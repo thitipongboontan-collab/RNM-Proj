@@ -1,0 +1,52 @@
+import Link from "next/link";
+import type { FundingItem } from "@/data/funding";
+
+const IMAGE_CLASS: Record<FundingItem["imageVariant"], string> = {
+  1: "bg-gradient-to-br from-[#4D5CAD] to-[#6B8FD4]",
+  2: "bg-gradient-to-br from-[#12B2C5] to-[#4D5CAD]",
+  3: "bg-gradient-to-br from-[#00CACC] to-[#4765B0]",
+};
+
+export function FundingCard({ item }: { item: FundingItem }) {
+  return (
+    <Link
+      href={`/funding/${item.id}`}
+      className="flex w-[420px] flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
+    >
+      <div
+        className={`h-[265px] w-full rounded-t-2xl ${IMAGE_CLASS[item.imageVariant]}`}
+      />
+      <div className="flex flex-col gap-[25px] px-[30px] pb-[35px] pt-[27px]">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-[13px]">
+            <h2 className="line-clamp-2 text-lg font-bold leading-snug tracking-[0.0278em] text-brand-dark">
+              {item.title}
+            </h2>
+            <p className="text-base tracking-[0.0313em] text-brand-dark/80">
+              {item.organization}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <span className="rounded-[20px] border border-[#12B2C5] px-5 py-[3px] text-xs font-medium text-[#12B2C5]">
+              {item.openDate}
+            </span>
+            <span className="rounded-[20px] border border-[#C5126C] px-5 py-[3px] text-xs font-medium text-[#C5126C]">
+              {item.closeDate}
+            </span>
+          </div>
+        </div>
+        <div className="h-px w-full bg-[#D9D9D9]" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-[#778097]">
+            <span aria-hidden>📅</span>
+            <span>{item.publishedDate}</span>
+          </div>
+          <span className="flex items-center gap-2 text-base font-medium text-brand-primary">
+            อ่านต่อ
+            <span aria-hidden>→</span>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
