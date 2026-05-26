@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { CopyLinkButton } from "@/components/funding/CopyLinkButton";
@@ -7,21 +8,17 @@ import {
   DownloadIcon,
   MetaItem,
 } from "@/components/funding/FundingDetailParts";
-import {
-  FUNDING_ITEMS,
-  getFundingIndex,
-  HERO_GRADIENT,
-  type FundingItem,
-} from "@/data/funding";
+import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
 
-export function FundingDetailPage({ item }: { item: FundingItem }) {
-  const index = getFundingIndex(item.id);
-  const prevId = index > 0 ? FUNDING_ITEMS[index - 1]?.id : undefined;
-  const nextId =
-    index >= 0 && index < FUNDING_ITEMS.length - 1
-      ? FUNDING_ITEMS[index + 1]?.id
-      : undefined;
-
+export function FundingDetailPage({
+  item,
+  prevId,
+  nextId,
+}: {
+  item: FundingItem;
+  prevId?: string;
+  nextId?: string;
+}) {
   return (
     <PageShell>
       <Breadcrumb
@@ -32,7 +29,6 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
         ]}
       />
 
-      {/* Figma Frame 39788 — title + meta */}
       <section
         className="flex flex-col items-center gap-[30px] px-20 pb-0 pt-[50px]"
         style={{
@@ -87,7 +83,6 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
         </div>
       </section>
 
-      {/* Figma Frame 39789 — hero + body */}
       <section
         className="flex flex-col gap-[30px] px-20 py-[50px]"
         style={{
@@ -98,17 +93,28 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
         }}
       >
         <div
-          className="h-[640px] w-full rounded-2xl"
+          className="relative h-[640px] w-full overflow-hidden rounded-2xl"
           style={{
             height: 640,
             width: "100%",
             borderRadius: 16,
-            background: HERO_GRADIENT[item.imageVariant],
+            background: item.imageSrc ? undefined : HERO_GRADIENT[item.imageVariant],
             flexShrink: 0,
           }}
           role="img"
           aria-label={item.detail.fullTitle}
-        />
+        >
+          {item.imageSrc && (
+            <Image
+              src={item.imageSrc}
+              alt={item.detail.fullTitle}
+              fill
+              sizes="1280px"
+              priority
+              className="object-cover"
+            />
+          )}
+        </div>
 
         <div className="flex flex-col gap-10" style={{ display: "flex", flexDirection: "column", gap: 40 }}>
           <div
@@ -116,7 +122,7 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
             style={{ fontSize: 18, lineHeight: 1.625, color: "#25324B" }}
           >
             {item.detail.bodySections.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)} style={{ margin: "0 0 20px" }}>
+              <p key={paragraph.slice(0, 40)} style={{ margin: "0 0 20px", whiteSpace: "pre-line" }}>
                 {paragraph}
               </p>
             ))}
@@ -135,21 +141,6 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
               </ul>
             ))}
 
-            <p style={{ margin: "0 0 20px" }}>
-              การส่งข้อเสนอการวิจัยและนวัตกรรม — ขอให้ลงทะเบียนส่งข้อเสนอการวิจัยและนวัตกรรม
-              ที่เว็บไซต์{" "}
-              <a
-                href={item.detail.nriisUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-brand-dark underline"
-                style={{ color: "#25324B", textDecoration: "underline" }}
-              >
-                {item.detail.nriisUrl}
-              </a>{" "}
-              โดยเลือกกลุ่มเรื่องประเด็น/หัวข้อการวิจัย ที่ต้องการรับทุน
-            </p>
-
             {item.detail.numberedList && (
               <div className="space-y-3">
                 <p className="font-medium">{item.detail.numberedList.title}</p>
@@ -162,8 +153,8 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
             )}
 
             {item.detail.closingNote && (
-              <p>
-                การประกาศผลการพิจารณา — วช. จะประกาศผลการพิจารณาข้อเสนอการวิจัยและนวัตกรรมที่ผ่านการพิจารณาเบื้องต้นทางเว็บไซต์{" "}
+              <p style={{ whiteSpace: "pre-line" }}>
+                การประกาศผลการพิจารณา — {item.detail.closingNote}{" "}
                 <a
                   href={item.detail.nrctUrl}
                   target="_blank"
@@ -186,24 +177,28 @@ export function FundingDetailPage({ item }: { item: FundingItem }) {
             )}
           </div>
 
-          <div className="flex items-center gap-[3px]" style={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <DownloadIcon />
-            <span
-              className="text-[25px] font-semibold text-brand-dark"
-              style={{ fontSize: 25, fontWeight: 600, color: "#25324B" }}
-            >
-              {item.detail.downloadLabel}
-            </span>
-          </div>
+          {item.detail.attachments.length > 0 && (
+            <>
+              <div className="flex items-center gap-[3px]" style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <DownloadIcon />
+                <span
+                  className="text-[25px] font-semibold text-brand-dark"
+                  style={{ fontSize: 25, fontWeight: 600, color: "#25324B" }}
+                >
+                  {item.detail.downloadLabel}
+                </span>
+              </div>
 
-          <div
-            className="flex flex-wrap gap-5"
-            style={{ display: "flex", flexWrap: "wrap", gap: 20 }}
-          >
-            {item.detail.attachments.map((file) => (
-              <AttachmentCard key={file.id} file={file} />
-            ))}
-          </div>
+              <div
+                className="flex flex-wrap gap-5"
+                style={{ display: "flex", flexWrap: "wrap", gap: 20 }}
+              >
+                {item.detail.attachments.map((file) => (
+                  <AttachmentCard key={file.id} file={file} />
+                ))}
+              </div>
+            </>
+          )}
 
           <DetailPagination prevId={prevId} nextId={nextId} />
         </div>

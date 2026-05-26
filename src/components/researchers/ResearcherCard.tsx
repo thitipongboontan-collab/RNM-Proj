@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ResearcherItem } from "@/data/researchers";
 
@@ -5,16 +6,26 @@ export function ResearcherCard({ item }: { item: ResearcherItem }) {
   return (
     <Link
       href={`/researchers/${item.id}`}
-      className="flex w-[420px] flex-col gap-[27px] rounded-2xl bg-white px-[30px] py-[35px] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
+      className="flex w-full flex-col gap-[27px] rounded-2xl bg-white px-[30px] py-[35px] shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
     >
       <div className="flex flex-col gap-[27px]">
         <div className="flex items-center gap-5">
-          <div className="h-[120px] w-[120px] shrink-0 rounded-[10px] bg-gradient-to-br from-[#D2D8EC] to-[#C1DFED]" />
-          <div className="flex flex-col gap-2">
+          <div className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[10px] bg-gradient-to-br from-[#D2D8EC] to-[#C1DFED]">
+            {item.imageSrc && (
+              <Image
+                src={item.imageSrc}
+                alt={item.name}
+                fill
+                sizes="120px"
+                className="object-cover"
+              />
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h2 className="text-lg font-bold text-brand-dark">{item.name}</h2>
             <p className="text-base text-[#778097]">{item.department}</p>
             <div className="flex flex-wrap gap-2">
-              {item.tags.map((tag) => (
+              {item.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
                   className="rounded-[20px] border border-brand-primary px-3 py-1 text-xs text-brand-primary"

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { FundingDetailPage } from "@/components/funding/FundingDetailPage";
-import { getFundingById } from "@/data/funding";
+import { getFundings } from "@/lib/funding-repository";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -8,7 +10,13 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  const item = getFundingById(id);
+  const items = await getFundings();
+  const item = items.find((entry) => entry.id === id);
   if (!item) notFound();
-  return <FundingDetailPage item={item} />;
+
+  const index = items.findIndex((entry) => entry.id === id);
+  const prevId = index > 0 ? items[index - 1]?.id : undefined;
+  const nextId = index >= 0 && index < items.length - 1 ? items[index + 1]?.id : undefined;
+
+  return <FundingDetailPage item={item} prevId={prevId} nextId={nextId} />;
 }

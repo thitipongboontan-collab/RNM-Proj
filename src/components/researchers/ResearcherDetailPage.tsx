@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import {
@@ -45,7 +46,7 @@ export function ResearcherDetailPage({ item }: { item: ResearcherItem }) {
             }}
           >
             <div
-              className="h-[346px] w-[331px] shrink-0 bg-gradient-to-br from-[#D2D8EC] to-[#C1DFED]"
+              className="relative h-[346px] w-[331px] shrink-0 overflow-hidden bg-gradient-to-br from-[#D2D8EC] to-[#C1DFED]"
               style={{
                 width: 331,
                 height: 346,
@@ -54,7 +55,18 @@ export function ResearcherDetailPage({ item }: { item: ResearcherItem }) {
               }}
               role="img"
               aria-label={item.name}
-            />
+            >
+              {item.imageSrc && (
+                <Image
+                  src={item.imageSrc}
+                  alt={item.name}
+                  fill
+                  sizes="331px"
+                  priority
+                  className="object-cover"
+                />
+              )}
+            </div>
 
             <div
               className="mt-[18px] flex w-full flex-col items-center gap-2 text-center"

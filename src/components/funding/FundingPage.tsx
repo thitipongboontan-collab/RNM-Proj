@@ -1,10 +1,10 @@
 import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
-import { FUNDING_ITEMS } from "@/data/funding";
+import type { FundingItem } from "@/data/funding";
 import { FundingCard } from "./FundingCard";
 
-export function FundingPage() {
+export function FundingPage({ items }: { items: FundingItem[] }) {
   return (
     <PageShell>
       <Breadcrumb
@@ -15,19 +15,10 @@ export function FundingPage() {
       />
       <main className="flex flex-col items-center gap-[50px] px-[60px] pb-20 pt-10">
         <PageTitle>แหล่งทุน</PageTitle>
-        <div className="flex w-[1320px] flex-col gap-10">
-          <div className="flex flex-col gap-10">
-            <div className="flex justify-center gap-10">
-              {FUNDING_ITEMS.slice(0, 3).map((item) => (
-                <FundingCard key={item.id} item={item} />
-              ))}
-            </div>
-            <div className="flex justify-center gap-10">
-              {FUNDING_ITEMS.slice(3, 6).map((item) => (
-                <FundingCard key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
+        <div className="grid w-[1320px] max-w-full grid-cols-3 gap-x-[30px] gap-y-10">
+          {items.map((item) => (
+            <FundingCard key={item.id} item={item} />
+          ))}
         </div>
       </main>
     </PageShell>

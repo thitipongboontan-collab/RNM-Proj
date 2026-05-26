@@ -1,21 +1,29 @@
+import Image from "next/image";
 import Link from "next/link";
-import type { FundingItem } from "@/data/funding";
-
-const IMAGE_CLASS: Record<FundingItem["imageVariant"], string> = {
-  1: "bg-gradient-to-br from-[#4D5CAD] to-[#6B8FD4]",
-  2: "bg-gradient-to-br from-[#12B2C5] to-[#4D5CAD]",
-  3: "bg-gradient-to-br from-[#00CACC] to-[#4765B0]",
-};
+import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
 
 export function FundingCard({ item }: { item: FundingItem }) {
   return (
     <Link
       href={`/funding/${item.id}`}
-      className="flex w-[420px] flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
+      className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
     >
       <div
-        className={`h-[265px] w-full rounded-t-2xl ${IMAGE_CLASS[item.imageVariant]}`}
-      />
+        className="relative h-[265px] w-full overflow-hidden rounded-t-2xl"
+        style={{
+          background: item.imageSrc ? undefined : HERO_GRADIENT[item.imageVariant],
+        }}
+      >
+        {item.imageSrc && (
+          <Image
+            src={item.imageSrc}
+            alt={item.title}
+            fill
+            sizes="420px"
+            className="object-cover"
+          />
+        )}
+      </div>
       <div className="flex flex-col gap-[25px] px-[30px] pb-[35px] pt-[27px]">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-[13px]">

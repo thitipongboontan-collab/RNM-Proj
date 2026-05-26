@@ -87,8 +87,12 @@ export function MetaItem({
 
 export function AttachmentCard({ file }: { file: FundingAttachment }) {
   return (
-    <div
-      className="flex w-[200px] flex-col gap-5 rounded-[10px] bg-white px-10 py-[30px] shadow-[0px_0px_8px_2px_rgba(0,0,0,0.1)]"
+    <a
+      href={file.downloadUrl}
+      target="_blank"
+      rel="noreferrer"
+      download
+      className="flex w-[200px] flex-col gap-5 rounded-[10px] bg-white px-10 py-[30px] shadow-[0px_0px_8px_2px_rgba(0,0,0,0.1)] transition hover:shadow-[0px_0px_12px_4px_rgba(0,0,0,0.12)]"
       style={{
         display: "flex",
         width: 200,
@@ -98,6 +102,7 @@ export function AttachmentCard({ file }: { file: FundingAttachment }) {
         backgroundColor: "#ffffff",
         padding: "30px 40px",
         boxShadow: "0px 0px 8px 2px rgba(0,0,0,0.1)",
+        textDecoration: "none",
       }}
     >
       <div
@@ -112,7 +117,7 @@ export function AttachmentCard({ file }: { file: FundingAttachment }) {
           {file.fileName}
         </p>
       </div>
-    </div>
+    </a>
   );
 }
 
