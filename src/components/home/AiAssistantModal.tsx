@@ -10,7 +10,12 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { AssistantReply, assistantReplyBoxClassName } from "./AssistantReply";
-import { AssistantCitations, type AssistantCitation } from "./AssistantCitations";
+import {
+  AssistantAttachmentPicker,
+  AssistantAttachmentPreview,
+  AssistantPendingAttachments,
+} from "./AssistantAttachmentPicker";
+import type { PendingAttachment } from "@/lib/assistant-attachments";
 
 function parseSseBlock(block: string) {
   const lines = block.split("\n");
@@ -41,7 +46,7 @@ type ChatTurn = {
   question: string;
   reply: string;
   error?: string;
-  citations?: AssistantCitation[];
+  attachments?: { name: string; previewUrl?: string; kind: "image" | "text" | "document" }[];
 };
 
 function SendIcon() {
@@ -61,6 +66,8 @@ function SendIcon() {
 export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
   const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState("");
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -76,6 +83,8 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
 
   const resetConversation = useCallback(() => {
     setMessage("");
+    setAttachments([]);
+    setAttachmentError("");
     setTurns([]);
     setStatusMessage("");
     setIsLoading(false);
@@ -137,11 +146,34 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const question = message.trim();
-    if (!question || isLoading) return;
+    const hasAttachments = attachments.length > 0;
+    if ((!question && !hasAttachments) || isLoading) return;
+
+    const turnAttachments = attachments.map(({ name, previewUrl, kind }) => ({
+      name,
+      previewUrl,
+      kind,
+    }));
+    const payloadAttachments = attachments.map(({ name, mimeType, kind, data }) => ({
+      name,
+      mimeType,
+      kind,
+      data,
+    }));
 
     const turnId = crypto.randomUUID();
-    setTurns((previous) => [...previous, { id: turnId, question, reply: "" }]);
+    setTurns((previous) => [
+      ...previous,
+      {
+        id: turnId,
+        question: question || "(แนบรูป/ไฟล์)",
+        reply: "",
+        attachments: turnAttachments,
+      },
+    ]);
     setMessage("");
+    setAttachments([]);
+    setAttachmentError("");
     setIsLoading(true);
     setIsStreaming(true);
     setStreamingTurnId(turnId);
@@ -151,7 +183,10 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({
+          message: question,
+          attachments: payloadAttachments,
+        }),
       });
 
       if (!response.ok) {
@@ -167,7 +202,6 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
       const decoder = new TextDecoder();
       let buffer = "";
       let streamedReply = "";
-      let streamedCitations: AssistantCitation[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -183,15 +217,6 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
 
           if (parsed.event === "status" && typeof parsed.data.message === "string") {
             setStatusMessage(parsed.data.message);
-          }
-
-          if (parsed.event === "citations" && Array.isArray(parsed.data.items)) {
-            streamedCitations = parsed.data.items as AssistantCitation[];
-            setTurns((previous) =>
-              previous.map((turn) =>
-                turn.id === turnId ? { ...turn, citations: streamedCitations } : turn,
-              ),
-            );
           }
 
           if (parsed.event === "token" && typeof parsed.data.text === "string") {
@@ -317,9 +342,14 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
 
                 return (
                   <div key={turn.id} className="flex flex-col gap-4">
-                    <p className="text-base font-medium leading-relaxed text-brand-dark">
-                      {turn.question}
-                    </p>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-base font-medium leading-relaxed text-brand-dark">
+                        {turn.question}
+                      </p>
+                      {turn.attachments && turn.attachments.length > 0 && (
+                        <AssistantAttachmentPreview attachments={turn.attachments} />
+                      )}
+                    </div>
 
                     {isActiveTurn && statusMessage && !turn.reply && !turn.error && (
                       <p className="text-sm text-[#778097]">{statusMessage}</p>
@@ -341,12 +371,7 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
                             </div>
                           </div>
                         ) : (
-                          <>
-                            <AssistantReply content={turn.reply} />
-                            {turn.citations && turn.citations.length > 0 && (
-                              <AssistantCitations items={turn.citations} />
-                            )}
-                          </>
+                          <AssistantReply content={turn.reply} />
                         )}
                       </div>
                     )}
@@ -357,36 +382,37 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="shrink-0 px-8 pb-8 pt-2">
+            <AssistantPendingAttachments
+              attachments={attachments}
+              onRemove={(id) => setAttachments((current) => current.filter((item) => item.id !== id))}
+            />
+            {attachmentError && (
+              <p className="mb-2 px-1 text-sm text-red-600">{attachmentError}</p>
+            )}
             <div className="flex items-center gap-3 rounded-full border border-[#E0E0E0] bg-white px-4 py-2 shadow-[0px_2px_12px_rgba(37,50,75,0.06)]">
-              <button
-                type="button"
+              <AssistantAttachmentPicker
                 disabled={isLoading}
-                aria-label="เพิ่ม"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#9F9F9F] transition hover:bg-[#F4F6FC] disabled:opacity-50"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path
-                    d="M8 3V13M3 8H13"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
+                attachments={attachments}
+                onChange={(items) => {
+                  setAttachments(items);
+                  setAttachmentError("");
+                }}
+                onError={setAttachmentError}
+              />
 
               <input
                 ref={inputRef}
                 type="text"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                placeholder="Ask Research Nexus AI..."
+                placeholder="Ask anything"
                 disabled={isLoading}
                 className="min-w-0 flex-1 border-0 bg-transparent text-base text-brand-dark outline-none placeholder:text-[#B0B8C9] disabled:opacity-60"
               />
 
               <button
                 type="submit"
-                disabled={isLoading || !message.trim()}
+                disabled={isLoading || (!message.trim() && attachments.length === 0)}
                 aria-label="ส่งคำถาม"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#4D5CAD] to-[#00CACC] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >

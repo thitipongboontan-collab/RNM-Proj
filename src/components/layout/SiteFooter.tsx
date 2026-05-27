@@ -1,7 +1,7 @@
 
 export function SiteFooter() {
   return (
-    <footer className="w-[1440px]" style={{ width: 1440, maxWidth: "100%" }}>
+    <footer className="w-full">
       <div
         className="relative h-[211px] bg-footer-main"
         style={{

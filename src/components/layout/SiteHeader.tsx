@@ -10,7 +10,7 @@ export function SiteHeader() {
 
   return (
     <header
-      className="relative z-20 h-[101px] bg-white/80 px-[62px] pr-[60px] backdrop-blur-[10px]"
+      className="relative z-20 h-[101px] w-full bg-white/80 px-[62px] pr-[60px] backdrop-blur-[10px]"
       style={{
         height: 101,
         backgroundColor: "rgba(255,255,255,0.8)",

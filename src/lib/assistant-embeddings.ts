@@ -1,4 +1,5 @@
-import type { AssistantDataset, FundingRecord, ResearcherRecord } from "@/lib/assistant-context";
+import type { AssistantDataset, FundingRecord, ResearcherRecord } from "@/lib/assistant-dataset";
+import { createSupabaseClient } from "@/lib/supabase/client";
 
 export type SearchDocument = {
   id: string;
@@ -185,17 +186,61 @@ export async function getEmbeddingIndex(
   return index;
 }
 
+async function searchSupabaseVectors(
+  queryEmbedding: number[],
+  topK: number,
+): Promise<SearchResult[] | null> {
+  try {
+    const supabase = createSupabaseClient();
+    if (!supabase) return null;
+
+    const { data, error } = await supabase.rpc("match_ai_documents", {
+      query_embedding: queryEmbedding,
+      match_count: topK,
+      filter_doc_type: null,
+    });
+
+    if (error) {
+      if (
+        error.message.includes("match_ai_documents") ||
+        error.message.includes("ai_documents") ||
+        error.code === "PGRST202"
+      ) {
+        return null;
+      }
+      console.error("Supabase vector search error:", error.message);
+      return null;
+    }
+
+    if (!data?.length) return null;
+
+    return data.map((row: { source_id: string; doc_type: string; score: number }) => ({
+      id: row.source_id,
+      type: row.doc_type as "researcher" | "funding",
+      score: row.score,
+    }));
+  } catch (error) {
+    console.error("Supabase vector search failed:", error);
+    return null;
+  }
+}
+
 export async function searchWithEmbeddings(
   apiKey: string,
   dataset: AssistantDataset,
   query: string,
   topK = 12,
 ): Promise<SearchResult[]> {
-  const index = await getEmbeddingIndex(apiKey, dataset);
-  if (!index.length) return [];
-
   const [queryEmbedding] = await createEmbeddings(apiKey, [query]);
   if (!queryEmbedding?.length) return [];
+
+  const supabaseResults = await searchSupabaseVectors(queryEmbedding, topK);
+  if (supabaseResults?.length) {
+    return supabaseResults;
+  }
+
+  const index = await getEmbeddingIndex(apiKey, dataset);
+  if (!index.length) return [];
 
   return index
     .map((document) => ({

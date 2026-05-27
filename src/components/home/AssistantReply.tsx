@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-
 export const assistantReplyBoxClassName =
   "rounded-xl border border-[#E5E7EB] bg-[#FAFBFD] px-5 py-4 text-[15px] leading-relaxed text-brand-dark";
 
@@ -20,19 +18,6 @@ function renderInline(text: string): ReactNode[] {
     const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (linkMatch) {
       const [, label, href] = linkMatch;
-      const isInternal = href.startsWith("/");
-
-      if (isInternal) {
-        return (
-          <Link
-            key={index}
-            href={href}
-            className="font-medium text-brand-primary underline underline-offset-2 hover:opacity-80"
-          >
-            {label}
-          </Link>
-        );
-      }
 
       return (
         <a

@@ -18,5 +18,13 @@ export default async function Page({ params }: PageProps) {
   const prevId = index > 0 ? items[index - 1]?.id : undefined;
   const nextId = index >= 0 && index < items.length - 1 ? items[index + 1]?.id : undefined;
 
-  return <FundingDetailPage item={item} prevId={prevId} nextId={nextId} />;
+  return (
+    <FundingDetailPage
+      item={item}
+      page={index + 1}
+      totalPages={items.length}
+      prevId={prevId}
+      nextId={nextId}
+    />
+  );
 }

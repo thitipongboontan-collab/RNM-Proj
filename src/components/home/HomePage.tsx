@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
+import { HeroParticleBackground } from "@/components/home/HeroParticleBackground";
 
 const FEATURE_CARDS = [
   {
@@ -77,13 +78,16 @@ function FeatureIcon({
 export function HomePage() {
   return (
     <PageShell>
-      <div className="relative">
+      <div className="relative w-full">
         <div
-          className="absolute left-0 right-0 top-0 h-[628px] bg-hero-page"
+          className="absolute inset-x-0 top-0 z-0 h-[628px] overflow-hidden"
           aria-hidden
-        />
+        >
+          <div className="pointer-events-none absolute inset-0 bg-hero-page" />
+          <HeroParticleBackground className="relative z-[1] h-full w-full" />
+        </div>
 
-        <section className="relative z-10 mx-auto flex w-[1061px] flex-col items-center gap-[68px] pt-[58px]">
+        <section className="relative z-10 mx-auto flex w-full max-w-[1061px] flex-col items-center gap-[68px] px-4 pt-[58px] sm:px-6 lg:px-0">
           <div className="flex w-full flex-col items-center gap-[30px]">
             <div className="flex w-full flex-col items-center gap-[63px]">
               <div className="flex h-[51px] w-[365px] shrink-0 items-center justify-center rounded-[50px] bg-hero-pill px-5">
@@ -114,8 +118,8 @@ export function HomePage() {
         </section>
       </div>
 
-      <main className="flex items-start justify-center gap-[114px] px-0 pb-[72px] pt-[140px]">
-        <section className="w-[509px] shrink-0">
+      <main className="mx-auto flex w-full max-w-[1316px] flex-col items-start justify-center gap-12 px-4 pb-[72px] pt-[140px] sm:px-6 lg:flex-row lg:gap-[114px] lg:px-8">
+        <section className="w-full shrink-0 lg:w-[509px]">
           <SectionLabel>เกี่ยวกับแพลตฟอร์ม</SectionLabel>
           <div className="mt-10 flex flex-col gap-5">
             <h2 className="font-sans w-[469px] text-[36px] font-bold leading-tight text-brand-dark">
@@ -141,7 +145,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="w-[631px] shrink-0">
+        <section className="w-full shrink-0 lg:w-[631px]">
           <SectionLabel>ฟังก์ชัน</SectionLabel>
           <div className="mt-10 flex flex-col gap-[30px]">
             <div className="flex flex-col gap-2.5">

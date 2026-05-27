@@ -4,18 +4,22 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { CopyLinkButton } from "@/components/funding/CopyLinkButton";
 import {
   AttachmentCard,
-  DetailPagination,
   DownloadIcon,
   MetaItem,
 } from "@/components/funding/FundingDetailParts";
+import { DetailPagination } from "@/components/funding/FundingDetailPagination";
 import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
 
 export function FundingDetailPage({
   item,
+  page,
+  totalPages,
   prevId,
   nextId,
 }: {
   item: FundingItem;
+  page: number;
+  totalPages: number;
   prevId?: string;
   nextId?: string;
 }) {
@@ -200,7 +204,12 @@ export function FundingDetailPage({
             </>
           )}
 
-          <DetailPagination prevId={prevId} nextId={nextId} />
+          <DetailPagination
+            page={page}
+            totalPages={totalPages}
+            prevId={prevId}
+            nextId={nextId}
+          />
         </div>
       </section>
     </PageShell>

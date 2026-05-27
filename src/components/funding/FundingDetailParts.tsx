@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { FundingAttachment } from "@/data/funding";
 
 function OrgIcon() {
@@ -92,69 +91,19 @@ export function AttachmentCard({ file }: { file: FundingAttachment }) {
       target="_blank"
       rel="noreferrer"
       download
-      className="flex w-[200px] flex-col gap-5 rounded-[10px] bg-white px-10 py-[30px] shadow-[0px_0px_8px_2px_rgba(0,0,0,0.1)] transition hover:shadow-[0px_0px_12px_4px_rgba(0,0,0,0.12)]"
-      style={{
-        display: "flex",
-        width: 200,
-        flexDirection: "column",
-        gap: 20,
-        borderRadius: 10,
-        backgroundColor: "#ffffff",
-        padding: "30px 40px",
-        boxShadow: "0px 0px 8px 2px rgba(0,0,0,0.1)",
-        textDecoration: "none",
-      }}
+      className="flex w-[200px] flex-col gap-5 rounded-[10px] bg-white px-6 py-[30px] shadow-[0px_0px_8px_2px_rgba(0,0,0,0.1)] transition hover:shadow-[0px_0px_12px_4px_rgba(0,0,0,0.12)]"
+      title={file.fileName}
     >
-      <div
-        className="flex flex-col items-center gap-3"
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
-      >
+      <div className="flex min-w-0 flex-col items-center gap-3">
         {file.type === "doc" ? <DocIcon /> : <PdfIcon />}
         <p
-          className="text-xl leading-[165%] tracking-[0.002em] text-[#0063D5]"
-          style={{ fontSize: 20, lineHeight: 1.65, color: "#0063D5", margin: 0 }}
+          className="m-0 w-full truncate text-center text-base leading-snug tracking-[0.002em] text-[#0063D5]"
+          title={file.fileName}
         >
           {file.fileName}
         </p>
       </div>
     </a>
-  );
-}
-
-export function DetailPagination({
-  prevId,
-  nextId,
-}: {
-  prevId?: string;
-  nextId?: string;
-}) {
-  return (
-    <div
-      className="flex justify-center pt-2 text-base leading-[165%]"
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        paddingTop: 8,
-        fontSize: 16,
-        lineHeight: 1.65,
-      }}
-    >
-      {prevId ? (
-        <Link href={`/funding/${prevId}`} className="text-black/20 hover:text-brand-primary">
-          &lt; ก่อนหน้า
-        </Link>
-      ) : (
-        <span className="text-black/20">&lt; ก่อนหน้า</span>
-      )}
-      <span className="mx-8" />
-      {nextId ? (
-        <Link href={`/funding/${nextId}`} className="text-[#0063D5] hover:underline">
-          หน้าถัดไป &gt;
-        </Link>
-      ) : (
-        <span className="text-[#0063D5]">หน้าถัดไป &gt;</span>
-      )}
-    </div>
   );
 }
 

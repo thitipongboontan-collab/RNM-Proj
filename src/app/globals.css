@@ -93,6 +93,10 @@ footer img[alt="CMU"] {
   pointer-events: none;
 }
 
+#hero-particles canvas {
+  filter: drop-shadow(0 0 6px rgba(90, 79, 207, 0.45));
+}
+
 @layer utilities {
   .font-thai-ui {
     font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;

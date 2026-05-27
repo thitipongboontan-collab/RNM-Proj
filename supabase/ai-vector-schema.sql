@@ -1,5 +1,5 @@
 -- Phase 1: pgvector foundation for Research Nexus AI
--- Run in Supabase SQL Editor when ready to persist embeddings.
+-- Run in Supabase SQL Editor before: npm run ai:index-embeddings
 
 create extension if not exists vector;
 
@@ -20,10 +20,10 @@ create unique index if not exists ai_documents_chunk_unique_idx
 create index if not exists ai_documents_source_idx
   on public.ai_documents (doc_type, source_id);
 
+-- HNSW works well for small/medium datasets (researchers + fundings)
 create index if not exists ai_documents_embedding_idx
   on public.ai_documents
-  using ivfflat (embedding vector_cosine_ops)
-  with (lists = 100);
+  using hnsw (embedding vector_cosine_ops);
 
 alter table public.ai_documents enable row level security;
 
@@ -33,9 +33,31 @@ on public.ai_documents
 for select
 using (true);
 
--- Example similarity query:
--- select source_id, content, 1 - (embedding <=> :query_embedding) as score
--- from public.ai_documents
--- where doc_type = 'researcher'
--- order by embedding <=> :query_embedding
--- limit 12;
+-- Similarity search RPC (used by AI assistant + index script verification)
+create or replace function public.match_ai_documents(
+  query_embedding vector(1536),
+  match_count int default 12,
+  filter_doc_type text default null
+)
+returns table (
+  source_id text,
+  doc_type text,
+  content text,
+  score float
+)
+language sql
+stable
+as $$
+  select
+    d.source_id,
+    d.doc_type,
+    d.content,
+    (1 - (d.embedding <=> query_embedding))::float as score
+  from public.ai_documents d
+  where d.embedding is not null
+    and (filter_doc_type is null or d.doc_type = filter_doc_type)
+  order by d.embedding <=> query_embedding
+  limit greatest(match_count, 1);
+$$;
+
+grant execute on function public.match_ai_documents(vector, int, text) to anon, authenticated, service_role;

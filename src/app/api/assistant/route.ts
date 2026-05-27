@@ -1,9 +1,20 @@
 import { buildAssistantSystemPrompt } from "@/lib/assistant-prompt";
+import {
+  buildAttachmentContext,
+  buildOpenAIUserContent,
+  type AssistantAttachmentPayload,
+} from "@/lib/assistant-attachments";
+import { resolveAttachmentsForAssistant } from "@/lib/assistant-document-parser";
 import { intentStatusMessage, runAssistantPipeline } from "@/lib/ai/pipeline";
+
+export const runtime = "nodejs";
 
 type AssistantRequest = {
   message?: string;
+  attachments?: AssistantAttachmentPayload[];
 };
+
+const MAX_ATTACHMENTS = 3;
 
 function sendEvent(
   controller: ReadableStreamDefaultController<Uint8Array>,
@@ -14,6 +25,26 @@ function sendEvent(
   controller.enqueue(
     encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
   );
+}
+
+function normalizeAttachments(raw: unknown): AssistantAttachmentPayload[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter((item): item is AssistantAttachmentPayload => {
+      if (!item || typeof item !== "object") return false;
+      const record = item as AssistantAttachmentPayload;
+      return (
+        (record.kind === "image" ||
+          record.kind === "text" ||
+          record.kind === "document") &&
+        typeof record.name === "string" &&
+        typeof record.mimeType === "string" &&
+        typeof record.data === "string" &&
+        record.data.length > 0
+      );
+    })
+    .slice(0, MAX_ATTACHMENTS);
 }
 
 export async function POST(request: Request) {
@@ -35,9 +66,23 @@ export async function POST(request: Request) {
     });
   }
 
-  const message = body.message?.trim();
-  if (!message) {
-    return new Response(JSON.stringify({ error: "กรุณาพิมพ์คำถาม" }), {
+  const message = body.message?.trim() ?? "";
+  const attachments = normalizeAttachments(body.attachments);
+
+  if (!message && attachments.length === 0) {
+    return new Response(JSON.stringify({ error: "กรุณาพิมพ์คำถามหรือแนบไฟล์" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  let resolvedAttachments: AssistantAttachmentPayload[];
+  try {
+    resolvedAttachments = await resolveAttachmentsForAssistant(attachments);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Could not read the attached document";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -50,23 +95,33 @@ export async function POST(request: Request) {
     });
   }
 
+  const hasImages = resolvedAttachments.some((item) => item.kind === "image");
   const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
   const encoder = new TextEncoder();
+  const pipelineMessage = `${message}${buildAttachmentContext(resolvedAttachments)}`.trim();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         sendEvent(controller, encoder, "status", {
-          message: "กำลังวิเคราะห์คำถาม...",
+          message: hasImages ? "กำลังวิเคราะห์รูปภาพและคำถาม..." : "กำลังวิเคราะห์คำถาม...",
         });
 
-        const pipeline = await runAssistantPipeline(message, apiKey);
+        const pipeline = await runAssistantPipeline(pipelineMessage || message, apiKey);
 
         sendEvent(controller, encoder, "status", {
           message: intentStatusMessage(pipeline.intent),
         });
 
-        const systemPrompt = buildAssistantSystemPrompt(pipeline.platformContext);
+        const attachmentNote = hasImages
+          ? "\n\nผู้ใช้แนบรูปภาพมาด้วย — ให้วิเคราะห์เนื้อหาในรูป แล้วเชื่อมโยงกับข้อมูลจากฐานข้อมูลแพลตฟอร์มเมื่อเกี่ยวข้อง"
+          : resolvedAttachments.length
+            ? "\n\nผู้ใช้แนบไฟล์ข้อความมาด้วย — ให้ใช้เนื้อหาไฟล์ประกอบการตอบ"
+            : "";
+
+        const systemPrompt = buildAssistantSystemPrompt(
+          `${pipeline.platformContext}${attachmentNote}`,
+        );
 
         sendEvent(controller, encoder, "citations", {
           items: pipeline.citations,
@@ -78,6 +133,8 @@ export async function POST(request: Request) {
           message: "กำลังวิเคราะห์และสรุปคำตอบ...",
         });
 
+        const userContent = buildOpenAIUserContent(message, resolvedAttachments);
+
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -86,12 +143,12 @@ export async function POST(request: Request) {
           },
           body: JSON.stringify({
             model,
-            temperature: 0.5,
-            max_tokens: 1200,
+            temperature: 0.35,
+            max_tokens: 1400,
             stream: true,
             messages: [
               { role: "system", content: systemPrompt },
-              { role: "user", content: message },
+              { role: "user", content: userContent },
             ],
           }),
         });

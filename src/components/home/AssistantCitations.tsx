@@ -20,6 +20,8 @@ export function AssistantCitations({ items }: { items: AssistantCitation[] }) {
           <li key={`${item.type}-${item.id}`}>
             <Link
               href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#D8DEEC] bg-[#F7F9FC] px-3 py-1 text-xs font-medium text-brand-primary transition hover:bg-[#EEF1F7]"
             >
               <span className="rounded bg-brand-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
