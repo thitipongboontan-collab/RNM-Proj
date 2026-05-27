@@ -6,6 +6,7 @@ import type {
 } from "@/data/funding";
 import { parseFundingDetails } from "@/lib/funding-content";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { abbreviateThaiMonthsInText } from "@/lib/thai-date";
 
 type FundingImportRecord = {
   id: string;
@@ -49,11 +50,13 @@ type AttachmentRow = {
 };
 
 function formatOpenDate(value: string) {
-  return value.startsWith("เปิดรับ") ? value : `เปิดรับวันที่ ${value}`;
+  const label = value.startsWith("เปิดรับ") ? value : `เปิดรับวันที่ ${value}`;
+  return abbreviateThaiMonthsInText(label);
 }
 
 function formatCloseDate(value: string) {
-  return value.startsWith("ปิดรับ") ? value : `ปิดรับวันที่ ${value}`;
+  const label = value.startsWith("ปิดรับ") ? value : `ปิดรับวันที่ ${value}`;
+  return abbreviateThaiMonthsInText(label);
 }
 
 function buildDetail(
@@ -80,8 +83,8 @@ function mapImportRecord(record: FundingImportRecord): FundingItem {
     id: record.id,
     title: record.title,
     organization: record.organization,
-    openDate: record.openDate,
-    closeDate: record.closeDate,
+    openDate: formatOpenDate(record.openDate),
+    closeDate: formatCloseDate(record.closeDate),
     publishedDate: record.publishedDate,
     imageVariant: record.imageVariant,
     imageSrc: record.imageSrc,

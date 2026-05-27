@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Thai, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const notoSansThai = Noto_Sans_Thai({
-  subsets: ["thai", "latin"],
-  variable: "--font-noto-sans-thai",
-  weight: ["400", "500", "600", "700"],
+const notoSansThaiUi = localFont({
+  src: "../fonts/noto-sans-thai-ui/NotoSansThaiUI.woff2",
+  weight: "400 700",
+  variable: "--font-noto-sans-thai-ui",
+  display: "swap",
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
-  weight: ["500"],
+  weight: ["500", "600", "700"],
 });
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -34,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body
-        className={`${notoSansThai.variable} ${plusJakarta.variable} ${inter.variable} font-thai`}
+        className={`${notoSansThaiUi.variable} ${plusJakarta.variable} ${inter.variable} font-sans`}
       >
         {children}
       </body>

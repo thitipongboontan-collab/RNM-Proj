@@ -8,7 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "funding:prepare": "node scripts/funding/prepare-funding-data.mjs"
+    "funding:prepare": "node scripts/funding/prepare-funding-data.mjs",
+    "researchers:photos": "node scripts/researchers/sync-researcher-photos.mjs",
+    "researchers:collaborations": "node scripts/researchers/prepare-collaboration-data.mjs",
+    "researchers:scholarly": "node scripts/researchers/import-scholarly-metrics.mjs",
+    "ai:index-embeddings": "node scripts/ai/index-embeddings.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

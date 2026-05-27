@@ -24,32 +24,15 @@ export function ContactRow({ email, phone }: { email?: string; phone?: string })
   if (!email && !phone) return null;
 
   return (
-    <div
-      className="flex flex-row flex-wrap items-center justify-center gap-2.5"
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        flexWrap: "wrap",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-        width: "100%",
-      }}
-    >
+    <div className="flex w-full flex-row flex-wrap items-center justify-center gap-2.5 sm:gap-[10px]">
       {email && (
-        <span
-          className="inline-flex items-center gap-1 text-sm text-[#5F5F60]"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, color: "#5F5F60" }}
-        >
+        <span className="inline-flex max-w-full items-center gap-1 break-all text-sm text-[#5F5F60]">
           <EmailIcon />
           {email}
         </span>
       )}
       {phone && (
-        <span
-          className="inline-flex items-center gap-1 text-sm text-[#5F5F60]"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, color: "#5F5F60" }}
-        >
+        <span className="inline-flex items-center gap-1 text-sm text-[#5F5F60]">
           <PhoneIcon />
           {phone}
         </span>
@@ -68,10 +51,7 @@ export function MetricsRow({
   hIndex: number;
 }) {
   return (
-    <div
-      className="flex w-full items-center justify-center gap-8"
-      style={{ display: "flex", width: "100%", alignItems: "center", justifyContent: "center", gap: 32 }}
-    >
+    <div className="flex w-full flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8">
       <Metric label="Scholarly Output" value={scholarlyOutput} />
       <Divider />
       <Metric label="Citations" value={citations} />
@@ -83,20 +63,11 @@ export function MetricsRow({
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className="flex flex-col items-center gap-1"
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
-    >
-      <span
-        className="text-[13px] text-[#9F9F9F]"
-        style={{ fontSize: 13, color: "#9F9F9F", lineHeight: 1.4, textAlign: "center" }}
-      >
+    <div className="flex min-w-[72px] flex-col items-center gap-1 sm:min-w-0">
+      <span className="text-center text-xs leading-snug text-[#9F9F9F] sm:text-[13px]">
         {label}
       </span>
-      <span
-        className="text-xl font-bold text-brand-dark"
-        style={{ fontSize: 20, fontWeight: 700, color: "#25324B", lineHeight: 1.35 }}
-      >
+      <span className="text-lg font-bold text-brand-dark sm:text-xl">
         {value}
       </span>
     </div>
@@ -104,44 +75,69 @@ function Metric({ label, value }: { label: string; value: number }) {
 }
 
 function Divider() {
-  return (
-    <div
-      className="h-10 w-px shrink-0 bg-[#D9D9D9]"
-      style={{ width: 1, height: 40, flexShrink: 0, backgroundColor: "#D9D9D9" }}
-    />
-  );
+  return <div className="hidden h-10 w-px shrink-0 bg-[#D9D9D9] sm:block" aria-hidden />;
 }
 
-export function DetailSection({ title, items }: { title: string; items: string[] }) {
+function SectionAccent() {
+  return <div className="hidden w-px shrink-0 self-stretch bg-[#D9D9D9] sm:block" aria-hidden />;
+}
+
+export function DetailSection({
+  title,
+  items,
+  bulletStyle = "dash",
+  variant = "default",
+}: {
+  title: string;
+  items: string[];
+  bulletStyle?: "dash" | "disc";
+  variant?: "default" | "card";
+}) {
+  if (!items.length) return null;
+
+  const listClassName =
+    bulletStyle === "disc"
+      ? variant === "card"
+        ? "m-0 list-disc space-y-2 pl-5 text-sm leading-[22px] text-brand-dark marker:text-brand-dark sm:text-base"
+        : "m-0 list-disc space-y-2 pl-5 text-base leading-6 text-brand-dark marker:text-brand-dark sm:space-y-2.5 sm:text-lg lg:text-xl"
+      : variant === "card"
+        ? "m-0 list-none space-y-2 p-0 text-sm leading-[22px] text-brand-dark sm:text-base"
+        : "m-0 list-none p-0 text-base leading-6 text-brand-dark sm:text-lg lg:text-xl";
+
+  const listContent =
+    bulletStyle === "disc" ? (
+      <ul className={listClassName}>
+        {items.map((item, index) => (
+          <li key={`${title}-${index}`} className="pl-1">
+            {item}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <ul className={listClassName}>
+        {items.map((item, index) => (
+          <li key={`${title}-${index}`} className={variant === "card" ? "" : "mb-2 last:mb-0 sm:mb-[10px]"}>
+            {variant === "card" ? item : <>{"  - "}{item}</>}
+          </li>
+        ))}
+      </ul>
+    );
+
+  if (variant === "card") {
+    return (
+      <section className="w-full rounded-[16px] border border-[#E5E7EB] bg-[#FAFBFD] px-4 py-3 sm:px-5 sm:py-4">
+        <h2 className="mb-3 m-0 text-base font-semibold leading-6 text-brand-primary">{title}</h2>
+        {listContent}
+      </section>
+    );
+  }
+
   return (
-    <section style={{ width: "100%" }}>
-      <div
-        className="flex flex-col gap-[13px]"
-        style={{ display: "flex", flexDirection: "column", gap: 13 }}
-      >
-        <h2
-          className="text-base font-semibold leading-6 text-brand-primary"
-          style={{ fontSize: 16, fontWeight: 600, lineHeight: "24px", color: "#4D5CAD", margin: 0 }}
-        >
-          {title}
-        </h2>
-        <ul
-          style={{
-            margin: 0,
-            padding: 0,
-            listStyle: "none",
-            fontSize: 20,
-            lineHeight: "24px",
-            color: "#25324B",
-          }}
-        >
-          {items.map((item, index) => (
-            <li key={`${title}-${index}`} style={{ marginBottom: 10 }}>
-              {"  - "}
-              {item}
-            </li>
-          ))}
-        </ul>
+    <section className="flex w-full items-stretch gap-4 sm:gap-[27px]">
+      <SectionAccent />
+      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:gap-[13px]">
+        <h2 className="m-0 text-base font-semibold leading-6 text-brand-primary">{title}</h2>
+        {listContent}
       </div>
     </section>
   );

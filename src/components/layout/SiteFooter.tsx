@@ -27,15 +27,15 @@ export function SiteFooter() {
           className="absolute left-[260px] top-[81px] w-[319px] text-white"
           style={{ position: "absolute", left: 260, top: 81, width: 319, color: "#fff" }}
         >
-          <p className="text-xl font-medium leading-tight" style={{ fontSize: 20, margin: 0 }}>
+          <p className="font-sans text-xl font-medium leading-tight" style={{ fontSize: 20, margin: 0 }}>
             Research Nexus Matching
           </p>
-          <p className="mt-1 text-sm font-normal leading-snug" style={{ fontSize: 14, marginTop: 4 }}>
+          <p className="font-sans mt-1 text-sm font-normal leading-snug" style={{ fontSize: 14, marginTop: 4 }}>
             ระบบสนับสนุนความร่วมมือทางวิชาการและงานวิจัยอัจฉริยะ
           </p>
         </div>
         <address
-          className="absolute left-[891px] top-14 w-[482px] not-italic text-sm leading-5 text-white"
+          className="font-sans absolute left-[891px] top-14 w-[482px] not-italic text-sm font-normal leading-5 text-white"
           style={{
             position: "absolute",
             left: 891,

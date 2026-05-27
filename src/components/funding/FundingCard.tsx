@@ -34,11 +34,11 @@ export function FundingCard({ item }: { item: FundingItem }) {
               {item.organization}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
-            <span className="rounded-[20px] border border-[#12B2C5] px-5 py-[3px] text-xs font-medium text-[#12B2C5]">
+          <div className="flex flex-nowrap items-center gap-2.5">
+            <span className="whitespace-nowrap rounded-[20px] border border-[#12B2C5] px-5 py-[3px] text-xs font-medium text-[#12B2C5]">
               {item.openDate}
             </span>
-            <span className="rounded-[20px] border border-[#C5126C] px-5 py-[3px] text-xs font-medium text-[#C5126C]">
+            <span className="whitespace-nowrap rounded-[20px] border border-[#C5126C] px-5 py-[3px] text-xs font-medium text-[#C5126C]">
               {item.closeDate}
             </span>
           </div>

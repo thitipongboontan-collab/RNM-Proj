@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
+import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
 
 const FEATURE_CARDS = [
   {
@@ -32,7 +33,7 @@ function SectionLabel({ children }: { children: string }) {
   return (
     <div className="flex items-center gap-5">
       <span className="h-9 w-[5px] shrink-0 bg-brand-primary" />
-      <span className="font-inter text-base font-medium leading-none text-brand-primary">
+      <span className="font-sans text-base font-medium leading-none tracking-[0.0208em] text-brand-primary">
         {children}
       </span>
     </div>
@@ -86,61 +87,41 @@ export function HomePage() {
           <div className="flex w-full flex-col items-center gap-[30px]">
             <div className="flex w-full flex-col items-center gap-[63px]">
               <div className="flex h-[51px] w-[365px] shrink-0 items-center justify-center rounded-[50px] bg-hero-pill px-5">
-                <p className="whitespace-nowrap text-base font-medium tracking-[0.0313em] text-brand-primary">
+                <p className="font-sans whitespace-nowrap text-base font-medium tracking-[0.0313em] text-brand-primary">
                   Intelligent for Research Colaboration
                 </p>
               </div>
 
-              <h1 className="flex items-center justify-center gap-[10px] whitespace-nowrap text-[64px] font-bold leading-none tracking-[0.0078em]">
+              <h1 className="font-sans flex items-center justify-center gap-[10px] whitespace-nowrap pb-1 text-[64px] font-bold leading-[1.15] tracking-[0.0078em]">
                 <span className="text-gradient-funding">Funding</span>
                 <span className="text-brand-dark">•</span>
-                <span className="text-gradient-matching">Matching</span>
+                <span className="inline-block pb-0.5 text-gradient-matching">Matching</span>
                 <span className="text-brand-dark">•</span>
                 <span className="text-brand-dark">Networking</span>
               </h1>
             </div>
 
-            <p className="w-[792px] text-center text-2xl font-medium leading-[1.35] tracking-[0.0208em] text-brand-muted">
+            <p className="font-sans m-0 w-[792px] text-center text-2xl font-medium leading-[1.35] tracking-[0.0208em] text-brand-muted">
               แพลตฟอร์มที่เชื่อมโยงแหล่งทุน นักวิจัย และเครือข่ายความร่วมมือทางวิชาการ
+              <br />
               เพื่อร่วมพัฒนาข้อเสนอโครงการ แลกเปลี่ยนความเชี่ยวชาญ
+              <br />
               และขับเคลื่อนงานวิจัยเพื่อสังคมอย่างยั่งยืน
             </p>
           </div>
 
-          <div className="ai-assistant-shell mb-[72px] flex h-[80px] w-[1000px] shrink-0 items-center justify-center rounded-[40px] px-[26px] py-[7px] shadow-ai-bar">
-            <div className="flex items-center justify-center gap-[22px]">
-              <div className="relative h-[48px] w-[54px] shrink-0">
-                <Image
-                  src="/images/ai-assistant.svg"
-                  alt=""
-                  width={54}
-                  height={40}
-                  className="absolute left-0 top-[8px] h-[40px] w-[54px] object-contain"
-                />
-                <Image
-                  src="/images/sparkle.png"
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="absolute left-[28.5px] top-0 h-[20px] w-[20px] object-cover"
-                />
-              </div>
-              <p className="font-jakarta text-lg font-medium leading-none text-brand-primary">
-                AI Research Assistant
-              </p>
-            </div>
-          </div>
+          <AiResearchAssistant />
         </section>
       </div>
 
-      <main className="flex items-start justify-center gap-[114px] px-0 pb-[72px]">
+      <main className="flex items-start justify-center gap-[114px] px-0 pb-[72px] pt-[140px]">
         <section className="w-[509px] shrink-0">
           <SectionLabel>เกี่ยวกับแพลตฟอร์ม</SectionLabel>
           <div className="mt-10 flex flex-col gap-5">
-            <h2 className="w-[469px] text-[36px] font-bold leading-tight text-brand-dark">
+            <h2 className="font-sans w-[469px] text-[36px] font-bold leading-tight text-brand-dark">
               ระบบสนับสนุนความร่วมมือทางวิชาการและงานวิจัยอัจฉริยะ
             </h2>
-            <div className="space-y-4 text-xl leading-normal text-brand-muted">
+            <div className="font-sans space-y-4 text-xl font-normal leading-normal text-brand-muted">
               <p>
                 <strong className="font-bold text-brand-dark">
                   Research Nexus Matching Platform
@@ -164,12 +145,12 @@ export function HomePage() {
           <SectionLabel>ฟังก์ชัน</SectionLabel>
           <div className="mt-10 flex flex-col gap-[30px]">
             <div className="flex flex-col gap-2.5">
-              <h2 className="text-[36px] font-bold leading-tight text-brand-dark">
+              <h2 className="font-sans text-[36px] font-bold leading-tight text-brand-dark">
                 ฟังก์ชันการใช้งาน
               </h2>
-              <p className="text-lg font-medium leading-normal text-brand-muted">
-                Our platform is currently under development. Here&apos;s what
-                you can look forward to:
+              <p className="font-sans text-lg font-medium leading-normal text-brand-muted">
+                ฟังก์ชันอัจฉริยะของระบบที่ช่วยยกระดับการทำงานวิจัย
+                พร้อมเชื่อมโยงนักวิจัย แหล่งทุน และโอกาสทางวิชาการไว้ในที่เดียว
               </p>
             </div>
             <div className="flex flex-wrap gap-x-[27px] gap-y-[17px]">
@@ -179,10 +160,10 @@ export function HomePage() {
                   className="flex h-[209px] w-[302px] flex-col justify-center gap-[7px] rounded-[10px] bg-brand-primary px-6 py-4"
                 >
                   <FeatureIcon type={card.icon} />
-                  <h3 className="text-lg font-semibold tracking-[0.0278em] text-white">
+                  <h3 className="font-sans text-lg font-semibold tracking-[0.0278em] text-white">
                     {card.title}
                   </h3>
-                  <p className="whitespace-pre-line text-sm leading-snug tracking-[0.0357em] text-white">
+                  <p className="font-sans whitespace-pre-line text-sm font-normal leading-snug tracking-[0.0357em] text-white">
                     {card.description}
                   </p>
                 </article>

@@ -9,18 +9,9 @@ export function Breadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
   return (
     <nav
       aria-label="breadcrumb"
-      className="flex h-[62px] items-center border-b border-[#D9D9D9] bg-[#FAFAFA] px-20"
-      style={{
-        display: "flex",
-        height: 62,
-        alignItems: "center",
-        borderBottom: "1px solid #D9D9D9",
-        backgroundColor: "#FAFAFA",
-        paddingLeft: 80,
-        paddingRight: 80,
-      }}
+      className="flex min-h-[52px] items-center border-b border-[#D9D9D9] bg-[#FAFAFA] px-4 py-2 sm:min-h-[62px] sm:px-8 sm:py-0 md:px-12 lg:px-20"
     >
-      <p className="text-base text-[#0247AE]" style={{ fontSize: 16, margin: 0 }}>
+      <p className="m-0 text-sm text-[#0247AE] sm:text-base">
         {segments.map((segment, index) => {
           const isLast = index === segments.length - 1;
           return (
@@ -29,20 +20,16 @@ export function Breadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
                 <Link
                   href={segment.href}
                   className="text-brand-primary hover:underline"
-                  style={{ color: "#4D5CAD", textDecoration: "none" }}
                 >
                   {segment.label}
                 </Link>
               ) : (
-                <span
-                  className={isLast ? "text-black/40" : undefined}
-                  style={isLast ? { color: "rgba(0,0,0,0.4)" } : undefined}
-                >
+                <span className={isLast ? "text-black/40" : undefined}>
                   {segment.label}
                 </span>
               )}
               {!isLast && (
-                <span className="text-black/40" style={{ color: "rgba(0,0,0,0.4)" }}>
+                <span className="text-black/40">
                   {" "}
                   /{" "}
                 </span>

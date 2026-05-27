@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HeaderAiButton } from "@/components/layout/HeaderAiButton";
 import { NAV_ITEMS } from "@/lib/navigation";
 
 export function SiteHeader() {
@@ -36,13 +37,13 @@ export function SiteHeader() {
           />
           <div style={{ width: 319 }}>
             <p
-              className="text-base font-bold leading-tight tracking-[0.0313em] text-brand-primary"
+              className="font-sans text-base font-bold leading-tight tracking-[0.0313em] text-brand-primary"
               style={{ fontSize: 16, fontWeight: 700, color: "#4D5CAD", margin: 0 }}
             >
               Research Nexus Matching
             </p>
             <p
-              className="mt-0.5 text-xs font-semibold leading-snug tracking-[0.0417em] text-brand-primary"
+              className="font-sans mt-0.5 text-xs font-semibold leading-snug tracking-[0.0417em] text-brand-primary"
               style={{ fontSize: 12, fontWeight: 600, color: "#4D5CAD", margin: "2px 0 0" }}
             >
               ระบบสนับสนุนความร่วมมือทางวิชาการและงานวิจัยอัจฉริยะ
@@ -64,7 +65,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`whitespace-nowrap text-xl font-semibold leading-none tracking-[0.025em] ${
+                className={`font-sans whitespace-nowrap text-xl font-semibold leading-none tracking-[0.025em] ${
                   isActive ? "text-brand-primary" : "text-brand-dark"
                 }`}
                 style={{
@@ -79,6 +80,7 @@ export function SiteHeader() {
               </Link>
             );
           })}
+          <HeaderAiButton />
         </nav>
       </div>
     </header>

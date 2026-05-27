@@ -1,4 +1,4 @@
-import type { ResearcherItem } from "@/data/researchers";
+import type { ResearcherItem, ResearcherPublication } from "@/data/researchers";
 import { resolveResearcherImageSrc } from "@/lib/researcher-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
 
@@ -41,6 +41,12 @@ type PublicationRow = {
   source_title: string | null;
   year: number | null;
   citations: number | null;
+};
+
+type CollaborationRow = {
+  researcher_id: string;
+  organization_name: string;
+  org_order: number | null;
 };
 
 const DEGREE_LEVEL_RANK: Record<string, number> = {
@@ -111,16 +117,22 @@ function sortExpertise(rows: ExpertiseRow[]): string[] {
     .map((row) => row.expertise);
 }
 
-function formatPublication(row: PublicationRow): string {
-  const source = row.source_title ? `, ${row.source_title}` : "";
-  const year = row.year ? `, ${row.year}` : "";
-  return `${row.title}${source}${year}`;
-}
-
-function sortPublications(rows: PublicationRow[]): string[] {
+function mapPublications(rows: PublicationRow[]): ResearcherPublication[] {
   return [...rows]
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-    .map(formatPublication);
+    .map((row) => ({
+      id: row.publication_id,
+      title: row.title,
+      sourceTitle: row.source_title ?? undefined,
+      year: row.year ?? undefined,
+      citations: row.citations ?? undefined,
+    }));
+}
+
+function sortCollaborations(rows: CollaborationRow[]): string[] {
+  return [...rows]
+    .sort((a, b) => (a.org_order ?? 0) - (b.org_order ?? 0))
+    .map((row) => row.organization_name);
 }
 
 export async function getResearchers(): Promise<ResearcherItem[]> {
@@ -133,6 +145,7 @@ export async function getResearchers(): Promise<ResearcherItem[]> {
       .select(
         "researcher_id, name_th, name_en, department, email_raw, phone, scholarly_output, citations, h_index",
       )
+      .order("scholarly_output", { ascending: false })
       .order("researcher_id"),
     supabase
       .from("researcher_keywords")
@@ -175,7 +188,7 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     return null;
   }
 
-  const [degreesResult, expertiseResult, publicationsResult, keywordsResult] =
+  const [degreesResult, expertiseResult, publicationsResult, keywordsResult, collaborationsResult] =
     await Promise.all([
       supabase
         .from("researcher_degrees")
@@ -194,6 +207,11 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
         .select("researcher_id, keyword_type, keyword_order, keyword")
         .eq("researcher_id", id)
         .eq("keyword_type", "keyword_en"),
+      supabase
+        .from("researcher_collaborations")
+        .select("researcher_id, organization_name, org_order")
+        .eq("researcher_id", id)
+        .order("org_order"),
     ]);
 
   const item = mapResearcherRow(researcher as ResearcherRow);
@@ -210,8 +228,16 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     item.tags = groupKeywordTags(keywordsResult.data as KeywordRow[]).get(id) ?? [];
   }
 
-  if (publicationsResult.data?.length) {
-    item.publications = sortPublications(publicationsResult.data as PublicationRow[]);
+  if (publicationsResult.error) {
+    console.error("Failed to fetch publications:", publicationsResult.error.message);
+  } else if (publicationsResult.data?.length) {
+    item.publications = mapPublications(publicationsResult.data as PublicationRow[]);
+  }
+
+  if (collaborationsResult.error) {
+    console.error("Failed to fetch collaborations:", collaborationsResult.error.message);
+  } else if (collaborationsResult.data?.length) {
+    item.collaborations = sortCollaborations(collaborationsResult.data as CollaborationRow[]);
   }
 
   return item;

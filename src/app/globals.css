@@ -19,7 +19,8 @@ body {
   color: #25324b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-noto-sans-thai), "Noto Sans Thai", sans-serif;
+  font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;
+  font-style: normal;
 }
 
 a {
@@ -67,6 +68,7 @@ footer img[alt="CMU"] {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-bottom: 0.08em;
 }
 
 .ai-assistant-shell {
@@ -89,4 +91,20 @@ footer img[alt="CMU"] {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+@layer utilities {
+  .font-thai-ui {
+    font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;
+    font-style: normal;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

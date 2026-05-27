@@ -13,9 +13,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        thai: ["var(--font-noto-sans-thai)", "sans-serif"],
-        jakarta: ["var(--font-plus-jakarta)", "sans-serif"],
-        inter: ["var(--font-inter)", "sans-serif"],
+        sans: ["var(--font-noto-sans-thai-ui)", "Noto Sans Thai UI", "sans-serif"],
+        jakarta: ["var(--font-plus-jakarta)", "Plus Jakarta Sans", "sans-serif"],
+        inter: ["var(--font-inter)", "Inter", "sans-serif"],
       },
       boxShadow: {
         "ai-bar": "0px 4px 20px 0px rgba(171, 205, 255, 1)",
