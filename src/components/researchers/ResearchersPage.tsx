@@ -84,10 +84,10 @@ export function ResearchersPage({
           { label: "นักวิจัย" },
         ]}
       />
-      <main className="flex flex-col items-center gap-[50px] px-[60px] pb-20 pt-10">
+      <main className="flex flex-col items-center gap-8 px-4 pb-12 pt-6 sm:gap-10 sm:px-6 sm:pb-16 sm:pt-8 md:px-10 lg:gap-[50px] lg:px-[60px] lg:pb-20 lg:pt-10">
         <PageTitle>นักวิจัย</PageTitle>
-        <div className="flex w-[1320px] max-w-full flex-col gap-10">
-          <div className="scrollbar-hide flex w-full flex-nowrap items-center gap-[10px] overflow-x-auto">
+        <div className="flex w-full max-w-[1320px] flex-col gap-8 sm:gap-10">
+          <div className="scrollbar-hide -mx-1 flex w-full flex-nowrap items-center gap-2 overflow-x-auto px-1 sm:gap-[10px]">
             {filters.map((filter) => {
               const isActive = activeDepartment === filter.id;
               return (
@@ -95,7 +95,7 @@ export function ResearchersPage({
                   key={filter.id}
                   type="button"
                   onClick={() => handleDepartmentFilter(filter.id)}
-                  className={`shrink-0 whitespace-nowrap rounded-[20px] px-[30px] py-2.5 text-lg font-semibold ${
+                  className={`shrink-0 whitespace-nowrap rounded-[20px] px-4 py-2 text-base font-semibold sm:px-[30px] sm:py-2.5 sm:text-lg ${
                     isActive
                       ? "bg-brand-primary text-white"
                       : "bg-[rgba(235,235,235,0.4)] text-brand-primary"
@@ -111,7 +111,7 @@ export function ResearchersPage({
             <p className="text-center text-lg text-[#778097]">ไม่พบนักวิจัยในหมวดนี้</p>
           ) : (
             <>
-              <div className="grid w-full grid-cols-3 gap-x-[30px] gap-y-10">
+              <div className="grid w-full grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3 lg:gap-x-[30px]">
                 {paginatedItems.map((item) => (
                   <ResearcherCard key={item.id} item={item} />
                 ))}
