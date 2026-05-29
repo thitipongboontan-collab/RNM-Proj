@@ -79,24 +79,21 @@ export function HomePage() {
   return (
     <PageShell>
       <div className="relative w-full">
-        <div
-          className="absolute inset-x-0 top-0 z-0 h-[628px] overflow-hidden"
-          aria-hidden
-        >
+        <div className="absolute inset-x-0 top-0 z-0 h-[640px] overflow-hidden sm:h-[628px]" aria-hidden>
           <div className="pointer-events-none absolute inset-0 bg-hero-page" />
           <HeroParticleBackground className="relative z-[1] h-full w-full" />
         </div>
 
-        <section className="relative z-10 mx-auto flex w-full max-w-[1061px] flex-col items-center gap-[68px] px-4 pt-[58px] sm:px-6 lg:px-0">
-          <div className="flex w-full flex-col items-center gap-[30px]">
-            <div className="flex w-full flex-col items-center gap-[63px]">
-              <div className="flex h-[51px] w-[365px] shrink-0 items-center justify-center rounded-[50px] bg-hero-pill px-5">
-                <p className="font-sans whitespace-nowrap text-base font-medium tracking-[0.0313em] text-brand-primary">
+        <section className="relative z-10 mx-auto flex w-full max-w-[1061px] flex-col items-center gap-10 px-4 pt-16 sm:gap-[68px] sm:px-6 sm:pt-[58px] lg:px-0">
+          <div className="flex w-full flex-col items-center gap-6 sm:gap-[30px]">
+            <div className="flex w-full flex-col items-center gap-10 sm:gap-[63px]">
+              <div className="flex min-h-[51px] w-full max-w-[365px] shrink-0 items-center justify-center rounded-[50px] bg-hero-pill px-5 py-3">
+                <p className="font-sans text-center text-sm font-medium tracking-[0.0313em] text-brand-primary sm:whitespace-nowrap sm:text-base">
                   Intelligent for Research Colaboration
                 </p>
               </div>
 
-              <h1 className="font-sans flex items-center justify-center gap-[10px] whitespace-nowrap pb-1 text-[64px] font-bold leading-[1.15] tracking-[0.0078em]">
+              <h1 className="font-sans flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 pb-1 text-center text-[clamp(2.35rem,12vw,4rem)] font-bold leading-[1.08] tracking-[0.0078em] sm:gap-[10px] sm:whitespace-nowrap sm:leading-[1.15]">
                 <span className="text-gradient-funding">Funding</span>
                 <span className="text-brand-dark">•</span>
                 <span className="inline-block pb-0.5 text-gradient-matching">Matching</span>
@@ -105,11 +102,11 @@ export function HomePage() {
               </h1>
             </div>
 
-            <p className="font-sans m-0 w-[792px] text-center text-2xl font-medium leading-[1.35] tracking-[0.0208em] text-brand-muted">
+            <p className="font-sans m-0 w-full max-w-[792px] text-center text-lg font-medium leading-relaxed tracking-[0.0208em] text-brand-muted sm:text-2xl sm:leading-[1.35]">
               แพลตฟอร์มที่เชื่อมโยงแหล่งทุน นักวิจัย และเครือข่ายความร่วมมือทางวิชาการ
-              <br />
+              <br className="hidden sm:block" />
               เพื่อร่วมพัฒนาข้อเสนอโครงการ แลกเปลี่ยนความเชี่ยวชาญ
-              <br />
+              <br className="hidden sm:block" />
               และขับเคลื่อนงานวิจัยเพื่อสังคมอย่างยั่งยืน
             </p>
           </div>
@@ -118,14 +115,14 @@ export function HomePage() {
         </section>
       </div>
 
-      <main className="mx-auto flex w-full max-w-[1316px] flex-col items-start justify-center gap-12 px-4 pb-[72px] pt-[140px] sm:px-6 lg:flex-row lg:gap-[114px] lg:px-8">
+      <main className="mx-auto flex w-full max-w-[1316px] flex-col items-start justify-center gap-12 px-4 pb-[72px] pt-16 sm:px-6 sm:pt-[140px] lg:flex-row lg:gap-[114px] lg:px-8">
         <section className="w-full shrink-0 lg:w-[509px]">
           <SectionLabel>เกี่ยวกับแพลตฟอร์ม</SectionLabel>
-          <div className="mt-10 flex flex-col gap-5">
-            <h2 className="font-sans w-[469px] text-[36px] font-bold leading-tight text-brand-dark">
+          <div className="mt-8 flex flex-col gap-5 sm:mt-10">
+            <h2 className="font-sans w-full max-w-[469px] text-2xl font-bold leading-tight text-brand-dark sm:text-[36px]">
               ระบบสนับสนุนความร่วมมือทางวิชาการและงานวิจัยอัจฉริยะ
             </h2>
-            <div className="font-sans space-y-4 text-xl font-normal leading-normal text-brand-muted">
+            <div className="font-sans space-y-4 text-base font-normal leading-relaxed text-brand-muted sm:text-xl sm:leading-normal">
               <p>
                 <strong className="font-bold text-brand-dark">
                   Research Nexus Matching Platform
@@ -147,21 +144,21 @@ export function HomePage() {
 
         <section className="w-full shrink-0 lg:w-[631px]">
           <SectionLabel>ฟังก์ชัน</SectionLabel>
-          <div className="mt-10 flex flex-col gap-[30px]">
+          <div className="mt-8 flex flex-col gap-[30px] sm:mt-10">
             <div className="flex flex-col gap-2.5">
-              <h2 className="font-sans text-[36px] font-bold leading-tight text-brand-dark">
+              <h2 className="font-sans text-2xl font-bold leading-tight text-brand-dark sm:text-[36px]">
                 ฟังก์ชันการใช้งาน
               </h2>
-              <p className="font-sans text-lg font-medium leading-normal text-brand-muted">
+              <p className="font-sans text-base font-medium leading-relaxed text-brand-muted sm:text-lg sm:leading-normal">
                 ฟังก์ชันอัจฉริยะของระบบที่ช่วยยกระดับการทำงานวิจัย
                 พร้อมเชื่อมโยงนักวิจัย แหล่งทุน และโอกาสทางวิชาการไว้ในที่เดียว
               </p>
             </div>
-            <div className="flex flex-wrap gap-x-[27px] gap-y-[17px]">
+            <div className="grid w-full grid-cols-1 gap-[17px] sm:grid-cols-2 sm:gap-x-[27px]">
               {FEATURE_CARDS.map((card) => (
                 <article
                   key={card.title}
-                  className="flex h-[209px] w-[302px] flex-col justify-center gap-[7px] rounded-[10px] bg-brand-primary px-6 py-4"
+                  className="group flex min-h-[190px] w-full flex-col justify-center gap-[7px] rounded-[10px] bg-brand-primary px-6 py-4 shadow-[0px_6px_18px_rgba(77,92,173,0.12)] transition-all duration-300 ease-out hover:-translate-y-1 hover:bg-[linear-gradient(105deg,#16314A_0%,#0A7378_58%,#00B8AE_100%)] hover:shadow-[0px_16px_34px_rgba(0,119,128,0.24)] sm:h-[209px]"
                 >
                   <FeatureIcon type={card.icon} />
                   <h3 className="font-sans text-lg font-semibold tracking-[0.0278em] text-white">
