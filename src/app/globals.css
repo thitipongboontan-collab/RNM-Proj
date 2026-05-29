@@ -36,13 +36,6 @@ header img[alt="Research Nexus Matching"] {
   object-fit: cover;
 }
 
-footer img[alt="CMU"] {
-  width: 136px !important;
-  height: 136px !important;
-  max-width: 136px !important;
-  max-height: 136px !important;
-}
-
 .text-gradient-funding {
   background: linear-gradient(90deg, #4765b0 0%, #00cacc 100%);
   -webkit-background-clip: text;
