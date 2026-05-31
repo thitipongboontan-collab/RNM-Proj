@@ -14,6 +14,9 @@ export function AiAssistantIcon({
   white = false,
 }: AiAssistantIconProps) {
   const toneClass = white ? "brightness-0 invert" : "";
+  const floatingSparkleClass = white
+    ? "ai-icon-floating-sparkle ai-icon-floating-sparkle-white"
+    : "ai-icon-floating-sparkle";
 
   return (
     <div className={className} aria-hidden>
@@ -29,8 +32,10 @@ export function AiAssistantIcon({
         alt=""
         width={20}
         height={20}
-        className={`${sparkleClassName} ${toneClass}`}
+        className={`${sparkleClassName} ai-icon-main-sparkle ${toneClass}`}
       />
+      <span className={`${floatingSparkleClass} ai-icon-floating-sparkle-one`} />
+      <span className={`${floatingSparkleClass} ai-icon-floating-sparkle-two`} />
     </div>
   );
 }

@@ -65,25 +65,132 @@ header img[alt="Research Nexus Matching"] {
 }
 
 .ai-assistant-shell {
-  background: rgba(255, 255, 255, 0.7);
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: linear-gradient(90deg, #4d5cad 0%, #00cacc 100%);
   position: relative;
+  animation: ai-assistant-pulse-glow 2.8s ease-in-out infinite;
 }
 
 .ai-assistant-shell::before {
+  content: none;
+}
+
+.ai-assistant-shell:hover {
+  animation-duration: 1.6s;
+}
+
+.ai-assistant-shell:hover::before {
+  animation-duration: 1.6s;
+}
+
+.ai-icon-main-sparkle {
+  animation: ai-icon-sparkle-float 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.ai-icon-floating-sparkle {
+  position: absolute;
+  z-index: 2;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #4d5cad 0%, #00cacc 100%);
+  filter: drop-shadow(0 0 6px rgba(0, 202, 204, 0.45));
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.ai-icon-floating-sparkle::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: 40px;
-  padding: 2px;
-  background: linear-gradient(90deg, #4d5cad 0%, #00cacc 100%);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0.35;
+}
+
+.ai-icon-floating-sparkle-white {
+  background: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.65));
+}
+
+.ai-icon-floating-sparkle-one {
+  left: 75%;
+  top: 6%;
+  animation: ai-icon-floating-sparkle-one 3.2s ease-in-out infinite;
+}
+
+.ai-icon-floating-sparkle-two {
+  left: 10%;
+  top: 18%;
+  width: 5px;
+  height: 5px;
+  animation: ai-icon-floating-sparkle-two 3.6s ease-in-out infinite 0.45s;
+}
+
+@keyframes ai-assistant-pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 18px rgba(77, 92, 173, 0.18),
+      0 0 0 rgba(0, 202, 204, 0);
+  }
+  50% {
+    box-shadow:
+      0 8px 26px rgba(77, 92, 173, 0.24),
+      0 0 28px rgba(0, 202, 204, 0.42);
+  }
+}
+
+@keyframes ai-assistant-border-glow {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ai-icon-sparkle-float {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(1px, -3px, 0) scale(1.12) rotate(8deg);
+  }
+}
+
+@keyframes ai-icon-floating-sparkle-one {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) rotate(45deg) scale(0.7);
+  }
+  18%,
+  70% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(4px, -6px, 0) rotate(45deg) scale(1);
+  }
+}
+
+@keyframes ai-icon-floating-sparkle-two {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 2px, 0) rotate(45deg) scale(0.6);
+  }
+  22%,
+  68% {
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate3d(-3px, -5px, 0) rotate(45deg) scale(0.95);
+  }
 }
 
 #hero-particles canvas {
