@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { divIcon, type LeafletEvent } from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
@@ -191,13 +191,13 @@ function SideOrganizationPopup({
     map.latLngToContainerPoint([latitude, longitude]),
   );
 
-  function updatePosition() {
+  const updatePosition = useCallback(() => {
     setPosition(map.latLngToContainerPoint([latitude, longitude]));
-  }
+  }, [latitude, longitude, map]);
 
   useEffect(() => {
     updatePosition();
-  }, [latitude, longitude]);
+  }, [updatePosition]);
 
   useMapEvents({
     move: updatePosition,
@@ -276,13 +276,13 @@ function SideAggregatePopup({
     map.latLngToContainerPoint([latitude, longitude]),
   );
 
-  function updatePosition() {
+  const updatePosition = useCallback(() => {
     setPosition(map.latLngToContainerPoint([latitude, longitude]));
-  }
+  }, [latitude, longitude, map]);
 
   useEffect(() => {
     updatePosition();
-  }, [latitude, longitude]);
+  }, [updatePosition]);
 
   useMapEvents({
     move: updatePosition,
