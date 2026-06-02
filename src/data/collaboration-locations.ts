@@ -1271,12 +1271,12 @@ export const COLLABORATION_LOCATION_SEED: CollaborationLocationSeed[] = [
     },
     {
         "organizationName":  "Naresuan University",
-        "country":  "Unknown",
-        "province":  "Unmapped",
-        "region":  "Unmapped",
+        "country":  "Thailand",
+        "province":  "Phitsanulok",
+        "region":  "Northern Thailand",
         "latitude":  16.742714,
         "longitude":  100.1948931,
-        "locationLevel":  "country"
+        "locationLevel":  "province"
     },
     {
         "organizationName":  "National and Kapodistrian University of Athens",

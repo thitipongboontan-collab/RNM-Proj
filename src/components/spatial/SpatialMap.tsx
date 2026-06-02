@@ -340,7 +340,6 @@ function SideAggregatePopup({
 export function SpatialMap({
   organizations,
   provinceAggregates,
-  regionAggregates,
   countryAggregates,
   selectedOrganization,
   focusedOrganizationName,
@@ -355,9 +354,7 @@ export function SpatialMap({
       ? buildOrganizationPoints(organizations, spreadPositions)
       : zoom >= 5
         ? buildAggregatePoints(provinceAggregates)
-        : zoom >= 3
-          ? buildAggregatePoints(regionAggregates)
-          : buildAggregatePoints(countryAggregates);
+        : buildAggregatePoints(countryAggregates);
   const selectedPoint = points.find(
     (point) => point.type === "organization" && point.label === selectedOrganization,
   );
