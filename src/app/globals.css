@@ -230,6 +230,49 @@ header img[alt="Research Nexus Matching"] {
     0 0 28px rgba(0, 202, 204, 0.48);
 }
 
+.spatial-side-popup {
+  position: absolute;
+  z-index: 800;
+  transform: translate(calc(-100% - 28px), -50%);
+  padding: 14px 36px 14px 18px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(37, 50, 75, 0.18);
+  color: #24324b;
+  font-family: var(--font-noto-sans-thai-ui), var(--font-inter), sans-serif;
+  pointer-events: auto;
+}
+
+.spatial-side-popup::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 3px -3px 6px rgba(37, 50, 75, 0.08);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.spatial-side-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: #8a94a8;
+  cursor: pointer;
+  font: 24px/1 var(--font-inter), sans-serif;
+}
+
 @layer utilities {
   .font-thai-ui {
     font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;

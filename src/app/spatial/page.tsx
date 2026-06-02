@@ -17,8 +17,15 @@ export default async function SpatialPage() {
           { label: "เชิงพื้นที่" },
         ]}
       />
-      <main className="flex flex-col items-center px-4 py-10 sm:px-8 lg:px-[60px] lg:py-14">
+      <main className="flex w-full flex-col items-center px-2 py-10 sm:px-4 lg:px-6 lg:py-14">
         <PageTitle>เชิงพื้นที่</PageTitle>
+        <p className="mt-4 max-w-4xl text-center text-base leading-relaxed text-brand-muted sm:text-lg">
+          แผนที่ความร่วมมือทางวิชาการ (Academic Collaboration Map)
+          แสดงเครือข่ายความร่วมมือทางวิชาการของนักวิจัยในรูปแบบเชิงพื้นที่
+          เพื่อให้เห็นการกระจายตัวและจำนวนความร่วมมือทางวิชาการของนักวิจัยในแต่ละพื้นที่
+          และสามารถวิเคราะห์แนวโน้มการเชื่อมโยงทางวิชาการ
+          และค้นหาโอกาสในการสร้างความร่วมมือใหม่ในอนาคต
+        </p>
         <div className="mt-8 w-full">
           <SpatialDashboard data={data} />
         </div>

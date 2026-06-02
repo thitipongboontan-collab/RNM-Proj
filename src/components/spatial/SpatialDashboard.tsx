@@ -97,10 +97,10 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-3xl border border-white/70 bg-white/85 p-5 text-right shadow-[0px_10px_32px_rgba(37,50,75,0.08)] backdrop-blur-md">
-      <p className="text-base font-semibold text-brand-dark">{label}</p>
-      <p className="mt-2 text-5xl font-bold leading-none text-black">{value}</p>
-      <p className="mt-1 text-base font-medium text-brand-dark">หน่วยงาน</p>
+    <div className="rounded-3xl border border-white/45 bg-white/70 p-5 text-center shadow-[0px_10px_32px_rgba(37,50,75,0.08)] backdrop-blur-md">
+      <p className="text-base font-semibold text-[#8A94A8]">{label}</p>
+      <p className="mt-2 text-5xl font-black leading-none text-black">{value}</p>
+      <p className="mt-1 text-base font-medium text-[#8A94A8]">หน่วยงาน</p>
     </div>
   );
 }
@@ -196,9 +196,9 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
     .length;
 
   return (
-    <div className="w-full max-w-[1320px]">
+    <div className="mx-auto w-full max-w-none">
       <div className="overflow-hidden rounded-[18px] border border-[#DDE7EC] bg-white shadow-[0px_14px_45px_rgba(37,50,75,0.08)]">
-        <div className="grid gap-2 border-b border-[#DDE7EC] bg-white/95 p-2.5 lg:grid-cols-[minmax(260px,1.35fr)_140px_minmax(220px,0.8fr)_auto]">
+        <div className="grid gap-2 border-b border-[#DDE7EC] bg-white/95 p-2.5 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
           <select
             value={researcherId}
             onChange={(event) => setResearcherId(event.target.value)}
@@ -229,9 +229,9 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ค้นหา"
-              className="h-11 w-full min-w-0 rounded-lg border border-[#B9C1C9] bg-white px-3 pr-9 text-right text-sm font-medium text-brand-dark outline-none transition placeholder:text-brand-dark focus:border-brand-primary"
+              className="h-11 w-full min-w-0 rounded-lg border border-[#B9C1C9] bg-white px-10 text-center text-sm font-medium text-brand-dark outline-none transition placeholder:text-brand-dark focus:border-brand-primary"
             />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#9F9F9F]">
+            <span className="pointer-events-none absolute left-[calc(50%-2.5rem)] top-1/2 -translate-y-1/2 text-xl text-[#9F9F9F]">
               ⌕
             </span>
           </label>
@@ -334,6 +334,11 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
           </div>
         </div>
       </div>
+      <p className="mt-4 text-sm leading-relaxed text-[#778097]">
+        <span className="font-semibold text-brand-dark">หมายเหตุ:</span>{" "}
+        จำนวนตัวเลขที่แสดงบนแผนที่(marker) คือ
+        แสดงจำนวนนักวิจัยที่มีความร่วมมือกับสถาบันหรือหน่วยงานนั้นๆ
+      </p>
     </div>
   );
 }

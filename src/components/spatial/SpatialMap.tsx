@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { divIcon, type LeafletEvent } from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import type {
   SpatialAggregate,
   SpatialOrganization,
@@ -36,7 +37,7 @@ type SpatialMapProps = {
   selectedOrganization?: string;
   focusedOrganizationName?: string;
   focusedCountry?: string;
-  onSelectOrganization: (organizationName: string) => void;
+  onSelectOrganization: (organizationName?: string) => void;
 };
 
 function useZoomLevel(onZoomChange: (zoom: number) => void) {
@@ -174,6 +175,168 @@ function buildAggregatePoints(aggregates: SpatialAggregate[]): MapPoint[] {
   }));
 }
 
+function SideOrganizationPopup({
+  organization,
+  latitude,
+  longitude,
+  onClose,
+}: {
+  organization: SpatialOrganization;
+  latitude: number;
+  longitude: number;
+  onClose: () => void;
+}) {
+  const map = useMap();
+  const [position, setPosition] = useState(() =>
+    map.latLngToContainerPoint([latitude, longitude]),
+  );
+
+  function updatePosition() {
+    setPosition(map.latLngToContainerPoint([latitude, longitude]));
+  }
+
+  useEffect(() => {
+    updatePosition();
+  }, [latitude, longitude]);
+
+  useMapEvents({
+    move: updatePosition,
+    zoom: updatePosition,
+    moveend: updatePosition,
+    zoomend: updatePosition,
+    viewreset: updatePosition,
+  });
+
+  return createPortal(
+    <div
+      className="spatial-side-popup"
+      style={{ left: position.x, top: position.y }}
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="spatial-side-popup-close"
+        aria-label="Close popup"
+        onClick={onClose}
+      >
+        ×
+      </button>
+      <div className="min-w-[240px] max-w-[300px]">
+        <p className="text-base font-semibold leading-tight text-brand-dark">
+          {organization.name}
+        </p>
+        <p className="text-xs leading-tight text-[#778097]">
+          {organization.province}, {organization.country}
+        </p>
+        <div className="mt-4">
+          <p className="text-xs font-semibold leading-tight text-brand-dark">
+            ความร่วมมือทั้งหมด({organization.collaborationCount})
+          </p>
+          <p className="mb-0.5 text-xs font-semibold leading-tight text-brand-dark">
+            รายชื่อนักวิจัย({organization.researchers.length})
+          </p>
+          <div className="max-h-[92px] overflow-y-auto pr-1">
+            <ul className="space-y-0.5">
+              {organization.researchers.map((researcher) => (
+                <li
+                  key={researcher.id}
+                  className="rounded-md border border-[#E3EAF2] bg-white px-2 py-1"
+                >
+                  <p className="text-xs font-semibold leading-snug text-brand-dark">
+                    {researcher.name}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-[#778097]">
+                    {researcher.department}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>,
+    map.getContainer(),
+  );
+}
+
+function SideAggregatePopup({
+  aggregate,
+  latitude,
+  longitude,
+  onClose,
+}: {
+  aggregate: SpatialAggregate;
+  latitude: number;
+  longitude: number;
+  onClose: () => void;
+}) {
+  const map = useMap();
+  const [position, setPosition] = useState(() =>
+    map.latLngToContainerPoint([latitude, longitude]),
+  );
+
+  function updatePosition() {
+    setPosition(map.latLngToContainerPoint([latitude, longitude]));
+  }
+
+  useEffect(() => {
+    updatePosition();
+  }, [latitude, longitude]);
+
+  useMapEvents({
+    move: updatePosition,
+    zoom: updatePosition,
+    moveend: updatePosition,
+    zoomend: updatePosition,
+    viewreset: updatePosition,
+  });
+
+  return createPortal(
+    <div
+      className="spatial-side-popup"
+      style={{ left: position.x, top: position.y }}
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="spatial-side-popup-close"
+        aria-label="Close popup"
+        onClick={onClose}
+      >
+        ×
+      </button>
+      <div className="min-w-[220px] max-w-[300px]">
+        <p className="text-base font-semibold leading-tight text-brand-dark">
+          {aggregate.label}
+        </p>
+        <div className="mt-4">
+          <p className="text-xs font-semibold leading-tight text-brand-dark">
+            ความร่วมมือทั้งหมด({aggregate.count})
+          </p>
+          <p className="mb-0.5 text-xs font-semibold leading-tight text-brand-dark">
+            หน่วยงานความร่วมมือ({aggregate.organizations.length})
+          </p>
+          <div className="max-h-[92px] overflow-y-auto pr-1">
+            <ul className="space-y-0.5">
+              {aggregate.organizations.map((organization) => (
+                <li
+                  key={organization}
+                  className="rounded-md border border-[#E3EAF2] bg-white px-2 py-1 text-xs font-semibold leading-snug text-brand-dark"
+                >
+                  {organization}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>,
+    map.getContainer(),
+  );
+}
+
 export function SpatialMap({
   organizations,
   provinceAggregates,
@@ -185,6 +348,7 @@ export function SpatialMap({
   onSelectOrganization,
 }: SpatialMapProps) {
   const [zoom, setZoom] = useState(5);
+  const [selectedAggregateKey, setSelectedAggregateKey] = useState<string>();
   const spreadPositions = spreadOverlappingOrganizations(organizations);
   const points =
     zoom >= 7
@@ -194,6 +358,12 @@ export function SpatialMap({
         : zoom >= 3
           ? buildAggregatePoints(regionAggregates)
           : buildAggregatePoints(countryAggregates);
+  const selectedPoint = points.find(
+    (point) => point.type === "organization" && point.label === selectedOrganization,
+  );
+  const selectedAggregatePoint = points.find(
+    (point) => point.type === "aggregate" && point.key === selectedAggregateKey,
+  );
 
   return (
     <MapContainer
@@ -226,65 +396,33 @@ export function SpatialMap({
             eventHandlers={{
               click: () => {
                 if (point.type === "organization") {
+                  setSelectedAggregateKey(undefined);
                   onSelectOrganization(point.organization.name);
+                  return;
                 }
+                onSelectOrganization(undefined);
+                setSelectedAggregateKey(point.key);
               },
             }}
-          >
-            <Popup>
-              {point.type === "organization" ? (
-                <div className="min-w-[240px] max-w-[300px]">
-                  <p className="text-base font-semibold leading-snug text-brand-dark">
-                    {point.organization.name}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[#778097]">
-                    {point.organization.province}, {point.organization.country}
-                  </p>
-                  <div className="mt-1.5 flex items-baseline justify-between">
-                    <p className="text-xs font-medium text-[#778097]">ความร่วมมือทั้งหมด</p>
-                    <p className="text-xl font-bold leading-none text-brand-primary">
-                      {point.organization.collaborationCount}
-                    </p>
-                  </div>
-                  <div className="mt-1.5">
-                    <p className="mb-1 text-xs font-semibold text-brand-dark">
-                      รายชื่อนักวิจัย ({point.organization.researchers.length})
-                    </p>
-                    <div className="max-h-[92px] overflow-y-auto pr-1">
-                      <ul className="space-y-0.5">
-                        {point.organization.researchers.map((researcher) => (
-                          <li
-                            key={researcher.id}
-                            className="rounded-md border border-[#E3EAF2] bg-white px-2 py-1"
-                          >
-                            <p className="text-xs font-semibold leading-snug text-brand-dark">
-                              {researcher.name}
-                            </p>
-                            <p className="mt-0.5 text-[11px] leading-snug text-[#778097]">
-                              {researcher.department}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="min-w-[220px]">
-                  <p className="font-semibold text-brand-dark">{point.aggregate.label}</p>
-                  <p className="mt-1 text-sm text-brand-primary">
-                    {point.aggregate.count} ความร่วมมือ
-                  </p>
-                  <p className="mt-2 text-sm text-[#778097]">
-                    {point.aggregate.organizations.slice(0, 4).join(", ")}
-                    {point.aggregate.organizations.length > 4 ? "..." : ""}
-                  </p>
-                </div>
-              )}
-            </Popup>
-          </Marker>
+          />
         );
       })}
+      {selectedPoint?.type === "organization" && (
+        <SideOrganizationPopup
+          organization={selectedPoint.organization}
+          latitude={selectedPoint.latitude}
+          longitude={selectedPoint.longitude}
+          onClose={() => onSelectOrganization(undefined)}
+        />
+      )}
+      {selectedAggregatePoint?.type === "aggregate" && (
+        <SideAggregatePopup
+          aggregate={selectedAggregatePoint.aggregate}
+          latitude={selectedAggregatePoint.latitude}
+          longitude={selectedAggregatePoint.longitude}
+          onClose={() => setSelectedAggregateKey(undefined)}
+        />
+      )}
     </MapContainer>
   );
 }
