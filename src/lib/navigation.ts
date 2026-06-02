@@ -2,6 +2,7 @@ export const NAV_ITEMS = [
   { label: "หน้าหลัก", href: "/" },
   { label: "แหล่งทุน", href: "/funding" },
   { label: "นักวิจัย", href: "/researchers" },
+  { label: "ผลงาน", href: "/works" },
   { label: "เชิงพื้นที่", href: "/spatial" },
 ] as const;
 
@@ -11,5 +12,6 @@ export const FIGMA_PAGES = {
   fundingDetail: "156:1488",
   researchers: "35:1138",
   researcherDetail: "70:3219",
+  works: "under-development",
   spatial: "145:649",
 } as const;

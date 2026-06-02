@@ -1,8 +1,14 @@
 import { PageShell } from "@/components/layout/PageShell";
+import { SpatialDashboard } from "@/components/spatial/SpatialDashboard";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
+import { getSpatialDashboardData } from "@/lib/spatial-repository";
 
-export default function SpatialPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SpatialPage() {
+  const data = await getSpatialDashboardData();
+
   return (
     <PageShell>
       <Breadcrumb
@@ -11,11 +17,11 @@ export default function SpatialPage() {
           { label: "เชิงพื้นที่" },
         ]}
       />
-      <main className="flex min-h-[500px] flex-col items-center justify-center px-[60px] py-20 text-center">
+      <main className="flex flex-col items-center px-4 py-10 sm:px-8 lg:px-[60px] lg:py-14">
         <PageTitle>เชิงพื้นที่</PageTitle>
-        <p className="mt-4 max-w-lg text-xl text-brand-muted">
-          กำลังพัฒนาหน้าแผนที่จาก Figma (node 145:649)
-        </p>
+        <div className="mt-8 w-full">
+          <SpatialDashboard data={data} />
+        </div>
       </main>
     </PageShell>
   );
