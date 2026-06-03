@@ -293,20 +293,20 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
                 </div>
               )}
 
-              <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
                 <ol className="flex flex-col gap-2">
                 {filteredOrganizations.slice(0, 80).map((organization) => (
                   <li key={organization.name}>
                     <button
                       type="button"
                       onClick={() => setSelectedOrganization(organization.name)}
-                      className={`grid w-full grid-cols-[1fr_auto] gap-3 rounded-xl px-3 py-2 text-left transition ${
+                      className={`grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl px-3 py-2 text-left transition ${
                         selected?.name === organization.name
                           ? "bg-brand-primary text-white"
                           : "bg-white/70 text-brand-dark hover:bg-white"
                       }`}
                     >
-                      <span>
+                      <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold">
                           {organization.name}
                         </span>
@@ -319,7 +319,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
                         </span>
                       </span>
                       <span
-                        className={`text-xs font-semibold ${
+                        className={`shrink-0 whitespace-nowrap text-xs font-semibold ${
                           organization.country === "Thailand" ? "text-[#00A6B0]" : "text-[#E25B76]"
                         }`}
                       >
