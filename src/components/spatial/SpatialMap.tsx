@@ -38,6 +38,8 @@ type SpatialMapProps = {
   focusedOrganizationName?: string;
   focusedCountry?: string;
   onSelectOrganization: (organizationName?: string) => void;
+  onSelectAggregate?: (aggregate: SpatialAggregate) => void;
+  onClearAggregate?: () => void;
 };
 
 function useZoomLevel(onZoomChange: (zoom: number) => void) {
@@ -345,6 +347,8 @@ export function SpatialMap({
   focusedOrganizationName,
   focusedCountry,
   onSelectOrganization,
+  onSelectAggregate,
+  onClearAggregate,
 }: SpatialMapProps) {
   const [zoom, setZoom] = useState(5);
   const [selectedAggregateKey, setSelectedAggregateKey] = useState<string>();
@@ -399,6 +403,7 @@ export function SpatialMap({
                 }
                 onSelectOrganization(undefined);
                 setSelectedAggregateKey(point.key);
+                onSelectAggregate?.(point.aggregate);
               },
             }}
           />
@@ -417,7 +422,10 @@ export function SpatialMap({
           aggregate={selectedAggregatePoint.aggregate}
           latitude={selectedAggregatePoint.latitude}
           longitude={selectedAggregatePoint.longitude}
-          onClose={() => setSelectedAggregateKey(undefined)}
+          onClose={() => {
+            setSelectedAggregateKey(undefined);
+            onClearAggregate?.();
+          }}
         />
       )}
     </MapContainer>

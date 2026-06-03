@@ -107,3 +107,50 @@ export function extractResearcherId(message: string): string | undefined {
   const match = message.match(/\b(RS\d{3})\b/i);
   return match?.[1]?.toUpperCase();
 }
+
+export function stripAcademicTitlePrefix(nameTh: string): string {
+  return nameTh
+    .replace(/^(รศ\.ดร\.|ผศ\.ดร\.|ศ\.ดร\.|อาจารย์ ดร\.|อาจารย์)\s*/, "")
+    .trim();
+}
+
+type ResearcherIdentity = {
+  row: { researcher_id: string; name_th: string; name_en: string | null };
+};
+
+export function findResearchersByNameQuery(
+  message: string,
+  researchers: ResearcherIdentity[],
+  limit = 3,
+): string[] {
+  const idFromMessage = extractResearcherId(message);
+  if (idFromMessage) return [idFromMessage];
+
+  const normalized = normalizeText(message);
+  const scored = researchers
+    .map((record) => {
+      const bareName = normalizeText(stripAcademicTitlePrefix(record.row.name_th));
+      const fullName = normalizeText(record.row.name_th);
+      const nameEn = record.row.name_en ? normalizeText(record.row.name_en) : "";
+
+      let score = 0;
+      if (normalized.includes(fullName) || normalized.includes(bareName)) score += 100;
+      if (nameEn && normalized.includes(nameEn)) score += 80;
+
+      for (const part of bareName.split(/\s+/).filter((token) => token.length >= 2)) {
+        if (normalized.includes(part)) score += 5;
+      }
+      if (nameEn) {
+        for (const part of nameEn.split(/\s+/).filter((token) => token.length >= 3)) {
+          if (normalized.includes(part)) score += 4;
+        }
+      }
+
+      return { id: record.row.researcher_id, score };
+    })
+    .filter((item) => item.score >= 10)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  return scored.map((item) => item.id);
+}

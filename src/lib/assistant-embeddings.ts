@@ -37,35 +37,41 @@ function sortKeywords(rows: { keyword: string; keyword_order: number | null }[])
 }
 
 function buildResearcherDocument(record: ResearcherRecord): string {
-  const { row, keywords, expertise, publications, collaborations } = record;
+  const { row, keywords, expertise, degrees, publications, collaborations } = record;
   const keywordEn = sortKeywords(
     keywords.filter((item) => item.keyword_type === "keyword_en"),
   );
   const keywordTh = sortKeywords(
     keywords.filter((item) => item.keyword_type === "keyword_th"),
   );
+  const degreeList = [...degrees]
+    .sort((a, b) => (a.degree_order ?? 0) - (b.degree_order ?? 0))
+    .map((item) => item.degree_text);
   const expertiseList = [...expertise]
     .sort((a, b) => (a.expertise_order ?? 0) - (b.expertise_order ?? 0))
     .map((item) => item.expertise);
   const publicationTitles = [...publications]
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-    .slice(0, 8)
-    .map((item) => item.title);
+    .map((item) => (item.year ? `${item.title} (${item.year})` : item.title));
   const collaborationOrgs = [...collaborations]
     .sort((a, b) => (a.org_order ?? 0) - (b.org_order ?? 0))
-    .slice(0, 10)
-    .map((item) => item.organization_name);
+    .map((item) => item.organization_name)
+    .filter((org) => org && org !== "-");
 
   return [
     `นักวิจัย ${row.name_th}`,
     row.name_en ? `ชื่ออังกฤษ ${row.name_en}` : "",
     `หน่วยงาน ${row.department}`,
-    `ความเชี่ยวชาญ ${expertiseList.join(", ")}`,
-    `คำสำคัญ ${[...keywordEn, ...keywordTh].join(", ")}`,
-    `ผลงานวิจัย ${publicationTitles.join(", ")}`,
+    degreeList.length ? `การศึกษา ${degreeList.join("; ")}` : "",
+    expertiseList.length ? `ความเชี่ยวชาญ ${expertiseList.join(", ")}` : "",
+    keywordEn.length || keywordTh.length
+      ? `คำสำคัญ ${[...keywordEn, ...keywordTh].join(", ")}`
+      : "",
+    publicationTitles.length ? `ผลงานวิจัย ${publicationTitles.join("; ")}` : "",
     collaborationOrgs.length ? `เครือข่ายความร่วมมือ ${collaborationOrgs.join(", ")}` : "",
+    `scholarly output ${row.scholarly_output ?? 0}`,
+    `citations ${row.citations ?? 0}`,
     `h-index ${row.h_index ?? 0}`,
-    "หัวข้อที่เกี่ยวข้อง: มลพิษอากาศ PM2.5 ฝุ่น สิ่งแวดล้อม สังคม การย้ายถิ่น ทุนวิจัย เครือข่ายความร่วมมือ",
   ]
     .filter(Boolean)
     .join(". ");

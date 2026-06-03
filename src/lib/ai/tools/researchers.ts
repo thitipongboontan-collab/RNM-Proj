@@ -42,9 +42,12 @@ function applyFilters(
   return filtered;
 }
 
-function sortKeywords(rows: { keyword: string; keyword_order: number | null; keyword_type: string }[]) {
+function sortKeywordsByType(
+  rows: { keyword: string; keyword_order: number | null; keyword_type: string }[],
+  keywordType: string,
+) {
   return [...rows]
-    .filter((row) => row.keyword_type === "keyword_en")
+    .filter((row) => row.keyword_type === keywordType)
     .sort((a, b) => (a.keyword_order ?? 0) - (b.keyword_order ?? 0))
     .map((row) => row.keyword);
 }
@@ -55,8 +58,14 @@ function sortExpertise(rows: { expertise: string; expertise_order: number | null
     .map((row) => row.expertise);
 }
 
+function sortDegrees(rows: { degree_text: string; degree_order: number | null }[]) {
+  return [...rows]
+    .sort((a, b) => (a.degree_order ?? 0) - (b.degree_order ?? 0))
+    .map((row) => row.degree_text);
+}
+
 export function formatResearcherDetail(record: ResearcherRecord): string {
-  const { row, expertise, publications, collaborations } = record;
+  const { row, expertise, degrees, publications, collaborations } = record;
   const lines = [
     `[${row.researcher_id}] ${row.name_th}${row.name_en ? ` (${row.name_en})` : ""}`,
     `  ตำแหน่ง: ${extractAcademicTitle(row.name_th) ?? "ไม่ระบุ"}`,
@@ -64,28 +73,40 @@ export function formatResearcherDetail(record: ResearcherRecord): string {
     `  Scholarly Output: ${row.scholarly_output ?? 0} | Citations: ${row.citations ?? 0} | h-index: ${row.h_index ?? 0}`,
   ];
 
-  const expertiseList = sortExpertise(expertise);
-  const keywordList = sortKeywords(record.keywords);
+  const degreeList = sortDegrees(degrees);
+  if (degreeList.length) {
+    lines.push("  การศึกษา:");
+    for (const degree of degreeList) lines.push(`    - ${degree}`);
+  }
 
-  if (expertiseList.length) lines.push(`  ความเชี่ยวชาญ: ${expertiseList.slice(0, 5).join("; ")}`);
-  if (keywordList.length) lines.push(`  keywords: ${keywordList.slice(0, 5).join(", ")}`);
+  const expertiseList = sortExpertise(expertise);
+  if (expertiseList.length) {
+    lines.push("  ความเชี่ยวชาญ:");
+    for (const item of expertiseList) lines.push(`    - ${item}`);
+  }
+
+  const keywordEn = sortKeywordsByType(record.keywords, "keyword_en");
+  const keywordTh = sortKeywordsByType(record.keywords, "keyword_th");
+  if (keywordEn.length) lines.push(`  คำสำคัญ (EN): ${keywordEn.join(", ")}`);
+  if (keywordTh.length) lines.push(`  คำสำคัญ (TH): ${keywordTh.join(", ")}`);
 
   const publicationList = [...publications]
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-    .slice(0, 5)
     .map((item) => (item.year ? `${item.title} (${item.year})` : item.title));
 
   if (publicationList.length) {
-    lines.push(`  ผลงานล่าสุด: ${publicationList.join(" | ")}`);
+    lines.push(`  ผลงานตีพิมพ์ (${publicationList.length} รายการ):`);
+    for (const item of publicationList) lines.push(`    - ${item}`);
   }
 
   const collaborationList = [...collaborations]
     .sort((a, b) => (a.org_order ?? 0) - (b.org_order ?? 0))
-    .slice(0, 6)
-    .map((item) => item.organization_name);
+    .map((item) => item.organization_name)
+    .filter((org) => org && org !== "-");
 
   if (collaborationList.length) {
-    lines.push(`  เครือข่าย: ${collaborationList.join(", ")}`);
+    lines.push(`  เครือข่ายความร่วมมือ (${collaborationList.length} หน่วยงาน):`);
+    for (const org of collaborationList) lines.push(`    - ${org}`);
   }
 
   lines.push(`  ลิงก์: /researchers/${row.researcher_id}`);

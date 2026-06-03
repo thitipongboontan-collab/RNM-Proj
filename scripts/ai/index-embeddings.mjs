@@ -32,7 +32,7 @@ function sortByOrder(rows, orderKey) {
   return [...rows].sort((a, b) => (a[orderKey] ?? 0) - (b[orderKey] ?? 0));
 }
 
-function buildResearcherContent(row, expertise, keywords, publications, collaborations) {
+function buildResearcherContent(row, expertise, keywords, degrees, publications, collaborations) {
   const keywordEn = sortByOrder(
     keywords.filter((item) => item.keyword_type === "keyword_en"),
     "keyword_order",
@@ -41,24 +41,25 @@ function buildResearcherContent(row, expertise, keywords, publications, collabor
     keywords.filter((item) => item.keyword_type === "keyword_th"),
     "keyword_order",
   ).map((item) => item.keyword);
+  const degreeList = sortByOrder(degrees, "degree_order").map((item) => item.degree_text);
   const expertiseList = sortByOrder(expertise, "expertise_order").map((item) => item.expertise);
   const publicationTitles = sortByOrder(publications, "year")
     .reverse()
-    .slice(0, 8)
-    .map((item) => item.title);
+    .map((item) => (item.year ? `${item.title} (${item.year})` : item.title));
   const collaborationOrgs = sortByOrder(collaborations, "org_order")
-    .slice(0, 10)
-    .map((item) => item.organization_name);
+    .map((item) => item.organization_name)
+    .filter((org) => org && org !== "-");
 
   return [
     `นักวิจัย ${row.name_th}`,
     row.name_en ? `ชื่ออังกฤษ ${row.name_en}` : "",
     `หน่วยงาน ${row.department}`,
+    degreeList.length ? `การศึกษา ${degreeList.join("; ")}` : "",
     expertiseList.length ? `ความเชี่ยวชาญ ${expertiseList.join(", ")}` : "",
     keywordEn.length || keywordTh.length
       ? `คำสำคัญ ${[...keywordEn, ...keywordTh].join(", ")}`
       : "",
-    publicationTitles.length ? `ผลงานวิจัย ${publicationTitles.join(", ")}` : "",
+    publicationTitles.length ? `ผลงานวิจัย ${publicationTitles.join("; ")}` : "",
     collaborationOrgs.length ? `เครือข่ายความร่วมมือ ${collaborationOrgs.join(", ")}` : "",
     `scholarly output ${row.scholarly_output ?? 0}`,
     `citations ${row.citations ?? 0}`,
@@ -127,6 +128,7 @@ async function main() {
     { data: researchers, error: researcherError },
     { data: expertise, error: expertiseError },
     { data: keywords, error: keywordError },
+    { data: degrees, error: degreeError },
     { data: publications, error: publicationError },
     { data: collaborations, error: collaborationError },
     { data: fundings, error: fundingError },
@@ -137,6 +139,7 @@ async function main() {
       .select("researcher_id, name_th, name_en, department, scholarly_output, citations, h_index"),
     supabase.from("researcher_expertise").select("researcher_id, expertise_order, expertise"),
     supabase.from("researcher_keywords").select("researcher_id, keyword_type, keyword_order, keyword"),
+    supabase.from("researcher_degrees").select("researcher_id, degree_order, degree_text"),
     supabase.from("publications").select("researcher_id, title, year"),
     supabase
       .from("researcher_collaborations")
@@ -151,6 +154,7 @@ async function main() {
     researcherError,
     expertiseError,
     keywordError,
+    degreeError,
     publicationError,
     collaborationError,
     fundingError,
@@ -171,6 +175,13 @@ async function main() {
     const list = keywordsByResearcher.get(row.researcher_id) ?? [];
     list.push(row);
     keywordsByResearcher.set(row.researcher_id, list);
+  }
+
+  const degreesByResearcher = new Map();
+  for (const row of degrees ?? []) {
+    const list = degreesByResearcher.get(row.researcher_id) ?? [];
+    list.push(row);
+    degreesByResearcher.set(row.researcher_id, list);
   }
 
   const publicationsByResearcher = new Map();
@@ -206,6 +217,7 @@ async function main() {
         row,
         expertiseByResearcher.get(row.researcher_id) ?? [],
         keywordsByResearcher.get(row.researcher_id) ?? [],
+        degreesByResearcher.get(row.researcher_id) ?? [],
         publicationsByResearcher.get(row.researcher_id) ?? [],
         collaborationsByResearcher.get(row.researcher_id) ?? [],
       ),

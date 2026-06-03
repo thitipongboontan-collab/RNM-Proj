@@ -256,6 +256,13 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
               focusedOrganizationName={selected?.name}
               focusedCountry={country !== "all" && !selected ? country : undefined}
               onSelectOrganization={setSelectedOrganization}
+              onSelectAggregate={(aggregate) => {
+                if (data.countries.includes(aggregate.label)) {
+                  setCountry(aggregate.label);
+                  setSelectedOrganization(undefined);
+                }
+              }}
+              onClearAggregate={resetFilters}
             />
           </div>
 

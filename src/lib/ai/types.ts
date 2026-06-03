@@ -12,6 +12,7 @@ export type QueryIntentType =
   | "search_fundings"
   | "match_funding"
   | "collaboration_network"
+  | "collaboration_ranking"
   | "publication_trends"
   | "researcher_intelligence"
   | "general";

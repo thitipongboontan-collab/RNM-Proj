@@ -1,7 +1,12 @@
 import { buildVectorScoreMap, searchWithEmbeddings } from "@/lib/assistant-embeddings";
 import { intentStatusMessage, routeQuery } from "@/lib/ai/router";
+import { findResearchersByNameQuery } from "@/lib/ai/researcher-meta";
 import { matchFundingTool } from "@/lib/ai/tools/match-funding";
-import { collaborationNetworkTool } from "@/lib/ai/tools/collaboration-network";
+import {
+  collaborationNetworkTool,
+  collaborationOrganizationTool,
+  collaborationRankingTool,
+} from "@/lib/ai/tools/collaboration-network";
 import { publicationTrendsTool } from "@/lib/ai/tools/publication-trends";
 import { researcherIntelligenceTool } from "@/lib/ai/tools/intelligence";
 import { buildFundingOverviewBlock, searchFundingsTool } from "@/lib/ai/tools/fundings";
@@ -51,6 +56,24 @@ function mergeToolResults(results: ToolExecutionResult[]): {
   };
 }
 
+function attachResolvedResearcherProfiles(
+  toolResults: ToolExecutionResult[],
+  dataset: Awaited<ReturnType<typeof getAssistantDataset>>,
+  researcherIds: string[],
+) {
+  const citedIds = new Set(
+    toolResults.flatMap((result) =>
+      result.citations.filter((item) => item.type === "researcher").map((item) => item.id),
+    ),
+  );
+
+  for (const researcherId of researcherIds.slice(0, 3)) {
+    if (citedIds.has(researcherId)) continue;
+    const profile = getResearcherProfileTool(dataset.researchers, researcherId);
+    if (profile) toolResults.push(profile);
+  }
+}
+
 export async function runAssistantPipeline(
   message: string,
   apiKey?: string,
@@ -59,11 +82,17 @@ export async function runAssistantPipeline(
   const departments = [...new Set(dataset.researchers.map((item) => item.row.department))];
   const routed = routeQuery(message, departments);
   const queryTokens = expandQueryTokens(message);
+  const resolvedResearcherIds = findResearchersByNameQuery(message, dataset.researchers, 3);
+  const primaryResearcherId = routed.filters.researcherId ?? resolvedResearcherIds[0];
+  const filters = {
+    ...routed.filters,
+    researcherId: primaryResearcherId,
+  };
 
   let vectorScores = new Map<string, number>();
   if (apiKey) {
     try {
-      const vectorResults = await searchWithEmbeddings(apiKey, dataset, message, 12);
+      const vectorResults = await searchWithEmbeddings(apiKey, dataset, message, 16);
       vectorScores = buildVectorScoreMap(vectorResults);
     } catch (error) {
       console.error("Vector search failed, falling back to keyword search:", error);
@@ -71,21 +100,22 @@ export async function runAssistantPipeline(
   }
 
   const toolResults: ToolExecutionResult[] = [];
+  const collaborationOrganizationLookup = collaborationOrganizationTool(dataset, message);
 
   switch (routed.intent) {
     case "count_researchers":
       toolResults.push(countResearchersTool(dataset.researchers, routed.filters));
       break;
     case "researcher_profile":
-      if (routed.filters.researcherId) {
+      if (filters.researcherId) {
         const profile = getResearcherProfileTool(
           dataset.researchers,
-          routed.filters.researcherId,
+          filters.researcherId,
         );
         if (profile) toolResults.push(profile);
         const intelligence = researcherIntelligenceTool(
           dataset,
-          routed.filters.researcherId,
+          filters.researcherId,
         );
         if (intelligence) toolResults.push(intelligence);
       }
@@ -94,18 +124,22 @@ export async function runAssistantPipeline(
           dataset.researchers,
           queryTokens,
           vectorScores,
-          routed.filters,
+          filters,
           6,
         ),
       );
       break;
     case "search_researchers":
+      if (filters.researcherId) {
+        const profile = getResearcherProfileTool(dataset.researchers, filters.researcherId);
+        if (profile) toolResults.push(profile);
+      }
       toolResults.push(
         searchResearchersTool(
           dataset.researchers,
           queryTokens,
           vectorScores,
-          routed.filters,
+          filters,
           8,
         ),
       );
@@ -119,36 +153,53 @@ export async function runAssistantPipeline(
           dataset,
           queryTokens,
           vectorScores,
-          routed.filters.researcherId,
+          filters.researcherId,
           5,
         ),
       );
       break;
     case "collaboration_network": {
-      const network = collaborationNetworkTool(dataset, routed.filters.researcherId);
-      if (network) toolResults.push(network);
+      if (collaborationOrganizationLookup) {
+        toolResults.push(collaborationOrganizationLookup);
+      }
+      if (filters.researcherId || !collaborationOrganizationLookup) {
+        const network = collaborationNetworkTool(dataset, filters.researcherId);
+        if (network) toolResults.push(network);
+      }
       break;
     }
+    case "collaboration_ranking":
+      toolResults.push(collaborationRankingTool(dataset, 10));
+      break;
     case "publication_trends":
       toolResults.push(
-        await publicationTrendsTool(dataset, routed.filters.researcherId),
+        await publicationTrendsTool(dataset, filters.researcherId),
       );
       break;
     case "researcher_intelligence":
-      if (routed.filters.researcherId) {
+      if (filters.researcherId) {
         const intelligence = researcherIntelligenceTool(
           dataset,
-          routed.filters.researcherId,
+          filters.researcherId,
         );
         if (intelligence) toolResults.push(intelligence);
       }
       break;
     default:
+      if (collaborationOrganizationLookup) {
+        toolResults.push(collaborationOrganizationLookup);
+        break;
+      }
+      attachResolvedResearcherProfiles(toolResults, dataset, resolvedResearcherIds);
       toolResults.push(
-        searchResearchersTool(dataset.researchers, queryTokens, vectorScores, { titles: [] }, 6),
+        searchResearchersTool(dataset.researchers, queryTokens, vectorScores, { titles: [] }, 8),
       );
       toolResults.push(searchFundingsTool(dataset.fundings, queryTokens, vectorScores, 3));
       break;
+  }
+
+  if (resolvedResearcherIds.length && routed.intent !== "count_researchers") {
+    attachResolvedResearcherProfiles(toolResults, dataset, resolvedResearcherIds);
   }
 
   const merged = mergeToolResults(toolResults);

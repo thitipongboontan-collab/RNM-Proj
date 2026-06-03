@@ -59,7 +59,10 @@ export function isResearcherQuestion(message: string, queryTokens: string[]): bo
   return (
     queryTokens.some((token) => QUERY_SYNONYMS.researcher.includes(token)) ||
     normalized.includes("นักวิจัย") ||
-    normalized.includes("researcher")
+    normalized.includes("researcher") ||
+    /(การศึกษา|วุฒิ|ปริญญา|ความเชี่ยวชาญ|ผลงานตีพิมพ์|เรียนจบ|education|expertise|publication|degree)/.test(
+      normalized,
+    )
   );
 }
 
@@ -82,7 +85,22 @@ export function isCollaborationQuestion(message: string): boolean {
   return (
     /(เครือข่าย|collaboration|network|ความร่วมมือ|co-?author|ร่วมวิจัย|ทีมวิจัย|team)/.test(
       normalized,
-    ) && (normalized.includes("นักวิจัย") || /\bRS\d{3}\b/i.test(message))
+    ) &&
+    (normalized.includes("นักวิจัย") ||
+      normalized.includes("อาจารย์") ||
+      /(ใคร|คนไหน|ผู้ใด|รายใด|who|which researcher)/.test(normalized) ||
+      /\bRS\d{3}\b/i.test(message))
+  );
+}
+
+export function isCollaborationRankingQuestion(message: string): boolean {
+  const normalized = normalizeText(message);
+  return (
+    /(เครือข่าย|collaboration|network|ความร่วมมือ|ร่วมวิจัย)/.test(normalized) &&
+    /(มากที่สุด|เยอะที่สุด|สูงสุด|อันดับ|top|most|highest|largest)/.test(normalized) &&
+    (normalized.includes("นักวิจัย") ||
+      normalized.includes("อาจารย์") ||
+      /(ใคร|คนไหน|ผู้ใด|รายใด|who|which researcher)/.test(normalized))
   );
 }
 

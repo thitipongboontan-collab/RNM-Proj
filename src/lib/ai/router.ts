@@ -8,6 +8,7 @@ import {
 import type { QueryIntentType, RoutedQuery } from "@/lib/ai/types";
 import {
   expandQueryTokens,
+  isCollaborationRankingQuestion,
   isCollaborationQuestion,
   isFundingQuestion,
   isIntelligenceProfileQuestion,
@@ -20,7 +21,9 @@ function detectResearcherProfileIntent(message: string): boolean {
   const normalized = normalizeText(message);
   return (
     extractResearcherId(message) !== undefined ||
-    /(โปรไฟล์|profile|รายละเอียด|ข้อมูลของ|เกี่ยวกับ)/.test(normalized)
+    /(โปรไฟล์|profile|รายละเอียด|ข้อมูลของ|เกี่ยวกับ|ประวัติ|การศึกษา|วุฒิ|ปริญญา|ความเชี่ยวชาญ|ผลงานที่ตีพิมพ์|ผลงานตีพิมพ์|publication|education|expertise|degree|เรียนจบ)/.test(
+      normalized,
+    )
   );
 }
 
@@ -34,6 +37,7 @@ export function routeQuery(message: string, departments: string[]): RoutedQuery 
   const researcherQuestion = isResearcherQuestion(message, queryTokens);
   const matchFunding = isMatchFundingQuestion(message);
   const collaborationQuestion = isCollaborationQuestion(message);
+  const collaborationRankingQuestion = isCollaborationRankingQuestion(message);
   const publicationTrendQuestion = isPublicationTrendQuestion(message);
   const intelligenceQuestion = isIntelligenceProfileQuestion(message);
 
@@ -49,6 +53,8 @@ export function routeQuery(message: string, departments: string[]): RoutedQuery 
     intent = "count_researchers";
   } else if (intelligenceQuestion && researcherId) {
     intent = "researcher_intelligence";
+  } else if (collaborationRankingQuestion) {
+    intent = "collaboration_ranking";
   } else if (collaborationQuestion) {
     intent = "collaboration_network";
   } else if (publicationTrendQuestion) {
@@ -86,6 +92,8 @@ export function intentStatusMessage(intent: QueryIntentType): string {
       return "กำลังจับคู่ทุนที่เหมาะสม (Fit Score)...";
     case "collaboration_network":
       return "กำลังวิเคราะห์เครือข่ายความร่วมมือ...";
+    case "collaboration_ranking":
+      return "กำลังจัดอันดับเครือข่ายความร่วมมือของนักวิจัย...";
     case "publication_trends":
       return "กำลังวิเคราะห์แนวโน้มผลงาน...";
     case "researcher_intelligence":

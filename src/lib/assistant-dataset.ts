@@ -101,6 +101,7 @@ function buildResearcherSearchText(
   expertise: ExpertiseRow[],
   degrees: DegreeRow[],
   publications: PublicationRow[],
+  collaborations: CollaborationRow[] = [],
 ): string {
   return normalizeText(
     [
@@ -111,6 +112,7 @@ function buildResearcherSearchText(
       ...expertise.map((item) => item.expertise),
       ...degrees.map((item) => item.degree_text),
       ...publications.map((item) => item.title),
+      ...collaborations.map((item) => item.organization_name),
     ].join(" "),
   );
 }
@@ -189,6 +191,7 @@ async function loadDatasetFromSupabase(): Promise<AssistantDataset | null> {
     const expertise = expertiseByResearcher.get(row.researcher_id) ?? [];
     const degrees = degreesByResearcher.get(row.researcher_id) ?? [];
     const publications = publicationsByResearcher.get(row.researcher_id) ?? [];
+    const collaborations = collaborationsByResearcher.get(row.researcher_id) ?? [];
 
     return {
       row,
@@ -196,17 +199,17 @@ async function loadDatasetFromSupabase(): Promise<AssistantDataset | null> {
       expertise,
       degrees,
       publications,
-      collaborations: collaborationsByResearcher.get(row.researcher_id) ?? [],
-      searchText: buildResearcherSearchText(row, keywords, expertise, degrees, publications),
+      collaborations,
+      searchText: buildResearcherSearchText(
+        row,
+        keywords,
+        expertise,
+        degrees,
+        publications,
+        collaborations,
+      ),
     };
   });
-
-  for (const record of researchers) {
-    if (record.collaborations.length) {
-      const orgText = record.collaborations.map((item) => item.organization_name).join(" ");
-      record.searchText = `${record.searchText} ${orgText}`.trim();
-    }
-  }
 
   const fundings = ((fundingsResult.data ?? []) as FundingRow[]).map((row) => {
     const attachments = attachmentsByFunding.get(row.funding_id) ?? [];
@@ -268,6 +271,7 @@ async function loadDatasetFallback(): Promise<AssistantDataset> {
         expertise,
         degrees,
         publications,
+        collaborations,
       );
 
       return {
@@ -277,9 +281,7 @@ async function loadDatasetFallback(): Promise<AssistantDataset> {
         degrees,
         publications,
         collaborations,
-        searchText: collaborations.length
-          ? `${searchText} ${collaborations.map((entry) => entry.organization_name).join(" ")}`.trim()
-          : searchText,
+        searchText,
       };
     }),
     fundings: fundings.map((item) => {
