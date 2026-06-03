@@ -5,15 +5,22 @@ export type Citation = {
   href: string;
 };
 
+export type ConversationTurn = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export type QueryIntentType =
   | "count_researchers"
   | "search_researchers"
   | "researcher_profile"
   | "search_fundings"
   | "match_funding"
+  | "match_researchers_for_funding"
   | "collaboration_network"
   | "collaboration_ranking"
   | "publication_trends"
+  | "search_by_publication"
   | "researcher_intelligence"
   | "general";
 

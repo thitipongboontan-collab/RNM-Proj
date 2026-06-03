@@ -5,13 +5,16 @@ import {
   type AssistantAttachmentPayload,
 } from "@/lib/assistant-attachments";
 import { resolveAttachmentsForAssistant } from "@/lib/assistant-document-parser";
+import { normalizeConversationHistory } from "@/lib/ai/conversation-context";
 import { intentStatusMessage, runAssistantPipeline } from "@/lib/ai/pipeline";
+import type { ConversationTurn } from "@/lib/ai/types";
 
 export const runtime = "nodejs";
 
 type AssistantRequest = {
   message?: string;
   attachments?: AssistantAttachmentPayload[];
+  history?: ConversationTurn[];
 };
 
 const MAX_ATTACHMENTS = 3;
@@ -68,6 +71,7 @@ export async function POST(request: Request) {
 
   const message = body.message?.trim() ?? "";
   const attachments = normalizeAttachments(body.attachments);
+  const history = normalizeConversationHistory(body.history);
 
   if (!message && attachments.length === 0) {
     return new Response(JSON.stringify({ error: "กรุณาพิมพ์คำถามหรือแนบไฟล์" }), {
@@ -107,7 +111,11 @@ export async function POST(request: Request) {
           message: hasImages ? "กำลังวิเคราะห์รูปภาพและคำถาม..." : "กำลังวิเคราะห์คำถาม...",
         });
 
-        const pipeline = await runAssistantPipeline(pipelineMessage || message, apiKey);
+        const pipeline = await runAssistantPipeline(
+          pipelineMessage || message,
+          apiKey,
+          history,
+        );
 
         sendEvent(controller, encoder, "status", {
           message: intentStatusMessage(pipeline.intent),
@@ -134,6 +142,10 @@ export async function POST(request: Request) {
         });
 
         const userContent = buildOpenAIUserContent(message, resolvedAttachments);
+        const chatHistory = history.slice(-8).map((turn) => ({
+          role: turn.role,
+          content: turn.content,
+        }));
 
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -148,6 +160,7 @@ export async function POST(request: Request) {
             stream: true,
             messages: [
               { role: "system", content: systemPrompt },
+              ...chatHistory,
               { role: "user", content: userContent },
             ],
           }),

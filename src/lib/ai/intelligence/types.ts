@@ -24,6 +24,15 @@ export type FundingFitResult = {
   reasons: string[];
 };
 
+export type ResearcherFitResult = {
+  researcherId: string;
+  nameTh: string;
+  nameEn: string | null;
+  department: string;
+  fitScore: number;
+  reasons: string[];
+};
+
 export type CollaborationLink = {
   researcherId: string;
   nameTh: string;

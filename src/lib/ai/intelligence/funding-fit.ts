@@ -1,5 +1,5 @@
 import { scoreText } from "@/lib/ai/text-utils";
-import type { FundingFitResult } from "@/lib/ai/intelligence/types";
+import type { FundingFitResult, ResearcherFitResult } from "@/lib/ai/intelligence/types";
 import type { AssistantDataset, FundingRecord, ResearcherRecord } from "@/lib/assistant-context";
 
 function tokenize(text: string): string[] {
@@ -66,6 +66,86 @@ export function rankFundingsForResearcher(
     .map((funding) => computeFundingFit(researcher, funding))
     .sort((a, b) => b.fitScore - a.fitScore)
     .slice(0, limit);
+}
+
+export function computeResearcherFit(
+  researcher: ResearcherRecord,
+  funding: FundingRecord,
+): ResearcherFitResult {
+  const fit = computeFundingFit(researcher, funding);
+  return {
+    researcherId: researcher.row.researcher_id,
+    nameTh: researcher.row.name_th,
+    nameEn: researcher.row.name_en,
+    department: researcher.row.department,
+    fitScore: fit.fitScore,
+    reasons: fit.reasons,
+  };
+}
+
+export function rankResearchersForFunding(
+  dataset: AssistantDataset,
+  fundingId: string,
+  limit = 8,
+): ResearcherFitResult[] {
+  const funding = dataset.fundings.find((row) => row.row.funding_id === fundingId);
+  if (!funding) return [];
+
+  return [...dataset.researchers]
+    .map((researcher) => computeResearcherFit(researcher, funding))
+    .filter((item) => item.fitScore >= 25)
+    .sort((a, b) => {
+      if (b.fitScore !== a.fitScore) return b.fitScore - a.fitScore;
+      return (b.reasons.length - a.reasons.length);
+    })
+    .slice(0, limit);
+}
+
+export function findFundingFromQuery(
+  fundings: FundingRecord[],
+  message: string,
+  queryTokens: string[],
+  vectorScores: Map<string, number>,
+): FundingRecord | undefined {
+  const normalizedMessage = message.toLowerCase();
+
+  const ranked = [...fundings]
+    .map((record) => {
+      let bonus = 0;
+      const titleNorm = record.row.title.toLowerCase();
+      if (normalizedMessage.includes(titleNorm.slice(0, 40))) bonus += 50;
+      if (/\bFD\d{3}\b/i.test(message) && message.toUpperCase().includes(record.row.funding_id)) {
+        bonus += 100;
+      }
+
+      const keywordScore = scoreText(record.searchText, queryTokens);
+      const vectorScore = vectorScores.get(record.row.funding_id) ?? 0;
+      return {
+        record,
+        combined: bonus + keywordScore + vectorScore * 100,
+      };
+    })
+    .sort((a, b) => b.combined - a.combined);
+
+  const best = ranked[0];
+  return best && best.combined > 0 ? best.record : undefined;
+}
+
+export function formatResearcherFitBlock(results: ResearcherFitResult[]): string {
+  if (!results.length) return "- ไม่พบนักวิจัยที่จับคู่ได้";
+
+  return results
+    .map(
+      (item) =>
+        [
+          `[${item.researcherId}] ${item.nameTh}${item.nameEn ? ` (${item.nameEn})` : ""}`,
+          `  Fit Score: ${item.fitScore}/100`,
+          `  หน่วยงาน: ${item.department}`,
+          `  เหตุผล: ${item.reasons.join("; ")}`,
+          `  ลิงก์: /researchers/${item.researcherId}`,
+        ].join("\n"),
+    )
+    .join("\n\n");
 }
 
 export function formatFundingFitBlock(results: FundingFitResult[]): string {

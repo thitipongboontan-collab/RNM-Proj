@@ -66,7 +66,20 @@ export function isResearcherQuestion(message: string, queryTokens: string[]): bo
   );
 }
 
+export function isFundingToResearchersQuestion(message: string): boolean {
+  const normalized = normalizeText(message);
+  const hasFunding =
+    /(ทุน|funding|grant|วช\.|nrct|nriis|ประกาศรับ|2570|งบประมาณ)/.test(normalized) ||
+    /\bFD\d{3}\b/i.test(message);
+  const asksResearchers =
+    /(นักวิจัย|researcher|อาจารย์)/.test(normalized) &&
+    /(คนไหน|ใคร|who|which|ใดบ้าง|บ้าง)/.test(normalized);
+  const fitIntent = /(เหมาะ|เหมาะสม|ควรสมัคร|match|จับคู่|แนะนำ)/.test(normalized);
+  return hasFunding && asksResearchers && fitIntent;
+}
+
 export function isMatchFundingQuestion(message: string): boolean {
+  if (isFundingToResearchersQuestion(message)) return false;
   const normalized = normalizeText(message);
   return (
     /(แนะนำทุน|ทุนที่เหมาะ|match|matching|จับคู่|เหมาะกับ|ควรสมัครทุน|หาทุน|smart match)/.test(
@@ -93,6 +106,13 @@ export function isCollaborationQuestion(message: string): boolean {
   );
 }
 
+export function isCollaborationTopic(message: string): boolean {
+  const normalized = normalizeText(message);
+  return /(เครือข่าย|collaboration|network|ความร่วมมือ|co-?author|ร่วมวิจัย|ทีมวิจัย|team)/.test(
+    normalized,
+  );
+}
+
 export function isCollaborationRankingQuestion(message: string): boolean {
   const normalized = normalizeText(message);
   return (
@@ -110,6 +130,16 @@ export function isPublicationTrendQuestion(message: string): boolean {
     /(แนวโน้ม|trend|เทรนด์|ต่อปี|รายปี|publication trend|ผลงานต่อปี|ช่วง.*ปี)/.test(
       normalized,
     ) || (normalized.includes("ผลงาน") && /(กี่|จำนวน|ปี)/.test(normalized))
+  );
+}
+
+export function isPublicationTopicQuestion(message: string): boolean {
+  const normalized = normalizeText(message);
+  return (
+    (/(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย)/.test(normalized) &&
+      /(เกี่ยวกับ|about|on|เรื่อง|regarding|หัวข้อ)/.test(normalized)) ||
+    (/(คนไหน|ใคร|who|which|นักวิจัย|researcher)/.test(normalized) &&
+      /(เกี่ยวกับ|about|on|เรื่อง|regarding)/.test(normalized))
   );
 }
 

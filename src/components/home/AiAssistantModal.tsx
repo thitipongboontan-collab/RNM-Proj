@@ -162,6 +162,16 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
     }));
 
     const turnId = crypto.randomUUID();
+    const history = turns.flatMap((turn) => {
+      const items: { role: "user" | "assistant"; content: string }[] = [
+        { role: "user", content: turn.question },
+      ];
+      if (turn.reply.trim()) {
+        items.push({ role: "assistant", content: turn.reply });
+      }
+      return items;
+    });
+
     setTurns((previous) => [
       ...previous,
       {
@@ -186,6 +196,7 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
         body: JSON.stringify({
           message: question,
           attachments: payloadAttachments,
+          history,
         }),
       });
 
