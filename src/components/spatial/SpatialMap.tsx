@@ -8,6 +8,12 @@ import type {
   SpatialAggregate,
   SpatialOrganization,
 } from "@/lib/spatial-repository";
+import { BasemapLayerControl } from "@/components/spatial/BasemapLayerControl";
+import {
+  DEFAULT_BASEMAP_ID,
+  getBasemapOption,
+  type BasemapId,
+} from "@/components/spatial/map-basemaps";
 
 type MapPoint =
   | {
@@ -351,7 +357,9 @@ export function SpatialMap({
   onClearAggregate,
 }: SpatialMapProps) {
   const [zoom, setZoom] = useState(5);
+  const [basemapId, setBasemapId] = useState<BasemapId>(DEFAULT_BASEMAP_ID);
   const [selectedAggregateKey, setSelectedAggregateKey] = useState<string>();
+  const basemap = getBasemapOption(basemapId);
   const spreadPositions = spreadOverlappingOrganizations(organizations);
   const points =
     zoom >= 7
@@ -367,19 +375,24 @@ export function SpatialMap({
   );
 
   return (
-    <MapContainer
-      center={[16.8, 100.6]}
-      zoom={6}
-      minZoom={2}
-      maxZoom={12}
-      scrollWheelZoom
-      className="h-full min-h-[620px] w-full rounded-[28px]"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="relative h-full min-h-[620px] w-full">
+      <MapContainer
+        center={[16.8, 100.6]}
+        zoom={6}
+        minZoom={2}
+        maxZoom={12}
+        scrollWheelZoom
+        className="h-full w-full rounded-[28px]"
+      >
+        <TileLayer
+          key={basemap.id}
+          attribution={basemap.attribution}
+          url={basemap.url}
+          {...(basemap.subdomains ? { subdomains: basemap.subdomains } : {})}
+          {...(basemap.maxZoom ? { maxZoom: basemap.maxZoom } : {})}
+        />
       <ZoomTracker onZoomChange={setZoom} />
+      <BasemapLayerControl basemapId={basemapId} onBasemapChange={setBasemapId} />
       <MapFocusController
         organizations={organizations}
         spreadPositions={spreadPositions}
@@ -428,6 +441,7 @@ export function SpatialMap({
           }}
         />
       )}
-    </MapContainer>
+      </MapContainer>
+    </div>
   );
 }

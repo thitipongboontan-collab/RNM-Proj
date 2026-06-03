@@ -27,7 +27,7 @@ function sortByScholarlyOutput(items: ResearcherItem[]) {
     if (b.scholarlyOutput !== a.scholarlyOutput) {
       return b.scholarlyOutput - a.scholarlyOutput;
     }
-    return a.name.localeCompare(b.name, "th");
+    return a.id.localeCompare(b.id);
   });
 }
 

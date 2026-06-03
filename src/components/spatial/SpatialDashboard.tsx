@@ -9,7 +9,10 @@ import type {
 } from "@/lib/spatial-repository";
 
 const SpatialMap = dynamic(
-  () => import("@/components/spatial/SpatialMap").then((mod) => mod.SpatialMap),
+  () =>
+    import("@/components/spatial/SpatialMap").then((mod) => ({
+      default: mod.SpatialMap,
+    })),
   {
     ssr: false,
     loading: () => (
@@ -86,7 +89,7 @@ function groupAggregates(
 
   return [...grouped.entries()]
     .map(([label, items]) => buildAggregate(keyPrefix, label, items))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
 function StatCard({
@@ -138,7 +141,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
       const countDiff =
         (collaborationCounts.get(b.id) ?? 0) - (collaborationCounts.get(a.id) ?? 0);
       if (countDiff !== 0) return countDiff;
-      return a.name.localeCompare(b.name, "th");
+      return a.id.localeCompare(b.id);
     });
   }, [data.organizations, data.researchers]);
 
@@ -202,6 +205,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
           <select
             value={researcherId}
             onChange={(event) => setResearcherId(event.target.value)}
+            suppressHydrationWarning
             className="h-11 min-w-0 rounded-lg border border-[#B9C1C9] bg-white px-3 text-center text-sm font-medium text-brand-dark outline-none focus:border-brand-primary"
           >
             <option value="all">นักวิจัย</option>
@@ -214,6 +218,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
           <select
             value={country}
             onChange={(event) => setCountry(event.target.value)}
+            suppressHydrationWarning
             className="h-11 min-w-0 rounded-lg border border-[#B9C1C9] bg-white px-3 text-center text-sm font-medium text-brand-dark outline-none focus:border-brand-primary"
           >
             <option value="all">ประเทศ</option>
@@ -229,6 +234,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ค้นหา"
+              suppressHydrationWarning
               className="h-11 w-full min-w-0 rounded-lg border border-[#B9C1C9] bg-white px-10 text-center text-sm font-medium text-brand-dark outline-none transition placeholder:text-brand-dark focus:border-brand-primary"
             />
             <span className="pointer-events-none absolute left-[calc(50%-2.5rem)] top-1/2 -translate-y-1/2 text-xl text-[#9F9F9F]">

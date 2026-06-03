@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
-import { HeroParticleBackground } from "@/components/home/HeroParticleBackground";
+import { HeroParticleBackgroundClient } from "@/components/home/HeroParticleBackgroundClient";
 
 const FEATURE_CARDS = [
   {
@@ -81,7 +81,7 @@ export function HomePage() {
       <div className="relative w-full">
         <div className="absolute inset-x-0 top-0 z-0 h-[640px] overflow-hidden sm:h-[628px]" aria-hidden>
           <div className="pointer-events-none absolute inset-0 bg-hero-page" />
-          <HeroParticleBackground className="relative z-[1] h-full w-full" />
+          <HeroParticleBackgroundClient className="relative z-[1] h-full w-full" />
         </div>
 
         <section className="relative z-10 mx-auto flex w-full max-w-[1061px] flex-col items-center gap-10 px-4 pt-16 sm:gap-[68px] sm:px-6 sm:pt-[58px] lg:px-0">
