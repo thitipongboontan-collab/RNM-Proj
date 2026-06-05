@@ -143,6 +143,36 @@ export function isPublicationTopicQuestion(message: string): boolean {
   );
 }
 
+export function isPublicationCountQuestion(message: string): boolean {
+  const normalized = normalizeText(message);
+  return (
+    /(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย)/.test(normalized) &&
+    /(จำนวน|ทั้งหมด|กี่|เท่าไร|เท่าไหร่|how many|count|total)/.test(normalized)
+  );
+}
+
+export function isCollaborationCountryQuestion(message: string): boolean {
+  const normalized = normalizeText(message);
+  return (
+    /(ประเทศ|country|countries)/.test(normalized) &&
+    /(จำนวน|ทั้งหมด|กี่|เท่าไร|how many|count|total)/.test(normalized) &&
+    /(เครือข่าย|collaboration|network|ความร่วมมือ|co-?author|ร่วมวิจัย)/.test(normalized)
+  );
+}
+
+export function isCollaborationCountryTopic(message: string): boolean {
+  const normalized = normalizeText(message);
+  return /(ประเทศ|country|countries)/.test(normalized) && isCollaborationTopic(message);
+}
+
+export function isPublicationCountTopic(message: string): boolean {
+  const normalized = normalizeText(message);
+  return (
+    /(ผลงาน|publication|ตีพิมพ์|paper|article)/.test(normalized) &&
+    /(จำนวน|กี่|ทั้งหมด|count|total)/.test(normalized)
+  );
+}
+
 export function isIntelligenceProfileQuestion(message: string): boolean {
   const normalized = normalizeText(message);
   return (

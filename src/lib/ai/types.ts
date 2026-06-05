@@ -20,7 +20,9 @@ export type QueryIntentType =
   | "collaboration_network"
   | "collaboration_ranking"
   | "publication_trends"
+  | "publication_count"
   | "search_by_publication"
+  | "collaboration_countries"
   | "researcher_intelligence"
   | "general";
 

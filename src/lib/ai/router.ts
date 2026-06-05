@@ -11,10 +11,14 @@ import {
   isCollaborationRankingQuestion,
   isCollaborationQuestion,
   isCollaborationTopic,
+  isCollaborationCountryQuestion,
+  isCollaborationCountryTopic,
   isFundingQuestion,
   isFundingToResearchersQuestion,
   isIntelligenceProfileQuestion,
   isMatchFundingQuestion,
+  isPublicationCountQuestion,
+  isPublicationCountTopic,
   isPublicationTrendQuestion,
   isPublicationTopicQuestion,
   isResearcherQuestion,
@@ -55,6 +59,16 @@ export function routeQuery(
       !!options.contextResearcherId &&
       isCollaborationTopic(message));
   const collaborationRankingQuestion = isCollaborationRankingQuestion(message);
+  const publicationCountQuestion =
+    isPublicationCountQuestion(message) ||
+    (options.isFollowUp &&
+      !!options.contextResearcherId &&
+      isPublicationCountTopic(message));
+  const collaborationCountryQuestion =
+    isCollaborationCountryQuestion(message) ||
+    (options.isFollowUp &&
+      !!options.contextResearcherId &&
+      isCollaborationCountryTopic(message));
   const publicationTopicQuestion = isPublicationTopicQuestion(message);
   const publicationTrendQuestion =
     isPublicationTrendQuestion(message) ||
@@ -76,7 +90,11 @@ export function routeQuery(
 
   let intent: QueryIntentType = "general";
 
-  if (isCountQuestion) {
+  if (publicationCountQuestion) {
+    intent = "publication_count";
+  } else if (collaborationCountryQuestion) {
+    intent = "collaboration_countries";
+  } else if (isCountQuestion) {
     intent = "count_researchers";
   } else if (intelligenceQuestion && researcherId) {
     intent = "researcher_intelligence";
@@ -129,8 +147,12 @@ export function intentStatusMessage(intent: QueryIntentType): string {
       return "กำลังจัดอันดับเครือข่ายความร่วมมือของนักวิจัย...";
     case "publication_trends":
       return "กำลังวิเคราะห์แนวโน้มผลงาน...";
+    case "publication_count":
+      return "กำลังนับจำนวนผลงานตีพิมพ์...";
     case "search_by_publication":
       return "กำลังค้นหานักวิจัยจากผลงานตีพิมพ์...";
+    case "collaboration_countries":
+      return "กำลังนับประเทศในเครือข่ายความร่วมมือ...";
     case "researcher_intelligence":
       return "กำลังวิเคราะห์ Research Intelligence Profile...";
     default:

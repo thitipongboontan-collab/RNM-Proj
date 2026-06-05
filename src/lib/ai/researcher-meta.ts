@@ -54,6 +54,16 @@ export function detectRequestedTitles(message: string): string[] {
 
 export function isAggregateCountQuestion(message: string): boolean {
   const normalized = normalizeText(message);
+  if (
+    (/(ผลงาน|publication|ตีพิมพ์|paper|article)/.test(normalized) &&
+      /(จำนวน|ทั้งหมด|กี่|how many|count|total)/.test(normalized)) ||
+    (/ประเทศ/.test(normalized) &&
+      /(เครือข่าย|collaboration|network|ความร่วมมือ)/.test(normalized) &&
+      /(จำนวน|ทั้งหมด|กี่|how many|count|total)/.test(normalized))
+  ) {
+    return false;
+  }
+
   const asksForCount =
     /(กี่คน|จำนวน|ทั้งหมด|เท่าไร|เท่าไหร่|กี่ราย|how many|count|total)/.test(normalized);
   const aboutResearchers =

@@ -7,12 +7,14 @@ import { intentStatusMessage, routeQuery } from "@/lib/ai/router";
 import { findResearchersByNameQuery } from "@/lib/ai/researcher-meta";
 import { matchFundingTool } from "@/lib/ai/tools/match-funding";
 import { matchResearchersForFundingTool } from "@/lib/ai/tools/match-researchers-for-funding";
+import { collaborationCountriesTool } from "@/lib/ai/tools/collaboration-countries";
 import {
   collaborationNetworkTool,
   collaborationOrganizationTool,
   collaborationRankingTool,
 } from "@/lib/ai/tools/collaboration-network";
 import { publicationTrendsTool } from "@/lib/ai/tools/publication-trends";
+import { publicationCountTool } from "@/lib/ai/tools/publication-stats";
 import { searchResearchersByPublicationTool } from "@/lib/ai/tools/publication-search";
 import { researcherIntelligenceTool } from "@/lib/ai/tools/intelligence";
 import { buildFundingOverviewBlock, searchFundingsTool } from "@/lib/ai/tools/fundings";
@@ -212,6 +214,20 @@ export async function runAssistantPipeline(
     case "collaboration_ranking":
       toolResults.push(collaborationRankingTool(dataset, 10));
       break;
+    case "collaboration_countries":
+      if (filters.researcherId) {
+        const profile = getResearcherProfileTool(dataset.researchers, filters.researcherId);
+        if (profile) toolResults.push(profile);
+      }
+      toolResults.push(collaborationCountriesTool(dataset, filters));
+      break;
+    case "publication_count":
+      if (filters.researcherId) {
+        const profile = getResearcherProfileTool(dataset.researchers, filters.researcherId);
+        if (profile) toolResults.push(profile);
+      }
+      toolResults.push(publicationCountTool(dataset.researchers, filters));
+      break;
     case "search_by_publication": {
       const publicationSearch = searchResearchersByPublicationTool(
         dataset.researchers,
@@ -286,9 +302,13 @@ export async function runAssistantPipeline(
     "",
     ...merged.contextBlocks,
     "",
-    routed.isCountQuestion
-      ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวน — ใช้ผลลัพธ์จาก TOOL count_researchers เท่านั้น ห้ามนับจากตัวอย่าง"
-      : conversation.isFollowUp
+    routed.isCountQuestion && routed.intent === "count_researchers"
+      ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนนักวิจัย — ใช้ผลลัพธ์จาก TOOL count_researchers เท่านั้น ห้ามนับจากตัวอย่าง"
+      : routed.intent === "publication_count"
+        ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนผลงานตีพิมพ์ — ใช้ผลลัพธ์จาก TOOL publication_count เท่านั้น"
+        : routed.intent === "collaboration_countries"
+          ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนประเทศในเครือข่ายความร่วมมือ — ใช้ผลลัพธ์จาก TOOL collaboration_countries เท่านั้น"
+          : conversation.isFollowUp
         ? "หมายเหตุ: คำถามนี้เป็นคำถามต่อเนื่อง — ให้ตอบใน context ของนักวิจัยที่อ้างถึงจากประวัติการสนทนา และใช้ข้อมูลจาก Tools ด้านล่าง"
         : "หมายเหตุ: อ้างอิงข้อมูลจาก Tools และภาพรวมระบบ ทุกคำตอบต้องมี citation [RSxxx] หรือ [FDxxx]",
     vectorScores.size
