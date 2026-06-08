@@ -17,9 +17,9 @@ const FEATURE_CARDS = [
     icon: "search-user" as const,
   },
   {
-    title: "Smart Matchmaking",
+    title: "Academic Collaboration Map",
     description:
-      "ระบบเชื่อมโยงนักวิจัยกับแหล่งทุน และเครือข่าย เพื่อสนับสนุนการพัฒนา ข้อเสนอโครงการวิจัย",
+      "แสดงเครือข่ายความร่วมมือทางวิชาการ เพื่อวิเคราะห์การเชื่อมโยงของนักวิจัยทั้งในประเทศและต่างประเทศ",
     icon: "link" as const,
   },
   {
