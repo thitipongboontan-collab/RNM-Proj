@@ -231,7 +231,7 @@ export async function runAssistantPipeline(
     case "search_by_publication": {
       const publicationSearch = searchResearchersByPublicationTool(
         dataset.researchers,
-        message,
+        pipelineMessage,
         filters,
         8,
       );
@@ -308,7 +308,9 @@ export async function runAssistantPipeline(
         ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนผลงานตีพิมพ์ — ใช้ผลลัพธ์จาก TOOL publication_count เท่านั้น"
         : routed.intent === "collaboration_countries"
           ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนประเทศในเครือข่ายความร่วมมือ — ใช้ผลลัพธ์จาก TOOL collaboration_countries เท่านั้น"
-          : conversation.isFollowUp
+          : routed.intent === "search_by_publication"
+            ? "หมายเหตุ: คำถามนี้เกี่ยวกับนักวิจัย/ผลงานตามหัวข้อ — ใช้ผลลัพธ์จาก TOOL search_by_publication เป็นหลัก หากพบรายชื่อและผลงานใน context ต้องตอบว่ามีนักวิจัยที่ทำวิจัยในหัวข้อนี้ ห้ามตอบว่าไม่พบข้อมูล"
+            : conversation.isFollowUp
         ? "หมายเหตุ: คำถามนี้เป็นคำถามต่อเนื่อง — ให้ตอบใน context ของนักวิจัยที่อ้างถึงจากประวัติการสนทนา และใช้ข้อมูลจาก Tools ด้านล่าง"
         : "หมายเหตุ: อ้างอิงข้อมูลจาก Tools และภาพรวมระบบ ทุกคำตอบต้องมี citation [RSxxx] หรือ [FDxxx]",
     vectorScores.size

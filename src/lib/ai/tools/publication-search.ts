@@ -1,4 +1,5 @@
-import { extractAcademicTitle, normalizeText } from "@/lib/ai/researcher-meta";
+import { extractAcademicTitle } from "@/lib/ai/researcher-meta";
+import { expandQueryTokens, normalizeTopicQueryText } from "@/lib/ai/text-utils";
 import type { Citation, ResearcherFilters, ToolExecutionResult } from "@/lib/ai/types";
 import type { ResearcherRecord } from "@/lib/assistant-context";
 import { formatResearcherDetail } from "@/lib/ai/tools/researchers";
@@ -62,11 +63,15 @@ export function extractPublicationTopicTokens(message: string): string[] {
   const topicMatch = message.match(
     /(?:เกี่ยวกับ|เรื่อง|about|on|regarding|with)\s+(.+?)(?:\s*(?:บ้าง|ไหม|หรือไม่)|$)/i,
   );
-  const segment = topicMatch?.[1] ?? message;
+  const segment = normalizeTopicQueryText(topicMatch?.[1] ?? message);
   const tokens = new Set<string>();
 
-  for (const part of normalizeText(segment.replace(/[''’]/g, " ")).split(/[^a-z0-9\u0E00-\u0E7F]+/i)) {
-    if (part.length >= 3 && !STOP_WORDS.has(part)) tokens.add(part);
+  for (const part of segment.replace(/[''’]/g, " ").split(/[^a-z0-9\u0E00-\u0E7F]+/i)) {
+    if (part.length >= 2 && !STOP_WORDS.has(part)) tokens.add(part);
+  }
+
+  for (const token of expandQueryTokens(message)) {
+    if (token.length >= 2 && !STOP_WORDS.has(token)) tokens.add(token);
   }
 
   return [...tokens];
@@ -78,8 +83,8 @@ export function extractPublicationTopicPhrases(message: string): string[] {
   );
   if (!topicMatch?.[1]) return [];
 
-  const phrase = normalizeText(topicMatch[1].replace(/[''’]/g, " ")).replace(/\bwomen s\b/, "women");
-  if (phrase.length < 4) return [];
+  const phrase = normalizeTopicQueryText(topicMatch[1].replace(/[''’]/g, " ")).replace(/\bwomen s\b/, "women");
+  if (phrase.length < 3) return [];
 
   const phrases = [phrase];
   if (phrase.includes("women s")) {
@@ -92,19 +97,27 @@ export function extractPublicationTopicPhrases(message: string): string[] {
   return [...new Set(phrases)];
 }
 
+function normalizeTopicMatchText(text: string): string {
+  return normalizeTopicQueryText(text.replace(/[''’]/g, " "));
+}
+
 function scorePublicationTitle(
   title: string,
   tokens: string[],
   phrases: string[],
 ): number {
-  const titleNorm = normalizeText(title.replace(/[''’]/g, " "));
+  const titleNorm = normalizeTopicMatchText(title);
   let score = 0;
 
   for (const token of tokens) {
-    if (titleNorm.includes(token)) score += token.length >= 5 ? 12 : 8;
+    const tokenNorm = normalizeTopicMatchText(token);
+    if (tokenNorm.length < 2) continue;
+    if (titleNorm.includes(tokenNorm)) score += tokenNorm.length >= 5 ? 12 : 8;
   }
   for (const phrase of phrases) {
-    if (titleNorm.includes(phrase)) score += 35;
+    const phraseNorm = normalizeTopicMatchText(phrase);
+    if (phraseNorm.length < 3) continue;
+    if (titleNorm.includes(phraseNorm)) score += 35;
   }
 
   return score;
@@ -112,16 +125,20 @@ function scorePublicationTitle(
 
 function scoreKeywordMatch(record: ResearcherRecord, tokens: string[], phrases: string[]): number {
   let score = 0;
-  const keywordText = normalizeText(record.keywords.map((item) => item.keyword).join(" "));
-  const expertiseText = normalizeText(record.expertise.map((item) => item.expertise).join(" "));
+  const keywordText = normalizeTopicMatchText(record.keywords.map((item) => item.keyword).join(" "));
+  const expertiseText = normalizeTopicMatchText(record.expertise.map((item) => item.expertise).join(" "));
 
   for (const token of tokens) {
-    if (keywordText.includes(token)) score += 6;
-    if (expertiseText.includes(token)) score += 4;
+    const tokenNorm = normalizeTopicMatchText(token);
+    if (tokenNorm.length < 2) continue;
+    if (keywordText.includes(tokenNorm)) score += 6;
+    if (expertiseText.includes(tokenNorm)) score += 4;
   }
   for (const phrase of phrases) {
-    if (keywordText.includes(phrase)) score += 15;
-    if (expertiseText.includes(phrase)) score += 10;
+    const phraseNorm = normalizeTopicMatchText(phrase);
+    if (phraseNorm.length < 3) continue;
+    if (keywordText.includes(phraseNorm)) score += 15;
+    if (expertiseText.includes(phraseNorm)) score += 10;
   }
 
   return score;

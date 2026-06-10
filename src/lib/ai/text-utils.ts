@@ -1,7 +1,23 @@
 import { normalizeText } from "@/lib/ai/researcher-meta";
 
+/** Normalize research-topic spellings (e.g. PM.2.5, PM 2.5 → pm2.5) for matching. */
+export function normalizeTopicQueryText(text: string): string {
+  return normalizeText(text).replace(/pm\s*[\.\-_]?\s*2\s*[\.\-_]?\s*5/g, "pm2.5");
+}
+
 export const QUERY_SYNONYMS: Record<string, string[]> = {
-  pm25: ["pm2.5", "pm 2.5", "pm-2.5", "ฝุ่น", "ฝุ่นละออง", "มลพิษอากาศ", "air pollution", "haze", "หมอกควัน"],
+  pm25: [
+    "pm2.5",
+    "pm.2.5",
+    "pm 2.5",
+    "pm-2.5",
+    "ฝุ่น",
+    "ฝุ่นละออง",
+    "มลพิษอากาศ",
+    "air pollution",
+    "haze",
+    "หมอกควัน",
+  ],
   migration: ["migration", "migration studies", "การย้ายถิ่น", "ผู้อพยพ", "immigrant"],
   funding: ["ทุน", "แหล่งทุน", "funding", "grant", "เปิดรับ", "nrct", "nriis"],
   social: ["สังคม", "social", "ความมั่นคง", "security"],
@@ -10,7 +26,7 @@ export const QUERY_SYNONYMS: Record<string, string[]> = {
 };
 
 export function expandQueryTokens(message: string): string[] {
-  const normalized = normalizeText(message);
+  const normalized = normalizeTopicQueryText(message);
   const tokens = new Set<string>();
 
   for (const part of normalized.split(/[^a-z0-9\u0E00-\u0E7F]+/i)) {
@@ -18,9 +34,10 @@ export function expandQueryTokens(message: string): string[] {
   }
 
   for (const [key, synonyms] of Object.entries(QUERY_SYNONYMS)) {
-    if (synonyms.some((term) => normalized.includes(normalizeText(term)))) {
+    const synonymNorms = synonyms.map((term) => normalizeTopicQueryText(term));
+    if (synonymNorms.some((term) => normalized.includes(term))) {
       tokens.add(key);
-      for (const synonym of synonyms) tokens.add(normalizeText(synonym));
+      for (const synonym of synonymNorms) tokens.add(synonym);
     }
   }
 
@@ -30,10 +47,12 @@ export function expandQueryTokens(message: string): string[] {
 export function scoreText(searchText: string, queryTokens: string[]): number {
   if (!queryTokens.length) return 0;
 
+  const textNorm = normalizeTopicQueryText(searchText);
   let score = 0;
   for (const token of queryTokens) {
-    if (token.length < 2) continue;
-    if (searchText.includes(token)) score += token.length >= 5 ? 8 : 4;
+    const tokenNorm = normalizeTopicQueryText(token);
+    if (tokenNorm.length < 2) continue;
+    if (textNorm.includes(tokenNorm)) score += tokenNorm.length >= 5 ? 8 : 4;
   }
   return score;
 }
@@ -136,9 +155,9 @@ export function isPublicationTrendQuestion(message: string): boolean {
 export function isPublicationTopicQuestion(message: string): boolean {
   const normalized = normalizeText(message);
   return (
-    (/(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย)/.test(normalized) &&
+    (/(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย|ทำงานวิจัย|วิจัย)/.test(normalized) &&
       /(เกี่ยวกับ|about|on|เรื่อง|regarding|หัวข้อ)/.test(normalized)) ||
-    (/(คนไหน|ใคร|who|which|นักวิจัย|researcher)/.test(normalized) &&
+    (/(คนไหน|ใคร|who|which|นักวิจัย|researcher|มี.*บ้าง|บ้างไหม)/.test(normalized) &&
       /(เกี่ยวกับ|about|on|เรื่อง|regarding)/.test(normalized))
   );
 }
