@@ -1,10 +1,9 @@
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
 
 export default function WorksPage() {
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -17,6 +16,6 @@ export default function WorksPage() {
           อยู่ระหว่างการพัฒนา
         </p>
       </main>
-    </PageShell>
+    </>
   );
 }

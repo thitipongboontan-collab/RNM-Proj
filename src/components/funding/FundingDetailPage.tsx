@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { CopyLinkButton } from "@/components/funding/CopyLinkButton";
 import {
@@ -24,7 +23,7 @@ export function FundingDetailPage({
   nextId?: string;
 }) {
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -212,6 +211,6 @@ export function FundingDetailPage({
           />
         </div>
       </section>
-    </PageShell>
+    </>
   );
 }

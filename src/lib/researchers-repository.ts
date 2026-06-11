@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import type { ResearcherItem, ResearcherPublication } from "@/data/researchers";
 import { resolveResearcherImageSrc } from "@/lib/researcher-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
@@ -136,6 +137,10 @@ function sortCollaborations(rows: CollaborationRow[]): string[] {
 }
 
 export async function getResearchers(): Promise<ResearcherItem[]> {
+  return getResearchersCached();
+}
+
+async function fetchResearchersFromDb(): Promise<ResearcherItem[]> {
   const supabase = createSupabaseClient();
   if (!supabase) return [];
 
@@ -170,6 +175,12 @@ export async function getResearchers(): Promise<ResearcherItem[]> {
     return item;
   });
 }
+
+const getResearchersCached = unstable_cache(
+  fetchResearchersFromDb,
+  ["researchers-list"],
+  { revalidate: 300 },
+);
 
 export async function getResearcherById(id: string): Promise<ResearcherItem | null> {
   const supabase = createSupabaseClient();

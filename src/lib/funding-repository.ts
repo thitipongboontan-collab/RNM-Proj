@@ -1,12 +1,16 @@
+import { unstable_cache } from "next/cache";
 import fundingImportData from "@/data/funding-import.json";
 import type {
   FundingAttachment,
   FundingDetailContent,
   FundingItem,
+  FundingListItem,
 } from "@/data/funding";
 import { parseFundingDetails } from "@/lib/funding-content";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { abbreviateThaiMonthsInText } from "@/lib/thai-date";
+
+const CACHE_REVALIDATE_SECONDS = 300;
 
 type FundingImportRecord = {
   id: string;
@@ -102,6 +106,20 @@ function mapImportRecord(record: FundingImportRecord): FundingItem {
   };
 }
 
+function mapImportSummary(record: FundingImportRecord): FundingListItem {
+  return {
+    id: record.id,
+    title: record.title,
+    organization: record.organization,
+    openDate: formatOpenDate(record.openDate),
+    closeDate: formatCloseDate(record.closeDate),
+    publishedDate: record.publishedDate,
+    imageVariant: record.imageVariant,
+    imageSrc: record.imageSrc,
+    statusLabel: record.statusLabel,
+  };
+}
+
 function mapAttachmentRow(row: AttachmentRow): FundingAttachment {
   return {
     id: String(row.id),
@@ -111,11 +129,7 @@ function mapAttachmentRow(row: AttachmentRow): FundingAttachment {
   };
 }
 
-function mapFundingRow(
-  row: FundingRow,
-  attachments: FundingAttachment[],
-  imageVariant: 1 | 2 | 3,
-): FundingItem {
+function mapFundingSummaryRow(row: FundingRow, imageVariant: 1 | 2 | 3): FundingListItem {
   return {
     id: row.funding_id,
     title: row.title,
@@ -126,6 +140,16 @@ function mapFundingRow(
     imageVariant,
     imageSrc: row.image_path ? `/images/funding/${row.image_path}` : undefined,
     statusLabel: row.status_label,
+  };
+}
+
+function mapFundingRow(
+  row: FundingRow,
+  attachments: FundingAttachment[],
+  imageVariant: 1 | 2 | 3,
+): FundingItem {
+  return {
+    ...mapFundingSummaryRow(row, imageVariant),
     detail: buildDetail(row, attachments),
   };
 }
@@ -134,7 +158,32 @@ function loadImportCache(): FundingItem[] {
   return (fundingImportData as FundingImportRecord[]).map(mapImportRecord);
 }
 
-export async function getFundings(): Promise<FundingItem[]> {
+function loadImportSummaryCache(): FundingListItem[] {
+  return (fundingImportData as FundingImportRecord[]).map(mapImportSummary);
+}
+
+async function fetchFundingSummariesFromDb(): Promise<FundingListItem[]> {
+  const supabase = createSupabaseClient();
+  if (!supabase) return loadImportSummaryCache();
+
+  const { data, error } = await supabase
+    .from("fundings")
+    .select(
+      "funding_id, title, organization, status_label, published_date, open_date, close_date, image_path, display_order",
+    )
+    .order("display_order");
+
+  if (error || !data?.length) {
+    if (error) console.error("Failed to fetch fundings:", error.message);
+    return loadImportSummaryCache();
+  }
+
+  return (data as FundingRow[]).map((row, index) =>
+    mapFundingSummaryRow(row, ((index % 3) + 1) as 1 | 2 | 3),
+  );
+}
+
+async function fetchFundingsFromDb(): Promise<FundingItem[]> {
   const supabase = createSupabaseClient();
   if (!supabase) return loadImportCache();
 
@@ -179,12 +228,90 @@ export async function getFundings(): Promise<FundingItem[]> {
   );
 }
 
+async function fetchFundingByIdFromDb(id: string): Promise<FundingItem | null> {
+  const supabase = createSupabaseClient();
+  if (!supabase) {
+    return loadImportCache().find((item) => item.id === id) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("fundings")
+    .select(
+      "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order",
+    )
+    .eq("funding_id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to fetch funding:", error.message);
+    return loadImportCache().find((item) => item.id === id) ?? null;
+  }
+
+  if (!data) {
+    return loadImportCache().find((item) => item.id === id) ?? null;
+  }
+
+  const row = data as FundingRow;
+
+  const { data: attachmentData, error: attachmentError } = await supabase
+    .from("funding_attachments")
+    .select("id, funding_id, file_name, file_type, storage_path, file_order")
+    .eq("funding_id", id)
+    .order("file_order");
+
+  if (attachmentError) {
+    console.error("Failed to fetch funding attachments:", attachmentError.message);
+  }
+
+  const attachments = ((attachmentData ?? []) as AttachmentRow[]).map(mapAttachmentRow);
+  const summaries = await fetchFundingSummariesFromDb();
+  const index = summaries.findIndex((item) => item.id === id);
+  const imageVariant = ((index >= 0 ? index : 0) % 3 + 1) as 1 | 2 | 3;
+
+  return mapFundingRow(row, attachments, imageVariant);
+}
+
+const getFundingSummariesCached = unstable_cache(
+  fetchFundingSummariesFromDb,
+  ["funding-summaries"],
+  { revalidate: CACHE_REVALIDATE_SECONDS },
+);
+
+const getFundingsCached = unstable_cache(fetchFundingsFromDb, ["fundings-full"], {
+  revalidate: CACHE_REVALIDATE_SECONDS,
+});
+
+export async function getFundingSummaries(): Promise<FundingListItem[]> {
+  return getFundingSummariesCached();
+}
+
+export async function getFundings(): Promise<FundingItem[]> {
+  return getFundingsCached();
+}
+
 export async function getFundingById(id: string): Promise<FundingItem | null> {
-  const items = await getFundings();
-  return items.find((item) => item.id === id) ?? null;
+  return fetchFundingByIdFromDb(id);
+}
+
+export async function getFundingNavigation(id: string): Promise<{
+  index: number;
+  totalPages: number;
+  prevId?: string;
+  nextId?: string;
+}> {
+  const summaries = await getFundingSummaries();
+  const index = summaries.findIndex((item) => item.id === id);
+
+  return {
+    index,
+    totalPages: summaries.length,
+    prevId: index > 0 ? summaries[index - 1]?.id : undefined,
+    nextId:
+      index >= 0 && index < summaries.length - 1 ? summaries[index + 1]?.id : undefined,
+  };
 }
 
 export async function getFundingIndex(id: string): Promise<number> {
-  const items = await getFundings();
-  return items.findIndex((item) => item.id === id);
+  const summaries = await getFundingSummaries();
+  return summaries.findIndex((item) => item.id === id);
 }

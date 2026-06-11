@@ -1,5 +1,6 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { divIcon, type LeafletEvent } from "leaflet";

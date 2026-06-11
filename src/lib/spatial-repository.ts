@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { COLLABORATION_LOCATION_SEED } from "@/data/collaboration-locations";
 import { createSupabaseClient } from "@/lib/supabase/client";
 
@@ -164,7 +165,7 @@ async function loadLocationRows(): Promise<LocationRow[]> {
   return data as LocationRow[];
 }
 
-export async function getSpatialDashboardData(): Promise<SpatialDashboardData> {
+async function fetchSpatialDashboardDataFromDb(): Promise<SpatialDashboardData> {
   const supabase = createSupabaseClient();
   if (!supabase) {
     return {
@@ -271,4 +272,14 @@ export async function getSpatialDashboardData(): Promise<SpatialDashboardData> {
     regionAggregates: groupAggregates(mappedOrganizations, "region", (item) => item.region),
     countryAggregates: groupAggregates(mappedOrganizations, "country", (item) => item.country),
   };
+}
+
+const getSpatialDashboardDataCached = unstable_cache(
+  fetchSpatialDashboardDataFromDb,
+  ["spatial-dashboard"],
+  { revalidate: 300 },
+);
+
+export async function getSpatialDashboardData(): Promise<SpatialDashboardData> {
+  return getSpatialDashboardDataCached();
 }

@@ -1,29 +1,20 @@
+import { Suspense } from "react";
 import {
   buildDepartmentFilters,
   getResearchers,
 } from "@/lib/researchers-repository";
 import { ResearchersPage } from "@/components/researchers/ResearchersPage";
+import { RouteLoadingSkeleton } from "@/components/ui/RouteLoadingSkeleton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-type PageProps = {
-  searchParams: Promise<{ department?: string }>;
-};
-
-export default async function Page({ searchParams }: PageProps) {
-  const { department } = await searchParams;
+export default async function Page() {
   const items = await getResearchers();
   const filters = buildDepartmentFilters(items);
-  const activeDepartment =
-    department && filters.some((filter) => filter.id === department)
-      ? department
-      : "all";
 
   return (
-    <ResearchersPage
-      items={items}
-      filters={filters}
-      activeDepartment={activeDepartment}
-    />
+    <Suspense fallback={<RouteLoadingSkeleton titleWidth="10rem" />}>
+      <ResearchersPage items={items} filters={filters} />
+    </Suspense>
   );
 }

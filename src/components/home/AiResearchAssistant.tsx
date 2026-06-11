@@ -1,19 +1,19 @@
 "use client";
 
 import { AiAssistantIcon } from "./AiAssistantIcon";
-import { AiAssistantTrigger } from "./AiAssistantTrigger";
+import { useAiAssistant } from "@/components/layout/AiAssistantProvider";
 
 export function AiResearchAssistant() {
+  const { openAssistant } = useAiAssistant();
+
   return (
-    <AiAssistantTrigger>
-      {(open) => (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            open();
-          }}
+    <button
+      type="button"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openAssistant();
+      }}
           className="ai-assistant-shell group relative z-10 flex min-h-[64px] w-full max-w-[620px] shrink-0 cursor-pointer items-center rounded-[40px] px-5 py-[7px] shadow-ai-bar transition hover:shadow-[0px_6px_24px_rgba(171,205,255,0.95)] sm:h-[68px] sm:px-[24px]"
           aria-label="Ask AI Research Assistant"
         >
@@ -24,8 +24,6 @@ export function AiResearchAssistant() {
               Ask AI Research Assistant
             </span>
           </div>
-        </button>
-      )}
-    </AiAssistantTrigger>
+    </button>
   );
 }

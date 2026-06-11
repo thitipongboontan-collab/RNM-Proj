@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import {
   ContactRow,
@@ -20,7 +19,7 @@ export function ResearcherDetailPage({
   initialTab?: ProfileTabId;
 }) {
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -93,6 +92,6 @@ export function ResearcherDetailPage({
           </div>
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }

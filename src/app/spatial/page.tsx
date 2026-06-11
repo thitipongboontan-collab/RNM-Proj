@@ -1,16 +1,15 @@
-import { PageShell } from "@/components/layout/PageShell";
 import { SpatialDashboard } from "@/components/spatial/SpatialDashboard";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { getSpatialDashboardData } from "@/lib/spatial-repository";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function SpatialPage() {
   const data = await getSpatialDashboardData();
 
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -30,6 +29,6 @@ export default async function SpatialPage() {
           <SpatialDashboard data={data} />
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }

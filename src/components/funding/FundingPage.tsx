@@ -1,12 +1,11 @@
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
-import type { FundingItem } from "@/data/funding";
+import type { FundingListItem } from "@/data/funding";
 import { FundingCard } from "./FundingCard";
 
-export function FundingPage({ items }: { items: FundingItem[] }) {
+export function FundingPage({ items }: { items: FundingListItem[] }) {
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -21,6 +20,6 @@ export function FundingPage({ items }: { items: FundingItem[] }) {
           ))}
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }

@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
+import { HERO_GRADIENT, type FundingListItem } from "@/data/funding";
 
-export function FundingCard({ item }: { item: FundingItem }) {
+export function FundingCard({ item }: { item: FundingListItem }) {
   return (
     <Link
       href={`/funding/${item.id}`}

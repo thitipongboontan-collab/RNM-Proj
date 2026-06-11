@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { PageShell } from "@/components/layout/PageShell";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
 import { HeroParticleBackgroundClient } from "@/components/home/HeroParticleBackgroundClient";
 
@@ -77,7 +76,7 @@ function FeatureIcon({
 
 export function HomePage() {
   return (
-    <PageShell>
+    <>
       <div className="relative w-full">
         <div className="absolute inset-x-0 top-0 z-0 h-[640px] overflow-hidden sm:h-[628px]" aria-hidden>
           <div className="pointer-events-none absolute inset-0 bg-hero-page" />
@@ -173,6 +172,6 @@ export function HomePage() {
           </div>
         </section>
       </main>
-    </PageShell>
+    </>
   );
 }

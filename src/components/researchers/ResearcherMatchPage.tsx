@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { FundingFitResult, ResearcherIntelligence } from "@/lib/ai/intelligence/types";
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
 
@@ -139,7 +138,7 @@ export function ResearcherMatchPage({
   publicationTrend: { year: number; count: number }[];
 }) {
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -180,6 +179,6 @@ export function ResearcherMatchPage({
           </section>
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }

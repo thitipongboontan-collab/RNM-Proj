@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { PageShell } from "@/components/layout/PageShell";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
 import type { ResearcherItem } from "@/data/researchers";
@@ -19,8 +18,17 @@ type DepartmentFilter = {
 type ResearchersPageProps = {
   items: ResearcherItem[];
   filters: DepartmentFilter[];
-  activeDepartment?: string;
 };
+
+function resolveDepartmentFromQuery(
+  department: string | null,
+  filters: DepartmentFilter[],
+): string {
+  if (department && filters.some((filter) => filter.id === department)) {
+    return department;
+  }
+  return "all";
+}
 
 function sortByScholarlyOutput(items: ResearcherItem[]) {
   return [...items].sort((a, b) => {
@@ -34,9 +42,11 @@ function sortByScholarlyOutput(items: ResearcherItem[]) {
 export function ResearchersPage({
   items,
   filters,
-  activeDepartment = "all",
 }: ResearchersPageProps) {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeDepartment, setActiveDepartment] = useState(() =>
+    resolveDepartmentFromQuery(searchParams.get("department"), filters),
+  );
   const [page, setPage] = useState(1);
 
   const visibleItems = useMemo(() => {
@@ -57,12 +67,12 @@ export function ResearchersPage({
   function handleDepartmentFilter(filterId: string) {
     if (filterId === activeDepartment) return;
 
+    setActiveDepartment(filterId);
     const nextUrl =
       filterId === "all"
         ? "/researchers"
         : `/researchers?department=${encodeURIComponent(filterId)}`;
-
-    router.push(nextUrl, { scroll: false });
+    window.history.replaceState(null, "", nextUrl);
   }
 
   useEffect(() => {
@@ -77,7 +87,7 @@ export function ResearchersPage({
   );
 
   return (
-    <PageShell>
+    <>
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
@@ -127,6 +137,6 @@ export function ResearchersPage({
           )}
         </div>
       </main>
-    </PageShell>
+    </>
   );
 }

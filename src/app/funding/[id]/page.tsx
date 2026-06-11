@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { FundingDetailPage } from "@/components/funding/FundingDetailPage";
-import { getFundings } from "@/lib/funding-repository";
+import { getFundingById, getFundingNavigation } from "@/lib/funding-repository";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -10,21 +10,19 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  const items = await getFundings();
-  const item = items.find((entry) => entry.id === id);
+  const [item, navigation] = await Promise.all([
+    getFundingById(id),
+    getFundingNavigation(id),
+  ]);
   if (!item) notFound();
-
-  const index = items.findIndex((entry) => entry.id === id);
-  const prevId = index > 0 ? items[index - 1]?.id : undefined;
-  const nextId = index >= 0 && index < items.length - 1 ? items[index + 1]?.id : undefined;
 
   return (
     <FundingDetailPage
       item={item}
-      page={index + 1}
-      totalPages={items.length}
-      prevId={prevId}
-      nextId={nextId}
+      page={navigation.index + 1}
+      totalPages={navigation.totalPages}
+      prevId={navigation.prevId}
+      nextId={navigation.nextId}
     />
   );
 }
