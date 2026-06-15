@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
 import { HeroParticleBackgroundClient } from "@/components/home/HeroParticleBackgroundClient";
+import { ResearchNewsSection } from "@/components/home/ResearchNewsSection";
+import type { ResearchNewsItem } from "@/data/research-news";
 
 const FEATURE_CARDS = [
   {
@@ -74,7 +76,7 @@ function FeatureIcon({
   );
 }
 
-export function HomePage() {
+export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
   return (
     <>
       <div className="relative w-full">
@@ -172,6 +174,8 @@ export function HomePage() {
           </div>
         </section>
       </main>
+
+      <ResearchNewsSection items={newsItems} />
     </>
   );
 }

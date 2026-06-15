@@ -9,6 +9,7 @@ import type {
 import { parseFundingDetails } from "@/lib/funding-content";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { abbreviateThaiMonthsInText } from "@/lib/thai-date";
+import { resolveFundingDocumentUrl, resolveFundingImageSrc } from "@/lib/funding-assets";
 
 const CACHE_REVALIDATE_SECONDS = 300;
 
@@ -125,7 +126,7 @@ function mapAttachmentRow(row: AttachmentRow): FundingAttachment {
     id: String(row.id),
     fileName: row.file_name,
     type: row.file_type,
-    downloadUrl: `/documents/funding/${row.storage_path}`,
+    downloadUrl: resolveFundingDocumentUrl(row.storage_path),
   };
 }
 
@@ -138,7 +139,7 @@ function mapFundingSummaryRow(row: FundingRow, imageVariant: 1 | 2 | 3): Funding
     closeDate: formatCloseDate(row.close_date),
     publishedDate: row.published_date,
     imageVariant,
-    imageSrc: row.image_path ? `/images/funding/${row.image_path}` : undefined,
+    imageSrc: resolveFundingImageSrc(row.image_path),
     statusLabel: row.status_label,
   };
 }
@@ -274,11 +275,12 @@ async function fetchFundingByIdFromDb(id: string): Promise<FundingItem | null> {
 const getFundingSummariesCached = unstable_cache(
   fetchFundingSummariesFromDb,
   ["funding-summaries"],
-  { revalidate: CACHE_REVALIDATE_SECONDS },
+  { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["funding-summaries"] },
 );
 
 const getFundingsCached = unstable_cache(fetchFundingsFromDb, ["fundings-full"], {
   revalidate: CACHE_REVALIDATE_SECONDS,
+  tags: ["fundings-full"],
 });
 
 export async function getFundingSummaries(): Promise<FundingListItem[]> {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import localFont from "next/font/local";
-import { PageShell } from "@/components/layout/PageShell";
+import { ConditionalPageShell } from "@/components/layout/ConditionalPageShell";
 import "./globals.css";
 
 const notoSansThaiUi = localFont({
@@ -40,7 +40,7 @@ export default function RootLayout({
         className={`${notoSansThaiUi.variable} ${plusJakarta.variable} ${inter.variable} font-sans`}
         suppressHydrationWarning
       >
-        <PageShell>{children}</PageShell>
+        <ConditionalPageShell>{children}</ConditionalPageShell>
       </body>
     </html>
   );

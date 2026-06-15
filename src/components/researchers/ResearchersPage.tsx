@@ -95,7 +95,13 @@ export function ResearchersPage({
         ]}
       />
       <main className="flex flex-col items-center gap-8 px-4 pb-12 pt-6 sm:gap-10 sm:px-6 sm:pb-16 sm:pt-8 md:px-10 lg:gap-[50px] lg:px-[60px] lg:pb-20 lg:pt-10">
-        <PageTitle>นักวิจัย</PageTitle>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <PageTitle>นักวิจัย</PageTitle>
+          <p className="max-w-[760px] text-sm leading-relaxed text-brand-muted sm:text-base">
+            ค้นหาและสำรวจโปรไฟล์นักวิจัย ความเชี่ยวชาญ และเครือข่ายความร่วมมือทางวิชาการ
+            เพื่อเชื่อมโยงโอกาสการทำงานวิจัยข้ามศาสตร์และส่งเสริมการสร้างความร่วมมือทั้งในประเทศและต่างประเทศ
+          </p>
+        </div>
         <div className="flex w-full max-w-[1320px] flex-col gap-8 sm:gap-10">
           <div className="scrollbar-hide -mx-1 flex w-full flex-nowrap items-center gap-2 overflow-x-auto px-1 sm:gap-[10px]">
             {filters.map((filter) => {

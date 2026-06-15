@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export function SiteFooter() {
   return (
@@ -42,6 +43,11 @@ export function SiteFooter() {
               >
                 https://rais.soc.cmu.ac.th/
               </a>
+            </p>
+            <p className="mt-3">
+              <Link href="/admin/login" className="underline">
+                สำหรับ Admin
+              </Link>
             </p>
           </address>
         </div>
