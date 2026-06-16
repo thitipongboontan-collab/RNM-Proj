@@ -44,4 +44,5 @@ export type AdminResearcherListItem = {
   department: string;
   scholarlyOutput: number;
   imagePath: string | null;
+  viewCount: number;
 };

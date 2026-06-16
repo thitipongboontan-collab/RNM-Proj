@@ -62,7 +62,14 @@ export default async function AdminDashboardPage() {
             <li>✓ Phase 1: จัดการแหล่งทุน (CRUD + upload)</li>
             <li>✓ Phase 2: จัดการข่าวสาร (CRUD + แสดงหน้าแรก)</li>
             <li>✓ Phase 3: จัดการนักวิจัย (CRUD + รูปโปรไฟล์)</li>
+            <li>✓ Phase 4: สถิติการใช้งาน (view count + dashboard)</li>
           </ul>
+          <Link
+            href="/admin/analytics"
+            className="mt-4 inline-flex rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            ดูสถิติการใช้งาน
+          </Link>
         </section>
 
         <p className="text-sm text-brand-muted">

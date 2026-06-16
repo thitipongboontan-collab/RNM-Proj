@@ -3,7 +3,7 @@ import { ResearchNewsDetailPage } from "@/components/news/ResearchNewsDetailPage
 import {
   getResearchNewsById,
 } from "@/lib/research-news-repository";
-import { incrementResearchNewsViews } from "@/lib/research-news-views";
+import { incrementResearchNewsViews } from "@/lib/analytics/views";
 
 export const revalidate = 300;
 

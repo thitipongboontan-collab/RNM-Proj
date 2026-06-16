@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ResearcherDetailPage } from "@/components/researchers/ResearcherDetailPage";
+import { incrementResearcherViews } from "@/lib/analytics/views";
 import { getResearcherById } from "@/lib/researchers-repository";
 
 export const dynamic = "force-dynamic";
@@ -26,5 +27,8 @@ export default async function Page({ params, searchParams }: PageProps) {
   const { tab } = await searchParams;
   const item = await getResearcherById(id);
   if (!item) notFound();
+
+  await incrementResearcherViews(id);
+
   return <ResearcherDetailPage item={item} initialTab={resolveProfileTab(tab)} />;
 }

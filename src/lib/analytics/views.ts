@@ -1,0 +1,63 @@
+import { createSupabaseAdminClient } from "@/lib/supabase/server-admin";
+import type { SitePageKey } from "@/lib/analytics/site-pages";
+
+async function incrementCounter(
+  table: string,
+  idColumn: string,
+  idValue: string,
+): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return;
+
+  const { data, error } = await admin
+    .from(table)
+    .select("view_count")
+    .eq(idColumn, idValue)
+    .maybeSingle();
+
+  if (error || !data) return;
+
+  await admin
+    .from(table)
+    .update({ view_count: (data.view_count ?? 0) + 1 })
+    .eq(idColumn, idValue);
+}
+
+export async function incrementFundingViews(fundingId: string): Promise<void> {
+  await incrementCounter("fundings", "funding_id", fundingId);
+}
+
+export async function incrementResearcherViews(researcherId: string): Promise<void> {
+  await incrementCounter("researchers", "researcher_id", researcherId);
+}
+
+export { incrementResearchNewsViews } from "@/lib/research-news-views";
+
+export async function incrementSitePageView(pageKey: SitePageKey): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return;
+
+  const { data, error } = await admin
+    .from("site_page_views")
+    .select("view_count")
+    .eq("page_key", pageKey)
+    .maybeSingle();
+
+  if (error) return;
+
+  if (data) {
+    await admin
+      .from("site_page_views")
+      .update({
+        view_count: (data.view_count ?? 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("page_key", pageKey);
+    return;
+  }
+
+  await admin.from("site_page_views").insert({
+    page_key: pageKey,
+    view_count: 1,
+  });
+}

@@ -45,4 +45,5 @@ export type AdminFundingListItem = {
   displayOrder: number;
   openDate: string;
   closeDate: string;
+  viewCount: number;
 };

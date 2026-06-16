@@ -68,6 +68,7 @@ export default async function AdminResearchersPage({ searchParams }: PageProps) 
                   <th className="px-4 py-3 font-medium">ชื่อ</th>
                   <th className="px-4 py-3 font-medium">สังกัด</th>
                   <th className="px-4 py-3 font-medium">Output</th>
+                  <th className="px-4 py-3 font-medium">Views</th>
                   <th className="px-4 py-3 font-medium">จัดการ</th>
                 </tr>
               </thead>
@@ -99,6 +100,7 @@ export default async function AdminResearchersPage({ searchParams }: PageProps) 
                         <td className="max-w-xs px-4 py-3 text-brand-dark">{item.nameTh}</td>
                         <td className="px-4 py-3 text-brand-muted">{item.department}</td>
                         <td className="px-4 py-3 text-brand-muted">{item.scholarlyOutput}</td>
+                        <td className="px-4 py-3 text-brand-muted">{item.viewCount}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap items-center gap-2">
                             <Link

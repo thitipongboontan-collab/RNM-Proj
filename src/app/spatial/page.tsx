@@ -1,11 +1,14 @@
 import { SpatialDashboard } from "@/components/spatial/SpatialDashboard";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
+import { SITE_PAGE_KEYS } from "@/lib/analytics/site-pages";
+import { incrementSitePageView } from "@/lib/analytics/views";
 import { getSpatialDashboardData } from "@/lib/spatial-repository";
 
 export const revalidate = 300;
 
 export default async function SpatialPage() {
+  await incrementSitePageView(SITE_PAGE_KEYS.spatial);
   const data = await getSpatialDashboardData();
 
   return (

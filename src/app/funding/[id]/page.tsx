@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { FundingDetailPage } from "@/components/funding/FundingDetailPage";
+import { incrementFundingViews } from "@/lib/analytics/views";
 import { getFundingById, getFundingNavigation } from "@/lib/funding-repository";
 
 export const revalidate = 300;
@@ -15,6 +16,8 @@ export default async function Page({ params }: PageProps) {
     getFundingNavigation(id),
   ]);
   if (!item) notFound();
+
+  await incrementFundingViews(id);
 
   return (
     <FundingDetailPage

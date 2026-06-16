@@ -48,6 +48,7 @@ export default async function AdminFundingsPage({ searchParams }: PageProps) {
                   <th className="px-4 py-3 font-medium">หน่วยงาน</th>
                   <th className="px-4 py-3 font-medium">เปิดรับ</th>
                   <th className="px-4 py-3 font-medium">ปิดรับ</th>
+                  <th className="px-4 py-3 font-medium">Views</th>
                   <th className="px-4 py-3 font-medium">จัดการ</th>
                 </tr>
               </thead>
@@ -59,6 +60,7 @@ export default async function AdminFundingsPage({ searchParams }: PageProps) {
                     <td className="px-4 py-3 text-brand-muted">{item.organization}</td>
                     <td className="px-4 py-3 text-brand-muted">{item.openDate}</td>
                     <td className="px-4 py-3 text-brand-muted">{item.closeDate}</td>
+                    <td className="px-4 py-3 text-brand-muted">{item.viewCount}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link

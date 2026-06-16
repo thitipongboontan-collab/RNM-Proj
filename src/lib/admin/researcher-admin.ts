@@ -20,6 +20,7 @@ type ResearcherRow = {
   citations_per_publication: number | null;
   field_weighted_citation_impact: number | null;
   image_path: string | null;
+  view_count: number | null;
 };
 
 type DegreeRow = {
@@ -116,7 +117,7 @@ export async function listAdminResearchers(): Promise<AdminResearcherListItem[]>
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from("researchers")
-    .select("researcher_id, name_th, department, scholarly_output, image_path")
+    .select("researcher_id, name_th, department, scholarly_output, image_path, view_count")
     .order("scholarly_output", { ascending: false })
     .order("researcher_id");
 
@@ -130,6 +131,7 @@ export async function listAdminResearchers(): Promise<AdminResearcherListItem[]>
     department: row.department,
     scholarlyOutput: row.scholarly_output ?? 0,
     imagePath: row.image_path,
+    viewCount: row.view_count ?? 0,
   }));
 }
 

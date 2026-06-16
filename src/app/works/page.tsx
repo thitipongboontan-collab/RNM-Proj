@@ -1,7 +1,11 @@
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
+import { SITE_PAGE_KEYS } from "@/lib/analytics/site-pages";
+import { incrementSitePageView } from "@/lib/analytics/views";
 
-export default function WorksPage() {
+export default async function WorksPage() {
+  await incrementSitePageView(SITE_PAGE_KEYS.works);
+
   return (
     <>
       <Breadcrumb

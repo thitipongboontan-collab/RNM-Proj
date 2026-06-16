@@ -25,6 +25,7 @@ type FundingRow = {
   details: string;
   image_path: string | null;
   display_order: number | null;
+  view_count: number | null;
 };
 
 type AttachmentRow = {
@@ -73,7 +74,7 @@ export async function listAdminFundings(): Promise<AdminFundingListItem[]> {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from("fundings")
-    .select("funding_id, title, organization, status_label, display_order, open_date, close_date")
+    .select("funding_id, title, organization, status_label, display_order, open_date, close_date, view_count")
     .order("display_order");
 
   if (error) {
@@ -88,6 +89,7 @@ export async function listAdminFundings(): Promise<AdminFundingListItem[]> {
     displayOrder: row.display_order ?? 0,
     openDate: row.open_date,
     closeDate: row.close_date,
+    viewCount: row.view_count ?? 0,
   }));
 }
 
