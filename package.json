@@ -19,7 +19,7 @@
     "@supabase/supabase-js": "^2.106.2",
     "@tsparticles/react": "^4.0.5",
     "@tsparticles/slim": "^4.0.5",
-    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-auto-scroll": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "leaflet": "^1.9.4",
     "mammoth": "^1.9.0",

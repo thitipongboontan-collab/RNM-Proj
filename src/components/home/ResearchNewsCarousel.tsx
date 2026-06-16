@@ -1,32 +1,33 @@
 "use client";
 
-import Autoplay from "embla-carousel-autoplay";
+import AutoScroll from "embla-carousel-auto-scroll";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useRef } from "react";
 import type { ResearchNewsItem } from "@/data/research-news";
 import { ResearchNewsCard } from "@/components/home/ResearchNewsCard";
 import { PageNavButton } from "@/components/ui/CircularPageNav";
 
-const AUTOPLAY_DELAY_MS = 5000;
-const SCROLL_DURATION = 25;
+const AUTO_SCROLL_SPEED = 1.15;
 
 export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
-  const autoplayPlugin = useRef(
-    Autoplay({
-      delay: AUTOPLAY_DELAY_MS,
+  const autoScrollPlugin = useRef(
+    AutoScroll({
+      speed: AUTO_SCROLL_SPEED,
+      direction: "backward",
+      startDelay: 0,
       stopOnMouseEnter: true,
       stopOnInteraction: false,
+      playOnInit: true,
     }),
   );
+
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       loop: true,
       align: "start",
-      slidesToScroll: 1,
-      duration: SCROLL_DURATION,
-      containScroll: "trimSnaps",
+      dragFree: true,
     },
-    [autoplayPlugin.current],
+    [autoScrollPlugin.current],
   );
 
   const scrollPrev = useCallback(() => {
@@ -48,8 +49,7 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
       <div
         className="min-w-0 flex-1 overflow-hidden"
         ref={emblaRef}
-        aria-live="polite"
-        aria-atomic="true"
+        aria-live="off"
       >
         <div className="flex touch-pan-y gap-5 sm:gap-6">
           {items.map((item, index) => (

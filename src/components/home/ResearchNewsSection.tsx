@@ -15,7 +15,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export function ResearchNewsSection({ items }: { items: ResearchNewsItem[] }) {
-  const useCarousel = items.length > 4;
+  const useCarousel = items.length > 1;
 
   return (
     <section id="research-news" className="mx-auto w-full max-w-[1316px] px-4 pb-[72px] sm:px-6 lg:px-8">
