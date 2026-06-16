@@ -27,7 +27,7 @@ export default async function AdminDashboardPage() {
     {
       label: "นักวิจัย",
       value: researchers.length,
-      hint: "Phase 2 จะเพิ่ม CRUD",
+      hint: "จัดการได้ที่เมนูนักวิจัย",
     },
   ];
 
@@ -61,7 +61,7 @@ export default async function AdminDashboardPage() {
             <li>✓ Admin layout แยกจากหน้าบ้าน</li>
             <li>✓ Phase 1: จัดการแหล่งทุน (CRUD + upload)</li>
             <li>✓ Phase 2: จัดการข่าวสาร (CRUD + แสดงหน้าแรก)</li>
-            <li>→ Phase 3: จัดการนักวิจัย (CRUD + รูปโปรไฟล์)</li>
+            <li>✓ Phase 3: จัดการนักวิจัย (CRUD + รูปโปรไฟล์)</li>
           </ul>
         </section>
 

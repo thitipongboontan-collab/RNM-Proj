@@ -13,3 +13,12 @@ export function revalidateNewsCaches() {
   revalidatePath("/admin/news");
   revalidatePath("/news", "layout");
 }
+
+export function revalidateResearcherCaches(researcherId?: string) {
+  revalidateTag("researchers-list");
+  revalidatePath("/researchers");
+  revalidatePath("/admin/researchers");
+  if (researcherId) {
+    revalidatePath(`/researchers/${researcherId}`);
+  }
+}

@@ -44,7 +44,13 @@ function upsertEnvKey(key, value) {
 }
 
 async function ensureBuckets(supabase) {
-  for (const bucket of ["funding-images", "funding-documents", "research-news-images", "research-news-documents"]) {
+  for (const bucket of [
+    "funding-images",
+    "funding-documents",
+    "research-news-images",
+    "research-news-documents",
+    "researcher-images",
+  ]) {
     const { data: existing } = await supabase.storage.getBucket(bucket);
     if (existing) {
       console.log(`✓ bucket exists: ${bucket}`);

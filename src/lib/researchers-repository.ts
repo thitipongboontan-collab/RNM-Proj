@@ -13,6 +13,7 @@ type ResearcherRow = {
   scholarly_output: number | null;
   citations: number | null;
   h_index: number | null;
+  image_path?: string | null;
 };
 
 type DegreeRow = {
@@ -65,7 +66,7 @@ function mapResearcherRow(row: ResearcherRow): ResearcherItem {
     name: row.name_th,
     nameEn: row.name_en ?? undefined,
     department: row.department,
-    imageSrc: resolveResearcherImageSrc(row.researcher_id),
+    imageSrc: resolveResearcherImageSrc(row.researcher_id, row.image_path),
     tags: [],
     scholarlyOutput: row.scholarly_output ?? 0,
     citations: row.citations ?? 0,
@@ -148,7 +149,7 @@ async function fetchResearchersFromDb(): Promise<ResearcherItem[]> {
     supabase
       .from("researchers")
       .select(
-        "researcher_id, name_th, name_en, department, email_raw, phone, scholarly_output, citations, h_index",
+        "researcher_id, name_th, name_en, department, email_raw, phone, scholarly_output, citations, h_index, image_path",
       )
       .order("scholarly_output", { ascending: false })
       .order("researcher_id"),
@@ -179,7 +180,7 @@ async function fetchResearchersFromDb(): Promise<ResearcherItem[]> {
 const getResearchersCached = unstable_cache(
   fetchResearchersFromDb,
   ["researchers-list"],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ["researchers-list"] },
 );
 
 export async function getResearcherById(id: string): Promise<ResearcherItem | null> {
@@ -189,7 +190,7 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
   const { data: researcher, error } = await supabase
     .from("researchers")
     .select(
-      "researcher_id, name_th, name_en, department, email_raw, phone, scholarly_output, citations, h_index",
+      "researcher_id, name_th, name_en, department, email_raw, phone, scholarly_output, citations, h_index, image_path",
     )
     .eq("researcher_id", id)
     .maybeSingle();

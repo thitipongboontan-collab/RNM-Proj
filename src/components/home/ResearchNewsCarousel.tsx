@@ -16,7 +16,8 @@ function buildLoopSlides(items: ResearchNewsItem[]): CarouselSlide[] {
     return items.map((item) => ({ ...item, slideKey: item.id }));
   }
 
-  return [...items, ...items].map((item, index) => ({
+  const repeated = [...items, ...items, ...items];
+  return repeated.map((item, index) => ({
     ...item,
     slideKey: `${item.id}-${index}`,
   }));
@@ -28,7 +29,7 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
   const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
+    loop: false,
     align: "start",
     slidesToScroll: 1,
     duration: SCROLL_DURATION,
@@ -42,6 +43,34 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
   const scrollTowardLeft = useCallback(() => {
     emblaApi?.scrollNext();
   }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi || items.length <= 1) return;
+
+    const normalizeLoop = () => {
+      const count = items.length;
+      const snap = emblaApi.selectedScrollSnap();
+
+      if (snap < count) {
+        emblaApi.scrollTo(snap + count, true);
+        return;
+      }
+
+      if (snap >= count * 2) {
+        emblaApi.scrollTo(snap - count, true);
+      }
+    };
+
+    emblaApi.scrollTo(items.length, true);
+    emblaApi.on("select", normalizeLoop);
+    emblaApi.on("reInit", () => {
+      emblaApi.scrollTo(items.length, true);
+    });
+
+    return () => {
+      emblaApi.off("select", normalizeLoop);
+    };
+  }, [emblaApi, items.length]);
 
   useEffect(() => {
     if (!emblaApi || items.length <= 1) return;
@@ -80,11 +109,11 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
         aria-live="polite"
         aria-atomic="true"
       >
-        <div className="flex touch-pan-y gap-5 sm:gap-6">
+        <div className="-ml-5 flex touch-pan-y sm:-ml-6">
           {slides.map((item, index) => (
             <div
               key={item.slideKey}
-              className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_calc((100%-1.25rem)/2)] lg:flex-[0_0_calc((100%-4.5rem)/4)]"
+              className="min-w-0 flex-[0_0_100%] pl-5 sm:flex-[0_0_50%] sm:pl-6 lg:flex-[0_0_25%]"
               role="group"
               aria-roledescription="slide"
               aria-label={`${(index % items.length) + 1} จาก ${items.length}`}
