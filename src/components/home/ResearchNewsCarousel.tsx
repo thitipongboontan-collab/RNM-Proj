@@ -1,8 +1,7 @@
 "use client";
 
-import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { ResearchNewsItem } from "@/data/research-news";
 import { ResearchNewsCard } from "@/components/home/ResearchNewsCard";
 import { PageNavButton } from "@/components/ui/CircularPageNav";
@@ -10,42 +9,70 @@ import { PageNavButton } from "@/components/ui/CircularPageNav";
 const AUTOPLAY_DELAY_MS = 5000;
 const SCROLL_DURATION = 25;
 
+type CarouselSlide = ResearchNewsItem & { slideKey: string };
+
+function buildLoopSlides(items: ResearchNewsItem[]): CarouselSlide[] {
+  if (items.length <= 1) {
+    return items.map((item) => ({ ...item, slideKey: item.id }));
+  }
+
+  return [...items, ...items].map((item, index) => ({
+    ...item,
+    slideKey: `${item.id}-${index}`,
+  }));
+}
+
 export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
-  const autoplayPlugin = useRef(
-    Autoplay({
-      delay: AUTOPLAY_DELAY_MS,
-      stopOnMouseEnter: true,
-      stopOnInteraction: false,
-      playOnInit: true,
-    }),
-  );
+  const slides = buildLoopSlides(items);
+  const isHoveringRef = useRef(false);
+  const autoplayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: true,
-      align: "start",
-      slidesToScroll: 1,
-      duration: SCROLL_DURATION,
-      containScroll: "trimSnaps",
-    },
-    [autoplayPlugin.current],
-  );
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+    slidesToScroll: 1,
+    duration: SCROLL_DURATION,
+    containScroll: "trimSnaps",
+  });
 
-  const scrollPrev = useCallback(() => {
+  const scrollTowardRight = useCallback(() => {
     emblaApi?.scrollPrev();
   }, [emblaApi]);
 
-  const scrollNext = useCallback(() => {
+  const scrollTowardLeft = useCallback(() => {
     emblaApi?.scrollNext();
   }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi || items.length <= 1) return;
+
+    const tick = () => {
+      if (isHoveringRef.current) return;
+      emblaApi.scrollPrev();
+    };
+
+    autoplayTimerRef.current = setInterval(tick, AUTOPLAY_DELAY_MS);
+
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearInterval(autoplayTimerRef.current);
+      }
+    };
+  }, [emblaApi, items.length]);
 
   return (
     <div
       className="flex items-center gap-3 sm:gap-4 lg:gap-5"
       aria-roledescription="carousel"
       aria-label="ข่าวสารงานวิจัย"
+      onMouseEnter={() => {
+        isHoveringRef.current = true;
+      }}
+      onMouseLeave={() => {
+        isHoveringRef.current = false;
+      }}
     >
-      <PageNavButton direction="left" disabled={false} onClick={scrollPrev} />
+      <PageNavButton direction="left" disabled={false} onClick={scrollTowardLeft} />
 
       <div
         className="min-w-0 flex-1 overflow-hidden"
@@ -54,13 +81,13 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
         aria-atomic="true"
       >
         <div className="flex touch-pan-y gap-5 sm:gap-6">
-          {items.map((item, index) => (
+          {slides.map((item, index) => (
             <div
-              key={item.id}
+              key={item.slideKey}
               className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_calc((100%-1.25rem)/2)] lg:flex-[0_0_calc((100%-4.5rem)/4)]"
               role="group"
               aria-roledescription="slide"
-              aria-label={`${index + 1} จาก ${items.length}`}
+              aria-label={`${(index % items.length) + 1} จาก ${items.length}`}
             >
               <ResearchNewsCard item={item} />
             </div>
@@ -68,7 +95,7 @@ export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
         </div>
       </div>
 
-      <PageNavButton direction="right" disabled={false} onClick={scrollNext} />
+      <PageNavButton direction="right" disabled={false} onClick={scrollTowardRight} />
     </div>
   );
 }
