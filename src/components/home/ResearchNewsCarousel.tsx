@@ -1,36 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import Autoplay from "embla-carousel-autoplay";
+import useEmblaCarousel from "embla-carousel-react";
+import { useCallback, useRef } from "react";
 import type { ResearchNewsItem } from "@/data/research-news";
 import { ResearchNewsCard } from "@/components/home/ResearchNewsCard";
 import { PageNavButton } from "@/components/ui/CircularPageNav";
 
-const CARDS_PER_PAGE = 4;
+const AUTOPLAY_DELAY_MS = 5000;
+const SCROLL_DURATION = 25;
 
 export function ResearchNewsCarousel({ items }: { items: ResearchNewsItem[] }) {
-  const totalPages = Math.ceil(items.length / CARDS_PER_PAGE);
-  const [page, setPage] = useState(0);
-  const visible = items.slice(page * CARDS_PER_PAGE, page * CARDS_PER_PAGE + CARDS_PER_PAGE);
+  const autoplayPlugin = useRef(
+    Autoplay({
+      delay: AUTOPLAY_DELAY_MS,
+      stopOnMouseEnter: true,
+      stopOnInteraction: false,
+    }),
+  );
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "start",
+      slidesToScroll: 1,
+      duration: SCROLL_DURATION,
+      containScroll: "trimSnaps",
+    },
+    [autoplayPlugin.current],
+  );
+
+  const scrollPrev = useCallback(() => {
+    emblaApi?.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    emblaApi?.scrollNext();
+  }, [emblaApi]);
 
   return (
-    <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
-      <PageNavButton
-        direction="left"
-        disabled={page === 0}
-        onClick={() => setPage((current) => Math.max(0, current - 1))}
-      />
+    <div
+      className="flex items-center gap-3 sm:gap-4 lg:gap-5"
+      aria-roledescription="carousel"
+      aria-label="ข่าวสารงานวิจัย"
+    >
+      <PageNavButton direction="left" disabled={false} onClick={scrollPrev} />
 
-      <div className="grid min-w-0 flex-1 grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-        {visible.map((item) => (
-          <ResearchNewsCard key={item.id} item={item} />
-        ))}
+      <div
+        className="min-w-0 flex-1 overflow-hidden"
+        ref={emblaRef}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div className="flex touch-pan-y gap-5 sm:gap-6">
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_calc((100%-1.25rem)/2)] lg:flex-[0_0_calc((100%-4.5rem)/4)]"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${index + 1} จาก ${items.length}`}
+            >
+              <ResearchNewsCard item={item} />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <PageNavButton
-        direction="right"
-        disabled={page >= totalPages - 1}
-        onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
-      />
+      <PageNavButton direction="right" disabled={false} onClick={scrollNext} />
     </div>
   );
 }

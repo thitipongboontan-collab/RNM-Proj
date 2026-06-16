@@ -76,3 +76,66 @@ export function formatIsoToThaiFundingDate(iso: string): string {
 
   return `${day} ${THAI_MONTHS[monthIndex]} ${year + 543}`;
 }
+
+/** Format ISO yyyy-mm-dd to Thai date with abbreviated month (e.g. "15 มิ.ย. 2569"). */
+export function formatIsoToThaiAbbreviatedDate(iso: string): string {
+  const full = formatIsoToThaiFundingDate(iso);
+  if (!full) return "";
+  return abbreviateThaiMonthsInText(full);
+}
+
+/** Parse stored Thai event date text into ISO start/end values for date inputs. */
+export function parseThaiEventDateText(value: string): { startIso: string; endIso?: string } {
+  const text = value.trim();
+  if (!text) return { startIso: "" };
+
+  const sameMonthRange = text.match(/^(\d{1,2})[–-](\d{1,2})\s+(\S+)\s+(\d{4})$/);
+  if (sameMonthRange) {
+    const [, startDay, endDay, month, year] = sameMonthRange;
+    const startIso = parseThaiFundingDateToIso(`${startDay} ${month} ${year}`);
+    const endIso = parseThaiFundingDateToIso(`${endDay} ${month} ${year}`);
+    return { startIso, endIso: endIso || undefined };
+  }
+
+  const crossRange = text.match(/^(\d{1,2}\s+\S+\s+\d{4})\s*[–-]\s*(\d{1,2}\s+\S+\s+\d{4})$/);
+  if (crossRange) {
+    return {
+      startIso: parseThaiFundingDateToIso(crossRange[1]),
+      endIso: parseThaiFundingDateToIso(crossRange[2]),
+    };
+  }
+
+  return { startIso: parseThaiFundingDateToIso(text) };
+}
+
+/** Format one or two ISO dates as Thai event date text with abbreviated months. */
+export function formatThaiEventDateRange(startIso: string, endIso?: string): string {
+  if (!startIso) return "";
+
+  const start = formatIsoToThaiAbbreviatedDate(startIso);
+  if (!endIso || endIso === startIso) return start;
+
+  const end = formatIsoToThaiAbbreviatedDate(endIso);
+  const startParts = start.match(/^(\d{1,2})\s+(\S+)\s+(\d{4})$/);
+  const endParts = end.match(/^(\d{1,2})\s+(\S+)\s+(\d{4})$/);
+  if (!startParts || !endParts) return `${start} – ${end}`;
+
+  const [, startDay, startMonth, startYear] = startParts;
+  const [, endDay, endMonth, endYear] = endParts;
+
+  if (startMonth === endMonth && startYear === endYear) {
+    return `${startDay}–${endDay} ${startMonth} ${startYear}`;
+  }
+
+  if (startYear === endYear) {
+    return `${startDay} ${startMonth} – ${endDay} ${endMonth} ${startYear}`;
+  }
+
+  return `${start} – ${end}`;
+}
+
+/** Ensure Thai event date text uses abbreviated month names for display. */
+export function normalizeThaiEventDateForDisplay(value: string): string {
+  if (!value) return "";
+  return abbreviateThaiMonthsInText(value.trim());
+}

@@ -5,6 +5,7 @@ import type {
   AdminNewsRecord,
 } from "@/lib/admin/news-types";
 import { removeNewsAttachment, removeNewsImage, uploadNewsAttachment, uploadNewsImage } from "@/lib/admin/news-upload";
+import { normalizeThaiEventDateForDisplay } from "@/lib/thai-date";
 
 type NewsRow = {
   news_id: string;
@@ -33,7 +34,7 @@ function mapNewsRecord(row: NewsRow): AdminNewsRecord {
     newsId: row.news_id,
     title: row.title,
     category: row.category,
-    publishedDate: row.published_date,
+    publishedDate: normalizeThaiEventDateForDisplay(row.published_date),
     details: row.details,
     externalUrl: row.external_url ?? "",
     imagePath: row.image_path,
@@ -59,7 +60,7 @@ export async function listAdminNews(): Promise<AdminNewsListItem[]> {
     newsId: row.news_id,
     title: row.title,
     category: row.category,
-    publishedDate: row.published_date,
+    publishedDate: normalizeThaiEventDateForDisplay(row.published_date),
     viewCount: row.view_count ?? 0,
     displayOrder: row.display_order ?? 0,
   }));
@@ -152,7 +153,7 @@ export async function createAdminNews(
     news_id: newsId,
     title: input.title.trim(),
     category: input.category.trim(),
-    published_date: input.publishedDate.trim(),
+    published_date: normalizeThaiEventDateForDisplay(input.publishedDate.trim()),
     details: input.details.trim(),
     external_url: input.externalUrl.trim() || null,
     image_path: imagePath,
@@ -219,7 +220,7 @@ export async function updateAdminNews(
     .update({
       title: input.title.trim(),
       category: input.category.trim(),
-      published_date: input.publishedDate.trim(),
+      published_date: normalizeThaiEventDateForDisplay(input.publishedDate.trim()),
       details: input.details.trim(),
       external_url: input.externalUrl.trim() || null,
       image_path: imagePath,

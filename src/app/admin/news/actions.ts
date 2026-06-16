@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin/news-admin";
 import type { AdminNewsFormInput } from "@/lib/admin/news-types";
 import { revalidateNewsCaches } from "@/lib/admin/revalidate";
+import { parseThaiEventDateText } from "@/lib/thai-date";
 
 export type NewsActionState = {
   error?: string;
@@ -39,8 +40,12 @@ function readNewsInput(formData: FormData): AdminNewsFormInput {
 function validateNewsInput(input: AdminNewsFormInput): string | null {
   if (!input.title.trim()) return "กรุณากรอกชื่อข่าว";
   if (!input.category.trim()) return "กรุณาเลือกหรือระบุหมวดหมู่";
-  if (!input.publishedDate.trim()) return "กรุณาเลือกวันที่โพสข่าว";
+  if (!input.publishedDate.trim()) return "กรุณาเลือกวันที่จัดกิจกรรม";
   if (!input.details.trim()) return "กรุณากรอกรายละเอียดข่าว";
+
+  const { startIso, endIso } = parseThaiEventDateText(input.publishedDate);
+  if (!startIso) return "รูปแบบวันที่จัดกิจกรรมไม่ถูกต้อง";
+  if (endIso && endIso < startIso) return "วันสิ้นสุดกิจกรรมต้องไม่ก่อนวันเริ่ม";
 
   const externalUrl = input.externalUrl.trim();
   if (externalUrl && !/^https?:\/\//i.test(externalUrl)) {

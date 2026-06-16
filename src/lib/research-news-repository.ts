@@ -4,6 +4,7 @@ import { getResearchNewsGradient } from "@/data/research-news";
 import { getMockResearchNewsById, RESEARCH_NEWS_MOCK } from "@/data/research-news-mock";
 import { resolveNewsAttachmentUrl, resolveNewsImageSrc } from "@/lib/news-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { normalizeThaiEventDateForDisplay } from "@/lib/thai-date";
 
 const CACHE_REVALIDATE_SECONDS = 300;
 
@@ -26,7 +27,7 @@ function mapNewsRow(row: NewsRow, index: number): ResearchNewsItem {
     id: row.news_id,
     category: row.category,
     title: row.title,
-    publishedDate: row.published_date,
+    publishedDate: normalizeThaiEventDateForDisplay(row.published_date),
     views: row.view_count ?? 0,
     imageGradient: getResearchNewsGradient(index),
     imageSrc: resolveNewsImageSrc(row.image_path),

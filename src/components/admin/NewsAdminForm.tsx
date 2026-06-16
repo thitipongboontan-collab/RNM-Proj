@@ -10,7 +10,7 @@ import {
   type NewsActionState,
 } from "@/app/admin/news/actions";
 import { NewsCategoryField } from "@/components/admin/NewsCategoryField";
-import { ThaiDateField } from "@/components/admin/ThaiDateField";
+import { ThaiEventDateField } from "@/components/admin/ThaiEventDateField";
 import type { AdminNewsRecord } from "@/lib/admin/news-types";
 import { resolveNewsAttachmentUrl, resolveNewsImageSrc } from "@/lib/news-assets";
 
@@ -72,8 +72,8 @@ export function NewsAdminForm({ mode, record }: NewsAdminFormProps) {
 
       <NewsCategoryField defaultCategory={record?.category} />
 
-      <ThaiDateField
-        label="วันที่โพสข่าว"
+      <ThaiEventDateField
+        label="วันที่จัดกิจกรรม"
         name="publishedDate"
         defaultValue={record?.publishedDate}
         required
