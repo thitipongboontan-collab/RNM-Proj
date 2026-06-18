@@ -67,7 +67,7 @@ export function NewsAdminForm({ mode, record }: NewsAdminFormProps) {
   }, [state.success, router]);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} encType="multipart/form-data" className="space-y-6">
       <Field label="ชื่อข่าว" name="title" defaultValue={record?.title} required />
 
       <NewsCategoryField defaultCategory={record?.category} />

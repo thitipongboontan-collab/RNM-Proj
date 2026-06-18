@@ -458,12 +458,12 @@ export async function updateAdminFunding(
 
   let imagePath = existing.imagePath;
   if (removeImage && imagePath) {
-    await removeFundingImage(imagePath);
+    await removeFundingImage(imagePath, fundingId);
     imagePath = null;
   }
   if (imageFile && imageFile.size > 0) {
     if (imagePath) {
-      await removeFundingImage(imagePath);
+      await removeFundingImage(imagePath, fundingId);
     }
     imagePath = await uploadFundingImage(fundingId, imageFile);
   }
@@ -543,7 +543,7 @@ export async function deleteAdminFunding(fundingId: string): Promise<void> {
   if (!existing) return;
 
   if (existing.imagePath) {
-    await removeFundingImage(existing.imagePath);
+    await removeFundingImage(existing.imagePath, fundingId);
   }
 
   for (const attachment of existing.attachments) {

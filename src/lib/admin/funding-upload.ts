@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createSupabaseAdminClient } from "@/lib/supabase/server-admin";
+import { imageStoragePathBelongsToOwner } from "@/lib/admin/storage-image-path";
 
 const IMAGE_BUCKET = "funding-images";
 const DOCUMENT_BUCKET = "funding-documents";
@@ -74,7 +75,7 @@ export async function uploadFundingImage(
   file: File,
 ): Promise<string> {
   const extension = getFileExtension(file.name);
-  const objectPath = `${fundingId}.${extension}`;
+  const objectPath = `${fundingId}/cover-${Date.now()}.${extension}`;
 
   const storageUrl = await uploadToSupabaseStorage(IMAGE_BUCKET, objectPath, file);
   if (storageUrl) return storageUrl;
@@ -101,8 +102,12 @@ export async function uploadFundingDocument(
   return { fileName: safeName, fileType, storagePath: objectPath };
 }
 
-export async function removeFundingImage(imagePath: string | null): Promise<void> {
+export async function removeFundingImage(
+  imagePath: string | null,
+  ownerId?: string,
+): Promise<void> {
   if (!imagePath) return;
+  if (ownerId && !imageStoragePathBelongsToOwner(ownerId, imagePath)) return;
 
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     const admin = createSupabaseAdminClient();

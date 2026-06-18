@@ -101,20 +101,18 @@ export async function getAdminNewsById(id: string): Promise<AdminNewsRecord | nu
 
 async function generateNextNewsId(): Promise<string> {
   const supabase = getAdminClient();
-  const { data, error } = await supabase
-    .from("research_news")
-    .select("news_id")
-    .order("news_id", { ascending: false })
-    .limit(1);
+  const { data, error } = await supabase.from("research_news").select("news_id");
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const lastId = data?.[0]?.news_id ?? "NEWS000";
-  const numeric = Number.parseInt(String(lastId).replace(/^NEWS/i, ""), 10);
-  const next = Number.isFinite(numeric) ? numeric + 1 : 1;
-  return `NEWS${String(next).padStart(3, "0")}`;
+  const maxNumeric = (data ?? []).reduce((max, row) => {
+    const numeric = Number.parseInt(String(row.news_id).replace(/^NEWS/i, ""), 10);
+    return Number.isFinite(numeric) ? Math.max(max, numeric) : max;
+  }, 0);
+
+  return `NEWS${String(maxNumeric + 1).padStart(3, "0")}`;
 }
 
 async function shiftExistingNewsForNewItem(): Promise<void> {
@@ -208,13 +206,13 @@ export async function updateAdminNews(
   let imagePath = existing.imagePath;
 
   if (removeImage && imagePath) {
-    await removeNewsImage(imagePath);
+    await removeNewsImage(imagePath, newsId);
     imagePath = null;
   }
 
   if (imageFile && imageFile.size > 0) {
     if (imagePath) {
-      await removeNewsImage(imagePath);
+      await removeNewsImage(imagePath, newsId);
     }
     imagePath = await uploadNewsImage(newsId, imageFile);
   }
@@ -271,7 +269,7 @@ export async function deleteAdminNews(newsId: string): Promise<void> {
   }
 
   if (existing.imagePath) {
-    await removeNewsImage(existing.imagePath);
+    await removeNewsImage(existing.imagePath, newsId);
   }
 
   const { error } = await supabase.from("research_news").delete().eq("news_id", newsId);

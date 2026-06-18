@@ -137,7 +137,7 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="รหัสอ้างอิง (Funding Code)" name="fundingCode" defaultValue={record?.fundingCode ?? defaults?.fundingCode} required />
         {mode === "create" ? (
