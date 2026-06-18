@@ -5,8 +5,25 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server-admin";
 const IMAGE_BUCKET = "funding-images";
 const DOCUMENT_BUCKET = "funding-documents";
 
-function sanitizeFileName(name: string): string {
+export function sanitizeFundingFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+}
+
+function sanitizeFileName(name: string): string {
+  return sanitizeFundingFileName(name);
+}
+
+export function resolveFundingDocumentFileType(fileName: string): "pdf" | "doc" {
+  return fileName.toLowerCase().endsWith(".pdf") ? "pdf" : "doc";
+}
+
+export function buildFundingDocumentObjectPath(
+  fundingId: string,
+  fileName: string,
+  fileOrder: number,
+): string {
+  const safeName = sanitizeFundingFileName(fileName);
+  return `${fundingId}/${fileOrder}-${safeName}`;
 }
 
 function getFileExtension(fileName: string): string {

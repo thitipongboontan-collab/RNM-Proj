@@ -5,8 +5,11 @@ import type {
   AdminFundingRecord,
 } from "@/lib/admin/funding-types";
 import {
+  buildFundingDocumentObjectPath,
   removeFundingDocument,
   removeFundingImage,
+  resolveFundingDocumentFileType,
+  sanitizeFundingFileName,
   uploadFundingDocument,
   uploadFundingImage,
 } from "@/lib/admin/funding-upload";
@@ -178,6 +181,65 @@ async function shiftExistingFundingsForNewItem(): Promise<void> {
   const failed = updates.find((result) => result.error);
   if (failed?.error) {
     throw new Error(failed.error.message);
+  }
+}
+
+export type PreparedFundingDocumentUpload = {
+  signedUrl: string;
+  token: string;
+  objectPath: string;
+  storagePath: string;
+  fileName: string;
+  fileType: "pdf" | "doc";
+  fileOrder: number;
+};
+
+export async function prepareFundingDocumentUpload(
+  fundingId: string,
+  fileName: string,
+  fileOrder: number,
+): Promise<PreparedFundingDocumentUpload> {
+  const supabase = getAdminClient();
+  const safeName = sanitizeFundingFileName(fileName);
+  const fileType = resolveFundingDocumentFileType(safeName);
+  const objectPath = buildFundingDocumentObjectPath(fundingId, fileName, fileOrder);
+
+  const { data, error } = await supabase.storage
+    .from("funding-documents")
+    .createSignedUploadUrl(objectPath);
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "ไม่สามารถเตรียมอัปโหลดไฟล์ได้");
+  }
+
+  const { data: publicUrl } = supabase.storage.from("funding-documents").getPublicUrl(objectPath);
+
+  return {
+    signedUrl: data.signedUrl,
+    token: data.token,
+    objectPath,
+    storagePath: publicUrl.publicUrl,
+    fileName: safeName,
+    fileType,
+    fileOrder,
+  };
+}
+
+export async function registerFundingDocumentAttachment(
+  fundingId: string,
+  attachment: Pick<PreparedFundingDocumentUpload, "storagePath" | "fileName" | "fileType" | "fileOrder">,
+): Promise<void> {
+  const supabase = getAdminClient();
+  const { error } = await supabase.from("funding_attachments").insert({
+    funding_id: fundingId,
+    file_name: attachment.fileName,
+    file_type: attachment.fileType,
+    storage_path: attachment.storagePath,
+    file_order: attachment.fileOrder,
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
 }
 

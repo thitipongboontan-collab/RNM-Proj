@@ -6,6 +6,8 @@ import {
   createAdminFunding,
   deleteAdminFunding,
   deleteAdminFundingAttachment,
+  prepareFundingDocumentUpload,
+  registerFundingDocumentAttachment,
   updateAdminFunding,
 } from "@/lib/admin/funding-admin";
 import type { AdminFundingFormInput } from "@/lib/admin/funding-types";
@@ -15,6 +17,7 @@ export type FundingActionState = {
   error?: string;
   success?: string;
   redirectTo?: string;
+  fundingId?: string;
 };
 
 function readFundingInput(formData: FormData): AdminFundingFormInput {
@@ -33,9 +36,8 @@ function readFundingInput(formData: FormData): AdminFundingFormInput {
   };
 }
 
-function readAttachmentFiles(formData: FormData): File[] {
-  const entries = formData.getAll("attachments");
-  return entries.filter((entry): entry is File => entry instanceof File && entry.size > 0);
+function readAttachmentFiles(): File[] {
+  return [];
 }
 
 function validateFundingInput(input: AdminFundingFormInput): string | null {
@@ -69,10 +71,13 @@ export async function createFundingAction(
     const fundingId = await createAdminFunding(
       input,
       imageFile instanceof File ? imageFile : null,
-      readAttachmentFiles(formData),
+      readAttachmentFiles(),
     );
     revalidateFundingCaches();
-    return { redirectTo: `/admin/fundings/${fundingId}/edit?saved=1` };
+    return {
+      fundingId,
+      redirectTo: `/admin/fundings/${fundingId}/edit?saved=1`,
+    };
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "ไม่สามารถบันทึกแหล่งทุนได้",
@@ -103,7 +108,7 @@ export async function updateFundingAction(
       fundingId,
       input,
       imageFile instanceof File ? imageFile : null,
-      readAttachmentFiles(formData),
+      readAttachmentFiles(),
       formData.get("removeImage") === "on",
     );
     revalidateFundingCaches();
@@ -132,6 +137,39 @@ export async function deleteFundingAction(fundingId: string): Promise<FundingAct
       error: error instanceof Error ? error.message : "ไม่สามารถลบแหล่งทุนได้",
     };
   }
+}
+
+export async function prepareFundingAttachmentUploadAction(
+  fundingId: string,
+  fileName: string,
+  fileOrder: number,
+) {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  return prepareFundingDocumentUpload(fundingId, fileName, fileOrder);
+}
+
+export async function completeFundingAttachmentUploadAction(
+  fundingId: string,
+  attachment: {
+    storagePath: string;
+    fileName: string;
+    fileType: "pdf" | "doc";
+    fileOrder: number;
+  },
+): Promise<void> {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  await registerFundingDocumentAttachment(fundingId, attachment);
+  revalidateFundingCaches();
 }
 
 export async function deleteFundingAttachmentAction(

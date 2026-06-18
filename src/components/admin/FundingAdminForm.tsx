@@ -3,15 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useMemo } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import {
   createFundingAction,
   deleteFundingAttachmentAction,
   updateFundingAction,
-  type FundingActionState,
 } from "@/app/admin/fundings/actions";
-import { MultiFileUploadSection } from "@/components/admin/MultiFileUploadField";
+import {
+  MultiFileUploadSection,
+  type MultiFileUploadHandle,
+} from "@/components/admin/MultiFileUploadField";
 import { ThaiDateField } from "@/components/admin/ThaiDateField";
+import { uploadFundingAttachmentsClient } from "@/lib/admin/funding-client-upload";
 import type { AdminFundingRecord } from "@/lib/admin/funding-types";
 import { resolveFundingDocumentUrl, resolveFundingImageSrc } from "@/lib/funding-assets";
 
@@ -23,8 +26,6 @@ type FundingAdminFormProps = {
     displayOrder: number;
   };
 };
-
-const initialState: FundingActionState = {};
 
 function Field({
   label,
@@ -56,27 +57,70 @@ function Field({
 export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormProps) {
   const router = useRouter();
   const fundingId = record?.fundingId;
-  const action = useMemo(
-    () =>
-      mode === "create"
-        ? createFundingAction
-        : updateFundingAction.bind(null, fundingId!),
-    [mode, fundingId],
+  const attachmentsRef = useRef<MultiFileUploadHandle>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "error" | "success"; text: string } | null>(
+    null,
   );
-  const [state, formAction, pending] = useActionState(action, initialState);
 
-  useEffect(() => {
-    if (state.redirectTo) {
-      router.push(state.redirectTo);
-      return;
-    }
-    if (state.success) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatusMessage(null);
+    setSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const attachmentFiles = attachmentsRef.current?.getFiles() ?? [];
+
+    try {
+      if (mode === "create") {
+        const result = await createFundingAction({}, formData);
+        if (result.error) {
+          setStatusMessage({ type: "error", text: result.error });
+          return;
+        }
+
+        if (result.fundingId && attachmentFiles.length > 0) {
+          const startOrder = 0;
+          await uploadFundingAttachmentsClient(result.fundingId, attachmentFiles, startOrder);
+          attachmentsRef.current?.clearFiles();
+        }
+
+        if (result.redirectTo) {
+          router.push(result.redirectTo);
+        }
+        return;
+      }
+
+      const result = await updateFundingAction(fundingId!, {}, formData);
+      if (result.error) {
+        setStatusMessage({ type: "error", text: result.error });
+        return;
+      }
+
+      if (attachmentFiles.length > 0) {
+        const startOrder =
+          record?.attachments.reduce((max, item) => Math.max(max, item.fileOrder), 0) ?? 0;
+        await uploadFundingAttachmentsClient(fundingId!, attachmentFiles, startOrder);
+        attachmentsRef.current?.clearFiles();
+      }
+
+      setStatusMessage({
+        type: "success",
+        text: result.success ?? "บันทึกแหล่งทุนเรียบร้อยแล้ว",
+      });
       router.refresh();
+    } catch (error) {
+      setStatusMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "ไม่สามารถบันทึกแหล่งทุนได้",
+      });
+    } finally {
+      setSubmitting(false);
     }
-  }, [state.redirectTo, state.success, router]);
+  }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="รหัสอ้างอิง (Funding Code)" name="fundingCode" defaultValue={record?.fundingCode ?? defaults?.fundingCode} required />
         {mode === "create" ? (
@@ -190,25 +234,26 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
       ) : null}
 
       <MultiFileUploadSection
+        ref={attachmentsRef}
         label="เพิ่มไฟล์แนบ (PDF/DOC)"
         accept=".pdf,.doc,.docx,application/pdf,application/msword"
         description="สามารถเลือกหลายไฟล์ในครั้งเดียว หรือกดเลือกไฟล์ซ้ำเพื่อเพิ่มอีก"
       />
 
-      {state.error ? (
-        <p className="rounded-xl bg-[#FFF1F2] px-4 py-3 text-sm text-[#BE123C]">{state.error}</p>
+      {statusMessage?.type === "error" ? (
+        <p className="rounded-xl bg-[#FFF1F2] px-4 py-3 text-sm text-[#BE123C]">{statusMessage.text}</p>
       ) : null}
-      {state.success ? (
-        <p className="rounded-xl bg-[#ECFDF5] px-4 py-3 text-sm text-[#047857]">{state.success}</p>
+      {statusMessage?.type === "success" ? (
+        <p className="rounded-xl bg-[#ECFDF5] px-4 py-3 text-sm text-[#047857]">{statusMessage.text}</p>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
+          disabled={submitting}
           className="rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? "กำลังบันทึก..." : mode === "create" ? "เพิ่มแหล่งทุน" : "บันทึกการแก้ไข"}
+          {submitting ? "กำลังบันทึก..." : mode === "create" ? "เพิ่มแหล่งทุน" : "บันทึกการแก้ไข"}
         </button>
         <Link
           href="/admin/fundings"
