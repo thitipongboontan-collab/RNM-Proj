@@ -26,6 +26,15 @@ export function buildFundingDocumentObjectPath(
   return `${fundingId}/${fileOrder}-${safeName}`;
 }
 
+export function buildFundingDetailImageObjectPath(
+  fundingId: string,
+  fileName: string,
+  imageOrder: number,
+): string {
+  const safeName = sanitizeFundingFileName(fileName);
+  return `${fundingId}/detail/${imageOrder}-${safeName}`;
+}
+
 function getFileExtension(fileName: string): string {
   const ext = path.extname(fileName).replace(".", "").toLowerCase();
   return ext || "bin";

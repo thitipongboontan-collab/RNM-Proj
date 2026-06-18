@@ -6,6 +6,12 @@ export type AdminFundingAttachment = {
   fileOrder: number;
 };
 
+export type AdminFundingDetailImage = {
+  id: number;
+  storagePath: string;
+  imageOrder: number;
+};
+
 export type AdminFundingRecord = {
   fundingId: string;
   fundingCode: string;
@@ -19,8 +25,10 @@ export type AdminFundingRecord = {
   sourceUrl: string;
   details: string;
   imagePath: string | null;
+  imagePosition: string;
   displayOrder: number;
   attachments: AdminFundingAttachment[];
+  detailImages: AdminFundingDetailImage[];
 };
 
 export type AdminFundingFormInput = {
@@ -35,6 +43,7 @@ export type AdminFundingFormInput = {
   sourceUrl: string;
   details: string;
   displayOrder: number;
+  imagePosition: string;
 };
 
 export type AdminFundingListItem = {

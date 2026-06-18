@@ -8,6 +8,7 @@ import {
 } from "@/components/funding/FundingDetailParts";
 import { DetailPagination } from "@/components/funding/FundingDetailPagination";
 import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
+import { resolveImagePositionCss } from "@/lib/image-position";
 
 export function FundingDetailPage({
   item,
@@ -115,6 +116,7 @@ export function FundingDetailPage({
               sizes="1280px"
               priority
               className="object-cover"
+              style={{ objectPosition: resolveImagePositionCss(item.imagePosition) }}
               unoptimized={item.imageSrc.startsWith("http")}
             />
           )}
@@ -180,6 +182,27 @@ export function FundingDetailPage({
               </p>
             )}
           </div>
+
+          {item.detail.detailImages.length > 0 && (
+            <div className="flex flex-col gap-5" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {item.detail.detailImages.map((src) => (
+                <div
+                  key={src}
+                  className="overflow-hidden rounded-2xl bg-[#EEF1F6]"
+                >
+                  <Image
+                    src={src}
+                    alt={item.detail.fullTitle}
+                    width={1280}
+                    height={960}
+                    sizes="100vw"
+                    className="h-auto w-full"
+                    unoptimized={src.startsWith("http")}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {item.detail.attachments.length > 0 && (
             <>

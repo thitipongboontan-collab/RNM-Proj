@@ -5,6 +5,7 @@ import type {
   AdminFundingRecord,
 } from "@/lib/admin/funding-types";
 import {
+  buildFundingDetailImageObjectPath,
   buildFundingDocumentObjectPath,
   removeFundingDocument,
   removeFundingImage,
@@ -13,6 +14,8 @@ import {
   uploadFundingDocument,
   uploadFundingImage,
 } from "@/lib/admin/funding-upload";
+import { normalizeImagePosition } from "@/lib/image-position";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 type FundingRow = {
   funding_id: string;
@@ -27,6 +30,7 @@ type FundingRow = {
   source_url: string | null;
   details: string;
   image_path: string | null;
+  image_position?: string | null;
   display_order: number | null;
   view_count: number | null;
 };
@@ -48,7 +52,18 @@ function getAdminClient() {
   return client;
 }
 
-function mapFundingRecord(row: FundingRow, attachments: AttachmentRow[]): AdminFundingRecord {
+type DetailImageRow = {
+  id: number;
+  funding_id: string;
+  storage_path: string;
+  image_order: number | null;
+};
+
+function mapFundingRecord(
+  row: FundingRow,
+  attachments: AttachmentRow[],
+  detailImages: DetailImageRow[],
+): AdminFundingRecord {
   return {
     fundingId: row.funding_id,
     fundingCode: row.funding_code,
@@ -62,6 +77,7 @@ function mapFundingRecord(row: FundingRow, attachments: AttachmentRow[]): AdminF
     sourceUrl: row.source_url ?? "",
     details: row.details,
     imagePath: row.image_path,
+    imagePosition: normalizeImagePosition(row.image_position),
     displayOrder: row.display_order ?? 0,
     attachments: attachments.map((item) => ({
       id: item.id,
@@ -69,6 +85,11 @@ function mapFundingRecord(row: FundingRow, attachments: AttachmentRow[]): AdminF
       fileType: item.file_type,
       storagePath: item.storage_path,
       fileOrder: item.file_order ?? 0,
+    })),
+    detailImages: detailImages.map((item) => ({
+      id: item.id,
+      storagePath: item.storage_path,
+      imageOrder: item.image_order ?? 0,
     })),
   };
 }
@@ -98,13 +119,24 @@ export async function listAdminFundings(): Promise<AdminFundingListItem[]> {
 
 export async function getAdminFundingById(id: string): Promise<AdminFundingRecord | null> {
   const supabase = getAdminClient();
-  const { data, error } = await supabase
+  const selectWithPosition =
+    "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, image_position, display_order";
+  const selectBase =
+    "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order";
+
+  let { data, error } = await supabase
     .from("fundings")
-    .select(
-      "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order",
-    )
+    .select(selectWithPosition)
     .eq("funding_id", id)
     .maybeSingle();
+
+  if (error && isMissingSchemaError(error.message)) {
+    ({ data, error } = await supabase
+      .from("fundings")
+      .select(selectBase)
+      .eq("funding_id", id)
+      .maybeSingle());
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -121,7 +153,21 @@ export async function getAdminFundingById(id: string): Promise<AdminFundingRecor
     throw new Error(attachmentError.message);
   }
 
-  return mapFundingRecord(data as FundingRow, (attachments ?? []) as AttachmentRow[]);
+  const { data: detailImages, error: detailImageError } = await supabase
+    .from("funding_detail_images")
+    .select("id, funding_id, storage_path, image_order")
+    .eq("funding_id", id)
+    .order("image_order");
+
+  if (detailImageError && !isMissingSchemaError(detailImageError.message)) {
+    throw new Error(detailImageError.message);
+  }
+
+  return mapFundingRecord(
+    data as FundingRow,
+    (attachments ?? []) as AttachmentRow[],
+    (detailImageError ? [] : (detailImages ?? [])) as DetailImageRow[],
+  );
 }
 
 async function generateNextFundingId(): Promise<string> {
@@ -243,6 +289,86 @@ export async function registerFundingDocumentAttachment(
   }
 }
 
+export type PreparedFundingDetailImageUpload = {
+  signedUrl: string;
+  token: string;
+  objectPath: string;
+  storagePath: string;
+  imageOrder: number;
+};
+
+export async function prepareFundingDetailImageUpload(
+  fundingId: string,
+  fileName: string,
+  imageOrder: number,
+): Promise<PreparedFundingDetailImageUpload> {
+  const supabase = getAdminClient();
+  const objectPath = buildFundingDetailImageObjectPath(fundingId, fileName, imageOrder);
+
+  const { data, error } = await supabase.storage
+    .from("funding-images")
+    .createSignedUploadUrl(objectPath);
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "ไม่สามารถเตรียมอัปโหลดรูปภาพได้");
+  }
+
+  const { data: publicUrl } = supabase.storage.from("funding-images").getPublicUrl(objectPath);
+
+  return {
+    signedUrl: data.signedUrl,
+    token: data.token,
+    objectPath,
+    storagePath: publicUrl.publicUrl,
+    imageOrder,
+  };
+}
+
+export async function registerFundingDetailImage(
+  fundingId: string,
+  image: Pick<PreparedFundingDetailImageUpload, "storagePath" | "imageOrder">,
+): Promise<void> {
+  const supabase = getAdminClient();
+  const { error } = await supabase.from("funding_detail_images").insert({
+    funding_id: fundingId,
+    storage_path: image.storagePath,
+    image_order: image.imageOrder,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function deleteAdminFundingDetailImage(
+  fundingId: string,
+  imageId: number,
+): Promise<void> {
+  const supabase = getAdminClient();
+  const { data, error } = await supabase
+    .from("funding_detail_images")
+    .select("id, funding_id, storage_path")
+    .eq("id", imageId)
+    .eq("funding_id", fundingId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) return;
+
+  await removeFundingImage(data.storage_path);
+
+  const { error: deleteError } = await supabase
+    .from("funding_detail_images")
+    .delete()
+    .eq("id", imageId);
+
+  if (deleteError) {
+    throw new Error(deleteError.message);
+  }
+}
+
 async function insertAttachments(
   fundingId: string,
   files: File[],
@@ -286,7 +412,7 @@ export async function createAdminFunding(
     imagePath = await uploadFundingImage(fundingId, imageFile);
   }
 
-  const { error } = await supabase.from("fundings").insert({
+  const insertPayload = {
     funding_id: fundingId,
     funding_code: fundingCode,
     title: input.title.trim(),
@@ -299,8 +425,15 @@ export async function createAdminFunding(
     source_url: input.sourceUrl.trim() || null,
     details: input.details.trim(),
     image_path: imagePath,
+    image_position: normalizeImagePosition(input.imagePosition),
     display_order: 1,
-  });
+  };
+
+  let { error } = await supabase.from("fundings").insert(insertPayload);
+  if (error && isMissingSchemaError(error.message)) {
+    const { image_position: _imagePosition, ...withoutPosition } = insertPayload;
+    ({ error } = await supabase.from("fundings").insert(withoutPosition));
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -335,23 +468,34 @@ export async function updateAdminFunding(
     imagePath = await uploadFundingImage(fundingId, imageFile);
   }
 
-  const { error } = await supabase
+  const updatePayload = {
+    funding_code: input.fundingCode.trim(),
+    title: input.title.trim(),
+    full_title: input.fullTitle.trim() || input.title.trim(),
+    organization: input.organization.trim(),
+    status_label: input.statusLabel.trim() || "ทุนวิจัยที่เปิดรับ",
+    published_date: input.publishedDate.trim(),
+    open_date: input.openDate.trim(),
+    close_date: input.closeDate.trim(),
+    source_url: input.sourceUrl.trim() || null,
+    details: input.details.trim(),
+    image_path: imagePath,
+    image_position: normalizeImagePosition(input.imagePosition),
+    display_order: input.displayOrder,
+  };
+
+  let { error } = await supabase
     .from("fundings")
-    .update({
-      funding_code: input.fundingCode.trim(),
-      title: input.title.trim(),
-      full_title: input.fullTitle.trim() || input.title.trim(),
-      organization: input.organization.trim(),
-      status_label: input.statusLabel.trim() || "ทุนวิจัยที่เปิดรับ",
-      published_date: input.publishedDate.trim(),
-      open_date: input.openDate.trim(),
-      close_date: input.closeDate.trim(),
-      source_url: input.sourceUrl.trim() || null,
-      details: input.details.trim(),
-      image_path: imagePath,
-      display_order: input.displayOrder,
-    })
+    .update(updatePayload)
     .eq("funding_id", fundingId);
+
+  if (error && isMissingSchemaError(error.message)) {
+    const { image_position: _imagePosition, ...withoutPosition } = updatePayload;
+    ({ error } = await supabase
+      .from("fundings")
+      .update(withoutPosition)
+      .eq("funding_id", fundingId));
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -404,6 +548,10 @@ export async function deleteAdminFunding(fundingId: string): Promise<void> {
 
   for (const attachment of existing.attachments) {
     await removeFundingDocument(attachment.storagePath);
+  }
+
+  for (const image of existing.detailImages) {
+    await removeFundingImage(image.storagePath);
   }
 
   const { error } = await supabase.from("fundings").delete().eq("funding_id", fundingId);

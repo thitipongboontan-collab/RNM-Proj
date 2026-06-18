@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo } from "react";
 import {
@@ -9,6 +8,7 @@ import {
   updateNewsAction,
   type NewsActionState,
 } from "@/app/admin/news/actions";
+import { CoverImageField } from "@/components/admin/CoverImageField";
 import { NewsCategoryField } from "@/components/admin/NewsCategoryField";
 import { ThaiEventDateField } from "@/components/admin/ThaiEventDateField";
 import type { AdminNewsRecord } from "@/lib/admin/news-types";
@@ -119,32 +119,14 @@ export function NewsAdminForm({ mode, record }: NewsAdminFormProps) {
         placeholder="https://example.com/news"
       />
 
-      <div className="rounded-2xl border border-[#E5E7EF] bg-[#FAFBFD] p-5">
-        <p className="text-sm font-medium text-brand-dark">รูปภาพข่าว</p>
-        {record?.imagePath ? (
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative h-28 w-44 overflow-hidden rounded-xl bg-white">
-              <Image
-                src={resolveNewsImageSrc(record.imagePath) ?? ""}
-                alt={record.title}
-                fill
-                className="object-cover"
-                unoptimized={record.imagePath.startsWith("http")}
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-brand-muted">
-              <input type="checkbox" name="removeImage" className="rounded border-[#D9DEE8]" />
-              ลบรูปปัจจุบัน
-            </label>
-          </div>
-        ) : null}
-        <input
-          type="file"
-          name="image"
-          accept="image/png,image/jpeg,image/webp,image/jpg"
-          className="mt-3 block w-full text-sm text-brand-muted file:mr-4 file:rounded-lg file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
-        />
-      </div>
+      <CoverImageField
+        label="รูปภาพข่าว (รูปหลัก)"
+        description="ใช้แสดงในการ์ดข่าวและด้านบนของหน้ารายละเอียด"
+        existingImageSrc={record?.imagePath ? resolveNewsImageSrc(record.imagePath) : undefined}
+        defaultImagePosition={record?.imagePosition ?? "50% 50%"}
+        showRemoveCheckbox={Boolean(record?.imagePath)}
+        imageAlt={record?.title ?? "รูปภาพข่าว"}
+      />
 
       <div className="rounded-2xl border border-[#E5E7EF] bg-[#FAFBFD] p-5">
         <p className="text-sm font-medium text-brand-dark">ไฟล์เพิ่มเติม (ไม่บังคับ)</p>

@@ -6,12 +6,16 @@ import {
   createAdminFunding,
   deleteAdminFunding,
   deleteAdminFundingAttachment,
+  deleteAdminFundingDetailImage,
+  prepareFundingDetailImageUpload,
   prepareFundingDocumentUpload,
+  registerFundingDetailImage,
   registerFundingDocumentAttachment,
   updateAdminFunding,
 } from "@/lib/admin/funding-admin";
 import type { AdminFundingFormInput } from "@/lib/admin/funding-types";
 import { revalidateFundingCaches } from "@/lib/admin/revalidate";
+import { normalizeImagePosition } from "@/lib/image-position";
 
 export type FundingActionState = {
   error?: string;
@@ -33,6 +37,7 @@ function readFundingInput(formData: FormData): AdminFundingFormInput {
     sourceUrl: String(formData.get("sourceUrl") ?? ""),
     details: String(formData.get("details") ?? ""),
     displayOrder: Number.parseInt(String(formData.get("displayOrder") ?? "0"), 10) || 0,
+    imagePosition: normalizeImagePosition(String(formData.get("imagePosition") ?? "")),
   };
 }
 
@@ -189,6 +194,58 @@ export async function deleteFundingAttachmentAction(
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "ไม่สามารถลบไฟล์แนบได้",
+    };
+  }
+}
+
+export async function prepareFundingDetailImageUploadAction(
+  fundingId: string,
+  fileName: string,
+  imageOrder: number,
+) {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  return prepareFundingDetailImageUpload(fundingId, fileName, imageOrder);
+}
+
+export async function completeFundingDetailImageUploadAction(
+  fundingId: string,
+  image: {
+    storagePath: string;
+    imageOrder: number;
+  },
+): Promise<void> {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  await registerFundingDetailImage(fundingId, image);
+  revalidateFundingCaches();
+}
+
+export async function deleteFundingDetailImageAction(
+  fundingId: string,
+  imageId: number,
+): Promise<FundingActionState> {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  try {
+    await deleteAdminFundingDetailImage(fundingId, imageId);
+    revalidateFundingCaches();
+    return { success: "ลบรูปภาพแล้ว" };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "ไม่สามารถลบรูปภาพได้",
     };
   }
 }

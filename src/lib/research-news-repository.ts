@@ -3,10 +3,21 @@ import type { ResearchNewsDetail, ResearchNewsItem } from "@/data/research-news"
 import { getResearchNewsGradient } from "@/data/research-news";
 import { getMockResearchNewsById, RESEARCH_NEWS_MOCK } from "@/data/research-news-mock";
 import { resolveNewsAttachmentUrl, resolveNewsImageSrc } from "@/lib/news-assets";
+import { normalizeImagePosition } from "@/lib/image-position";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { normalizeThaiEventDateForDisplay } from "@/lib/thai-date";
 
 const CACHE_REVALIDATE_SECONDS = 300;
+
+const NEWS_LIST_SELECT_WITH_POSITION =
+  "news_id, title, category, published_date, external_url, image_path, image_position, attachment_storage_path, view_count, display_order";
+const NEWS_LIST_SELECT_BASE =
+  "news_id, title, category, published_date, external_url, image_path, attachment_storage_path, view_count, display_order";
+const NEWS_DETAIL_SELECT_WITH_POSITION =
+  "news_id, title, category, published_date, details, external_url, image_path, image_position, attachment_file_name, attachment_storage_path, view_count, display_order";
+const NEWS_DETAIL_SELECT_BASE =
+  "news_id, title, category, published_date, details, external_url, image_path, attachment_file_name, attachment_storage_path, view_count, display_order";
 
 type NewsRow = {
   news_id: string;
@@ -16,6 +27,7 @@ type NewsRow = {
   details?: string;
   external_url: string | null;
   image_path: string | null;
+  image_position?: string | null;
   attachment_file_name: string | null;
   attachment_storage_path: string | null;
   view_count: number | null;
@@ -31,6 +43,7 @@ function mapNewsRow(row: NewsRow, index: number): ResearchNewsItem {
     views: row.view_count ?? 0,
     imageGradient: getResearchNewsGradient(index),
     imageSrc: resolveNewsImageSrc(row.image_path),
+    imagePosition: normalizeImagePosition(row.image_position),
     externalUrl: row.external_url ?? undefined,
     attachmentUrl: resolveNewsAttachmentUrl(row.attachment_storage_path),
   };
@@ -52,12 +65,15 @@ async function fetchResearchNewsFromDb(): Promise<ResearchNewsItem[]> {
   const supabase = createSupabaseClient();
   if (!supabase) return loadMockNews();
 
-  const { data, error } = await supabase
-    .from("research_news")
-    .select(
-      "news_id, title, category, published_date, external_url, image_path, attachment_storage_path, view_count, display_order",
-    )
-    .order("display_order");
+  const primary = await supabase.from("research_news").select(NEWS_LIST_SELECT_WITH_POSITION).order("display_order");
+  let data = primary.data as NewsRow[] | null;
+  let error = primary.error;
+
+  if (error && isMissingSchemaError(error.message)) {
+    const fallback = await supabase.from("research_news").select(NEWS_LIST_SELECT_BASE).order("display_order");
+    data = fallback.data as NewsRow[] | null;
+    error = fallback.error;
+  }
 
   if (error || !data?.length) {
     if (error) console.error("Failed to fetch research news:", error.message);
@@ -85,13 +101,23 @@ async function fetchResearchNewsByIdFromDb(id: string): Promise<ResearchNewsDeta
   const supabase = createSupabaseClient();
   if (!supabase) return getMockResearchNewsById(id);
 
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("research_news")
-    .select(
-      "news_id, title, category, published_date, details, external_url, image_path, attachment_file_name, attachment_storage_path, view_count, display_order",
-    )
+    .select(NEWS_DETAIL_SELECT_WITH_POSITION)
     .eq("news_id", id)
     .maybeSingle();
+  let data = primary.data as NewsRow | null;
+  let error = primary.error;
+
+  if (error && isMissingSchemaError(error.message)) {
+    const fallback = await supabase
+      .from("research_news")
+      .select(NEWS_DETAIL_SELECT_BASE)
+      .eq("news_id", id)
+      .maybeSingle();
+    data = fallback.data as NewsRow | null;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("Failed to fetch research news detail:", error.message);

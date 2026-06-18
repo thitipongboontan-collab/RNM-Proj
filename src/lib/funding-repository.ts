@@ -10,8 +10,19 @@ import { parseFundingDetails } from "@/lib/funding-content";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { abbreviateThaiMonthsInText } from "@/lib/thai-date";
 import { resolveFundingDocumentUrl, resolveFundingImageSrc } from "@/lib/funding-assets";
+import { normalizeImagePosition } from "@/lib/image-position";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 const CACHE_REVALIDATE_SECONDS = 300;
+
+const FUNDING_SUMMARY_SELECT_WITH_POSITION =
+  "funding_id, title, organization, status_label, published_date, open_date, close_date, image_path, image_position, display_order";
+const FUNDING_SUMMARY_SELECT_BASE =
+  "funding_id, title, organization, status_label, published_date, open_date, close_date, image_path, display_order";
+const FUNDING_FULL_SELECT_WITH_POSITION =
+  "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, image_position, display_order";
+const FUNDING_FULL_SELECT_BASE =
+  "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order";
 
 type FundingImportRecord = {
   id: string;
@@ -42,6 +53,7 @@ type FundingRow = {
   source_url: string | null;
   details: string;
   image_path: string | null;
+  image_position?: string | null;
   display_order: number | null;
 };
 
@@ -70,6 +82,7 @@ function buildDetail(
     "full_title" | "organization" | "published_date" | "details" | "source_url"
   >,
   attachments: FundingAttachment[],
+  detailImages: string[] = [],
 ): FundingDetailContent {
   const parsed = parseFundingDetails(row.details, row.source_url ?? undefined);
 
@@ -79,6 +92,7 @@ function buildDetail(
     publishedDate: row.published_date,
     downloadLabel: "ดาวน์โหลดไฟล์ที่เกี่ยวข้อง",
     attachments,
+    detailImages,
     ...parsed,
   };
 }
@@ -121,6 +135,17 @@ function mapImportSummary(record: FundingImportRecord): FundingListItem {
   };
 }
 
+type DetailImageRow = {
+  id: number;
+  funding_id: string;
+  storage_path: string;
+  image_order: number | null;
+};
+
+function mapDetailImageRow(row: DetailImageRow): string {
+  return resolveFundingImageSrc(row.storage_path) ?? row.storage_path;
+}
+
 function mapAttachmentRow(row: AttachmentRow): FundingAttachment {
   return {
     id: String(row.id),
@@ -140,6 +165,7 @@ function mapFundingSummaryRow(row: FundingRow, imageVariant: 1 | 2 | 3): Funding
     publishedDate: row.published_date,
     imageVariant,
     imageSrc: resolveFundingImageSrc(row.image_path),
+    imagePosition: normalizeImagePosition(row.image_position),
     statusLabel: row.status_label,
   };
 }
@@ -147,11 +173,12 @@ function mapFundingSummaryRow(row: FundingRow, imageVariant: 1 | 2 | 3): Funding
 function mapFundingRow(
   row: FundingRow,
   attachments: FundingAttachment[],
+  detailImages: string[],
   imageVariant: 1 | 2 | 3,
 ): FundingItem {
   return {
     ...mapFundingSummaryRow(row, imageVariant),
-    detail: buildDetail(row, attachments),
+    detail: buildDetail(row, attachments, detailImages),
   };
 }
 
@@ -167,12 +194,18 @@ async function fetchFundingSummariesFromDb(): Promise<FundingListItem[]> {
   const supabase = createSupabaseClient();
   if (!supabase) return loadImportSummaryCache();
 
-  const { data, error } = await supabase
-    .from("fundings")
-    .select(
-      "funding_id, title, organization, status_label, published_date, open_date, close_date, image_path, display_order",
-    )
-    .order("display_order");
+  const summarySelectWithPosition = FUNDING_SUMMARY_SELECT_WITH_POSITION;
+  const summarySelectBase = FUNDING_SUMMARY_SELECT_BASE;
+
+  const primary = await supabase.from("fundings").select(summarySelectWithPosition).order("display_order");
+  let data = primary.data as FundingRow[] | null;
+  let error = primary.error;
+
+  if (error && isMissingSchemaError(error.message)) {
+    const fallback = await supabase.from("fundings").select(summarySelectBase).order("display_order");
+    data = fallback.data as FundingRow[] | null;
+    error = fallback.error;
+  }
 
   if (error || !data?.length) {
     if (error) console.error("Failed to fetch fundings:", error.message);
@@ -188,12 +221,18 @@ async function fetchFundingsFromDb(): Promise<FundingItem[]> {
   const supabase = createSupabaseClient();
   if (!supabase) return loadImportCache();
 
-  const { data, error } = await supabase
-    .from("fundings")
-    .select(
-      "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order",
-    )
-    .order("display_order");
+  const fullSelectWithPosition = FUNDING_FULL_SELECT_WITH_POSITION;
+  const fullSelectBase = FUNDING_FULL_SELECT_BASE;
+
+  const primary = await supabase.from("fundings").select(fullSelectWithPosition).order("display_order");
+  let data = primary.data as FundingRow[] | null;
+  let error = primary.error;
+
+  if (error && isMissingSchemaError(error.message)) {
+    const fallback = await supabase.from("fundings").select(fullSelectBase).order("display_order");
+    data = fallback.data as FundingRow[] | null;
+    error = fallback.error;
+  }
 
   if (error || !data?.length) {
     if (error) console.error("Failed to fetch fundings:", error.message);
@@ -220,10 +259,28 @@ async function fetchFundingsFromDb(): Promise<FundingItem[]> {
     attachmentsByFunding.set(row.funding_id, list);
   }
 
+  const { data: detailImageData, error: detailImageError } = await supabase
+    .from("funding_detail_images")
+    .select("id, funding_id, storage_path, image_order")
+    .in("funding_id", ids)
+    .order("image_order");
+
+  if (detailImageError) {
+    console.error("Failed to fetch funding detail images:", detailImageError.message);
+  }
+
+  const detailImagesByFunding = new Map<string, string[]>();
+  for (const row of (detailImageData ?? []) as DetailImageRow[]) {
+    const list = detailImagesByFunding.get(row.funding_id) ?? [];
+    list.push(mapDetailImageRow(row));
+    detailImagesByFunding.set(row.funding_id, list);
+  }
+
   return fundingRows.map((row, index) =>
     mapFundingRow(
       row,
       attachmentsByFunding.get(row.funding_id) ?? [],
+      detailImagesByFunding.get(row.funding_id) ?? [],
       ((index % 3) + 1) as 1 | 2 | 3,
     ),
   );
@@ -235,13 +292,23 @@ async function fetchFundingByIdFromDb(id: string): Promise<FundingItem | null> {
     return loadImportCache().find((item) => item.id === id) ?? null;
   }
 
-  const { data, error } = await supabase
+  const primary = await supabase
     .from("fundings")
-    .select(
-      "funding_id, funding_code, title, full_title, organization, status_label, published_date, open_date, close_date, source_url, details, image_path, display_order",
-    )
+    .select(FUNDING_FULL_SELECT_WITH_POSITION)
     .eq("funding_id", id)
     .maybeSingle();
+  let data = primary.data as FundingRow | null;
+  let error = primary.error;
+
+  if (error && isMissingSchemaError(error.message)) {
+    const fallback = await supabase
+      .from("fundings")
+      .select(FUNDING_FULL_SELECT_BASE)
+      .eq("funding_id", id)
+      .maybeSingle();
+    data = fallback.data as FundingRow | null;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("Failed to fetch funding:", error.message);
@@ -265,11 +332,23 @@ async function fetchFundingByIdFromDb(id: string): Promise<FundingItem | null> {
   }
 
   const attachments = ((attachmentData ?? []) as AttachmentRow[]).map(mapAttachmentRow);
+
+  const { data: detailImageData, error: detailImageError } = await supabase
+    .from("funding_detail_images")
+    .select("id, funding_id, storage_path, image_order")
+    .eq("funding_id", id)
+    .order("image_order");
+
+  if (detailImageError) {
+    console.error("Failed to fetch funding detail images:", detailImageError.message);
+  }
+
+  const detailImages = ((detailImageData ?? []) as DetailImageRow[]).map(mapDetailImageRow);
   const summaries = await fetchFundingSummariesFromDb();
   const index = summaries.findIndex((item) => item.id === id);
   const imageVariant = ((index >= 0 ? index : 0) % 3 + 1) as 1 | 2 | 3;
 
-  return mapFundingRow(row, attachments, imageVariant);
+  return mapFundingRow(row, attachments, detailImages, imageVariant);
 }
 
 const getFundingSummariesCached = unstable_cache(

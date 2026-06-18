@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ResearchNewsItem } from "@/data/research-news";
+import { resolveImagePositionCss } from "@/lib/image-position";
 
 function EyeIcon() {
   return (
@@ -42,6 +43,7 @@ export function ResearchNewsCard({ item }: { item: ResearchNewsItem }) {
             alt={item.title}
             fill
             className="object-cover"
+            style={{ objectPosition: resolveImagePositionCss(item.imagePosition) }}
             unoptimized={item.imageSrc.startsWith("http")}
           />
         ) : null}

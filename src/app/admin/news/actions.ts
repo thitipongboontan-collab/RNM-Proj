@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin/news-admin";
 import type { AdminNewsFormInput } from "@/lib/admin/news-types";
 import { revalidateNewsCaches } from "@/lib/admin/revalidate";
+import { normalizeImagePosition } from "@/lib/image-position";
 import { parseThaiEventDateText } from "@/lib/thai-date";
 
 export type NewsActionState = {
@@ -34,6 +35,7 @@ function readNewsInput(formData: FormData): AdminNewsFormInput {
     details: String(formData.get("details") ?? ""),
     externalUrl: String(formData.get("externalUrl") ?? ""),
     displayOrder: Number.parseInt(String(formData.get("displayOrder") ?? "0"), 10) || 0,
+    imagePosition: normalizeImagePosition(String(formData.get("imagePosition") ?? "")),
   };
 }
 

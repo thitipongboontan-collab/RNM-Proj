@@ -5,6 +5,8 @@ import type {
   AdminNewsRecord,
 } from "@/lib/admin/news-types";
 import { removeNewsAttachment, removeNewsImage, uploadNewsAttachment, uploadNewsImage } from "@/lib/admin/news-upload";
+import { normalizeImagePosition } from "@/lib/image-position";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 import { normalizeThaiEventDateForDisplay } from "@/lib/thai-date";
 
 type NewsRow = {
@@ -15,6 +17,7 @@ type NewsRow = {
   details: string;
   external_url: string | null;
   image_path: string | null;
+  image_position?: string | null;
   attachment_file_name: string | null;
   attachment_storage_path: string | null;
   view_count: number | null;
@@ -38,6 +41,7 @@ function mapNewsRecord(row: NewsRow): AdminNewsRecord {
     details: row.details,
     externalUrl: row.external_url ?? "",
     imagePath: row.image_path,
+    imagePosition: normalizeImagePosition(row.image_position),
     attachmentFileName: row.attachment_file_name,
     attachmentStoragePath: row.attachment_storage_path,
     viewCount: row.view_count ?? 0,
@@ -68,13 +72,24 @@ export async function listAdminNews(): Promise<AdminNewsListItem[]> {
 
 export async function getAdminNewsById(id: string): Promise<AdminNewsRecord | null> {
   const supabase = getAdminClient();
-  const { data, error } = await supabase
+  const selectWithPosition =
+    "news_id, title, category, published_date, details, external_url, image_path, image_position, attachment_file_name, attachment_storage_path, view_count, display_order";
+  const selectBase =
+    "news_id, title, category, published_date, details, external_url, image_path, attachment_file_name, attachment_storage_path, view_count, display_order";
+
+  let { data, error } = await supabase
     .from("research_news")
-    .select(
-      "news_id, title, category, published_date, details, external_url, image_path, attachment_file_name, attachment_storage_path, view_count, display_order",
-    )
+    .select(selectWithPosition)
     .eq("news_id", id)
     .maybeSingle();
+
+  if (error && isMissingSchemaError(error.message)) {
+    ({ data, error } = await supabase
+      .from("research_news")
+      .select(selectBase)
+      .eq("news_id", id)
+      .maybeSingle());
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -149,7 +164,7 @@ export async function createAdminNews(
     attachmentStoragePath = uploaded.storagePath;
   }
 
-  const { error } = await supabase.from("research_news").insert({
+  const insertPayload = {
     news_id: newsId,
     title: input.title.trim(),
     category: input.category.trim(),
@@ -157,10 +172,17 @@ export async function createAdminNews(
     details: input.details.trim(),
     external_url: input.externalUrl.trim() || null,
     image_path: imagePath,
+    image_position: normalizeImagePosition(input.imagePosition),
     attachment_file_name: attachmentFileName,
     attachment_storage_path: attachmentStoragePath,
     display_order: 1,
-  });
+  };
+
+  let { error } = await supabase.from("research_news").insert(insertPayload);
+  if (error && isMissingSchemaError(error.message)) {
+    const { image_position: _imagePosition, ...withoutPosition } = insertPayload;
+    ({ error } = await supabase.from("research_news").insert(withoutPosition));
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -215,20 +237,24 @@ export async function updateAdminNews(
     attachmentStoragePath = uploaded.storagePath;
   }
 
-  const { error } = await supabase
-    .from("research_news")
-    .update({
-      title: input.title.trim(),
-      category: input.category.trim(),
-      published_date: normalizeThaiEventDateForDisplay(input.publishedDate.trim()),
-      details: input.details.trim(),
-      external_url: input.externalUrl.trim() || null,
-      image_path: imagePath,
-      attachment_file_name: attachmentFileName,
-      attachment_storage_path: attachmentStoragePath,
-      display_order: input.displayOrder ?? existing.displayOrder,
-    })
-    .eq("news_id", newsId);
+  const updatePayload = {
+    title: input.title.trim(),
+    category: input.category.trim(),
+    published_date: normalizeThaiEventDateForDisplay(input.publishedDate.trim()),
+    details: input.details.trim(),
+    external_url: input.externalUrl.trim() || null,
+    image_path: imagePath,
+    image_position: normalizeImagePosition(input.imagePosition),
+    attachment_file_name: attachmentFileName,
+    attachment_storage_path: attachmentStoragePath,
+    display_order: input.displayOrder ?? existing.displayOrder,
+  };
+
+  let { error } = await supabase.from("research_news").update(updatePayload).eq("news_id", newsId);
+  if (error && isMissingSchemaError(error.message)) {
+    const { image_position: _imagePosition, ...withoutPosition } = updatePayload;
+    ({ error } = await supabase.from("research_news").update(withoutPosition).eq("news_id", newsId));
+  }
 
   if (error) {
     throw new Error(error.message);

@@ -6,6 +6,7 @@ export type AdminNewsRecord = {
   details: string;
   externalUrl: string;
   imagePath: string | null;
+  imagePosition: string;
   attachmentFileName: string | null;
   attachmentStoragePath: string | null;
   viewCount: number;
@@ -19,6 +20,7 @@ export type AdminNewsFormInput = {
   details: string;
   externalUrl: string;
   displayOrder?: number;
+  imagePosition: string;
 };
 
 export type AdminNewsListItem = {

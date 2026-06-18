@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FundingStarButton } from "@/components/funding/FundingStarButton";
 import { HERO_GRADIENT, type FundingListItem } from "@/data/funding";
+import { resolveImagePositionCss } from "@/lib/image-position";
 
 type FundingCardProps = {
   item: FundingListItem;
@@ -38,6 +39,7 @@ export function FundingCard({ item, starred = false, onToggleStar }: FundingCard
               fill
               sizes="420px"
               className="object-cover"
+              style={{ objectPosition: resolveImagePositionCss(item.imagePosition) }}
               unoptimized={item.imageSrc.startsWith("http")}
             />
           )}

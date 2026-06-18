@@ -7,14 +7,17 @@ import { type FormEvent, useRef, useState } from "react";
 import {
   createFundingAction,
   deleteFundingAttachmentAction,
+  deleteFundingDetailImageAction,
   updateFundingAction,
 } from "@/app/admin/fundings/actions";
+import { CoverImageField } from "@/components/admin/CoverImageField";
 import {
   MultiFileUploadSection,
   type MultiFileUploadHandle,
 } from "@/components/admin/MultiFileUploadField";
 import { ThaiDateField } from "@/components/admin/ThaiDateField";
 import { uploadFundingAttachmentsClient } from "@/lib/admin/funding-client-upload";
+import { uploadFundingDetailImagesClient } from "@/lib/admin/funding-detail-image-client-upload";
 import type { AdminFundingRecord } from "@/lib/admin/funding-types";
 import { resolveFundingDocumentUrl, resolveFundingImageSrc } from "@/lib/funding-assets";
 
@@ -58,6 +61,7 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
   const router = useRouter();
   const fundingId = record?.fundingId;
   const attachmentsRef = useRef<MultiFileUploadHandle>(null);
+  const detailImagesRef = useRef<MultiFileUploadHandle>(null);
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "error" | "success"; text: string } | null>(
     null,
@@ -70,6 +74,7 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
 
     const formData = new FormData(event.currentTarget);
     const attachmentFiles = attachmentsRef.current?.getFiles() ?? [];
+    const detailImageFiles = detailImagesRef.current?.getFiles() ?? [];
 
     try {
       if (mode === "create") {
@@ -79,10 +84,15 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
           return;
         }
 
-        if (result.fundingId && attachmentFiles.length > 0) {
-          const startOrder = 0;
-          await uploadFundingAttachmentsClient(result.fundingId, attachmentFiles, startOrder);
-          attachmentsRef.current?.clearFiles();
+        if (result.fundingId) {
+          if (attachmentFiles.length > 0) {
+            await uploadFundingAttachmentsClient(result.fundingId, attachmentFiles, 0);
+            attachmentsRef.current?.clearFiles();
+          }
+          if (detailImageFiles.length > 0) {
+            await uploadFundingDetailImagesClient(result.fundingId, detailImageFiles, 0);
+            detailImagesRef.current?.clearFiles();
+          }
         }
 
         if (result.redirectTo) {
@@ -102,6 +112,13 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
           record?.attachments.reduce((max, item) => Math.max(max, item.fileOrder), 0) ?? 0;
         await uploadFundingAttachmentsClient(fundingId!, attachmentFiles, startOrder);
         attachmentsRef.current?.clearFiles();
+      }
+
+      if (detailImageFiles.length > 0) {
+        const startOrder =
+          record?.detailImages.reduce((max, item) => Math.max(max, item.imageOrder), 0) ?? 0;
+        await uploadFundingDetailImagesClient(fundingId!, detailImageFiles, startOrder);
+        detailImagesRef.current?.clearFiles();
       }
 
       setStatusMessage({
@@ -169,32 +186,56 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
         />
       </label>
 
-      <div className="rounded-2xl border border-[#E5E7EF] bg-[#FAFBFD] p-5">
-        <p className="text-sm font-medium text-brand-dark">รูปภาพปก</p>
-        {record?.imagePath ? (
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative h-28 w-44 overflow-hidden rounded-xl bg-white">
-              <Image
-                src={resolveFundingImageSrc(record.imagePath) ?? ""}
-                alt={record.title}
-                fill
-                className="object-cover"
-                unoptimized={record.imagePath.startsWith("http")}
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-brand-muted">
-              <input type="checkbox" name="removeImage" className="rounded border-[#D9DEE8]" />
-              ลบรูปปัจจุบัน
-            </label>
-          </div>
-        ) : null}
-        <input
-          type="file"
-          name="image"
-          accept="image/png,image/jpeg,image/webp,image/jpg"
-          className="mt-3 block w-full text-sm text-brand-muted file:mr-4 file:rounded-lg file:border-0 file:bg-brand-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
-        />
-      </div>
+      <CoverImageField
+        label="รูปภาพปก (รูปหลัก)"
+        description="ใช้แสดงในการ์ดรายการและด้านบนของหน้ารายละเอียด"
+        existingImageSrc={record?.imagePath ? resolveFundingImageSrc(record.imagePath) : undefined}
+        defaultImagePosition={record?.imagePosition ?? "50% 50%"}
+        showRemoveCheckbox={Boolean(record?.imagePath)}
+        imageAlt={record?.title ?? "รูปภาพปกทุน"}
+      />
+
+      {mode === "edit" && record?.detailImages.length ? (
+        <div className="rounded-2xl border border-[#E5E7EF] bg-white p-5">
+          <p className="text-sm font-medium text-brand-dark">รูปภาพย่อยในหน้ารายละเอียด (ปัจจุบัน)</p>
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {record.detailImages.map((image) => (
+              <li
+                key={image.id}
+                className="flex flex-col gap-2 rounded-xl border border-[#EEF1F6] p-2"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[#FAFBFD]">
+                  <Image
+                    src={resolveFundingImageSrc(image.storagePath) ?? ""}
+                    alt="รูปภาพย่อย"
+                    fill
+                    className="object-cover"
+                    unoptimized={image.storagePath.startsWith("http")}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg border border-[#FECDD3] px-3 py-1.5 text-xs font-medium text-[#BE123C]"
+                  onClick={async () => {
+                    if (!confirm("ลบรูปภาพนี้?")) return;
+                    await deleteFundingDetailImageAction(record.fundingId, image.id);
+                    router.refresh();
+                  }}
+                >
+                  ลบรูป
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <MultiFileUploadSection
+        ref={detailImagesRef}
+        label="เพิ่มรูปภาพย่อยในหน้ารายละเอียด"
+        accept="image/png,image/jpeg,image/webp,image/jpg"
+        description="รูปเหล่านี้จะแสดงในส่วนรายละเอียดเท่านั้น ไม่กระทบรูปปกหลัก"
+      />
 
       {mode === "edit" && record?.attachments.length ? (
         <div className="rounded-2xl border border-[#E5E7EF] bg-white p-5">

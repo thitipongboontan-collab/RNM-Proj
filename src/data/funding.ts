@@ -15,6 +15,7 @@ export type FundingDetailContent = {
   closingNote?: string;
   downloadLabel: string;
   attachments: FundingAttachment[];
+  detailImages: string[];
   nriisUrl: string;
   nrctUrl: string;
 };
@@ -28,6 +29,7 @@ export type FundingItem = {
   publishedDate: string;
   imageVariant: 1 | 2 | 3;
   imageSrc?: string;
+  imagePosition?: string;
   statusLabel: string;
   detail: FundingDetailContent;
 };

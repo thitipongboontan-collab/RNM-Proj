@@ -6,6 +6,7 @@ export type ResearchNewsItem = {
   views: number;
   imageGradient: string;
   imageSrc?: string;
+  imagePosition?: string;
   externalUrl?: string;
   attachmentUrl?: string;
 };
