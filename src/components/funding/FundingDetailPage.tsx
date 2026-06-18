@@ -115,6 +115,7 @@ export function FundingDetailPage({
               sizes="1280px"
               priority
               className="object-cover"
+              unoptimized={item.imageSrc.startsWith("http")}
             />
           )}
         </div>

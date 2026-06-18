@@ -66,10 +66,14 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
   const [state, formAction, pending] = useActionState(action, initialState);
 
   useEffect(() => {
+    if (state.redirectTo) {
+      router.push(state.redirectTo);
+      return;
+    }
     if (state.success) {
       router.refresh();
     }
-  }, [state.success, router]);
+  }, [state.redirectTo, state.success, router]);
 
   return (
     <form action={formAction} className="space-y-6">

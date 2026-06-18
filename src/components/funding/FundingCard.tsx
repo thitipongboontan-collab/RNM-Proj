@@ -38,6 +38,7 @@ export function FundingCard({ item, starred = false, onToggleStar }: FundingCard
               fill
               sizes="420px"
               className="object-cover"
+              unoptimized={item.imageSrc.startsWith("http")}
             />
           )}
         </div>

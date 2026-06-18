@@ -14,6 +14,7 @@ import { revalidateFundingCaches } from "@/lib/admin/revalidate";
 export type FundingActionState = {
   error?: string;
   success?: string;
+  redirectTo?: string;
 };
 
 function readFundingInput(formData: FormData): AdminFundingFormInput {
@@ -71,9 +72,8 @@ export async function createFundingAction(
       readAttachmentFiles(formData),
     );
     revalidateFundingCaches();
-    redirect(`/admin/fundings/${fundingId}/edit?saved=1`);
+    return { redirectTo: `/admin/fundings/${fundingId}/edit?saved=1` };
   } catch (error) {
-    unstable_rethrow(error);
     return {
       error: error instanceof Error ? error.message : "ไม่สามารถบันทึกแหล่งทุนได้",
     };
