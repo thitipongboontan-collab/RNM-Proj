@@ -1,6 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { AttachmentCard, DownloadIcon } from "@/components/funding/FundingDetailParts";
+import { AdaptiveDetailLayout } from "@/components/detail/AdaptiveDetailLayout";
 import type { ResearchNewsDetail } from "@/data/research-news";
 
 function EyeIcon() {
@@ -17,6 +18,13 @@ function EyeIcon() {
   );
 }
 
+function getAttachmentType(fileName?: string): "doc" | "pdf" {
+  return fileName?.toLowerCase().endsWith(".doc") ||
+    fileName?.toLowerCase().endsWith(".docx")
+    ? "doc"
+    : "pdf";
+}
+
 export function ResearchNewsDetailPage({ item }: { item: ResearchNewsDetail }) {
   return (
     <>
@@ -28,80 +36,83 @@ export function ResearchNewsDetailPage({ item }: { item: ResearchNewsDetail }) {
         ]}
       />
 
-      <article className="mx-auto w-full max-w-[900px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-brand-primary/10 px-4 py-1 text-sm font-medium text-brand-primary">
+      <section className="flex flex-col items-center gap-[30px] px-4 pb-0 pt-[50px] sm:px-8 lg:px-20">
+        <h1 className="max-w-[1280px] text-center text-[32px] font-bold leading-snug text-brand-primary">
+          {item.title}
+        </h1>
+
+        <div className="flex flex-wrap items-center justify-center gap-5">
+          <span className="rounded-[20px] bg-brand-primary/10 px-5 py-[3px] text-base font-medium text-brand-primary">
             {item.category}
           </span>
-          <span className="text-sm text-brand-muted">{item.publishedDate}</span>
-          <span className="flex items-center gap-1 text-sm text-brand-muted">
+          <span className="text-lg text-[#5F5F60]">{item.publishedDate}</span>
+          <span className="flex items-center gap-1 text-lg text-[#5F5F60]">
             <EyeIcon />
             {item.views} views
           </span>
         </div>
+      </section>
 
-        <h1 className="mt-5 font-sans text-2xl font-bold leading-snug text-brand-dark sm:text-3xl">
-          {item.title}
-        </h1>
+      <section className="px-4 py-[50px] sm:px-8 lg:px-20">
+        <div className="mx-auto w-full max-w-[1280px]">
+          <AdaptiveDetailLayout
+            imageSrc={item.imageSrc}
+            imageAlt={item.title}
+            fallbackBackground={item.imageGradient}
+            details={
+              <div className="flex flex-col gap-5">
+                <h2 className="text-[25px] font-semibold text-brand-dark">รายละเอียด</h2>
 
-        {item.imageSrc ? (
-          <div className="mt-8 overflow-hidden rounded-2xl bg-[#EEF1F6]">
-            <Image
-              src={item.imageSrc}
-              alt={item.title}
-              width={900}
-              height={600}
-              className="h-auto w-full"
-              priority
-              unoptimized={item.imageSrc.startsWith("http")}
-            />
-          </div>
-        ) : (
-          <div
-            className="mt-8 aspect-[16/9] w-full rounded-2xl"
-            style={{ background: item.imageGradient }}
-            aria-hidden
+                <div className="whitespace-pre-line text-lg leading-relaxed text-brand-dark">
+                  {item.details}
+                </div>
+
+                {item.externalUrl ? (
+                  <a
+                    href={item.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-fit rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                  >
+                    เปิดลิงก์เพิ่มเติม
+                  </a>
+                ) : null}
+              </div>
+            }
+            downloads={
+              item.attachmentUrl ? (
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center gap-[3px]">
+                    <DownloadIcon />
+                    <span className="text-[25px] font-semibold text-brand-dark">
+                      ดาวน์โหลดไฟล์ที่เกี่ยวข้อง
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-5">
+                    <AttachmentCard
+                      file={{
+                        id: "news-attachment",
+                        fileName: item.attachmentFileName ?? "ไฟล์แนบ",
+                        type: getAttachmentType(item.attachmentFileName),
+                        downloadUrl: item.attachmentUrl,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : undefined
+            }
+            footer={
+              <Link
+                href="/"
+                className="inline-flex rounded-xl border border-[#D9DEE8] px-5 py-3 text-sm font-medium text-brand-dark transition hover:bg-[#F3F5FA]"
+              >
+                กลับหน้าหลัก
+              </Link>
+            }
           />
-        )}
-
-        <div className="mt-8 whitespace-pre-line font-sans text-base leading-relaxed text-brand-dark sm:text-lg">
-          {item.details}
         </div>
-
-        {(item.externalUrl || item.attachmentUrl) && (
-          <div className="mt-8 flex flex-wrap gap-3 border-t border-[#EEF1F6] pt-6">
-            {item.externalUrl ? (
-              <a
-                href={item.externalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl bg-brand-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-              >
-                เปิดลิงก์เพิ่มเติม
-              </a>
-            ) : null}
-            {item.attachmentUrl ? (
-              <a
-                href={item.attachmentUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-[#D9DEE8] px-5 py-3 text-sm font-medium text-brand-dark transition hover:bg-[#F3F5FA]"
-              >
-                {item.attachmentFileName ? `ดาวน์โหลด ${item.attachmentFileName}` : "ดาวน์โหลดไฟล์แนบ"}
-              </a>
-            ) : null}
-          </div>
-        )}
-
-        <div className="mt-10">
-          <Link
-            href="/"
-            className="inline-flex rounded-xl border border-[#D9DEE8] px-5 py-3 text-sm font-medium text-brand-dark transition hover:bg-[#F3F5FA]"
-          >
-            กลับหน้าหลัก
-          </Link>
-        </div>
-      </article>
+      </section>
     </>
   );
 }
