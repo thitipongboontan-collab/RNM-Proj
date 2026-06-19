@@ -8,7 +8,6 @@ import {
 } from "@/components/funding/FundingDetailParts";
 import { DetailPagination } from "@/components/funding/FundingDetailPagination";
 import { HERO_GRADIENT, type FundingItem } from "@/data/funding";
-import { resolveImagePositionCss } from "@/lib/image-position";
 
 export function FundingDetailPage({
   item,
@@ -97,27 +96,31 @@ export function FundingDetailPage({
         }}
       >
         <div
-          className="relative h-[640px] w-full overflow-hidden rounded-2xl"
+          className="w-full overflow-hidden rounded-2xl bg-[#EEF1F6]"
           style={{
-            height: 640,
             width: "100%",
             borderRadius: 16,
-            background: item.imageSrc ? undefined : HERO_GRADIENT[item.imageVariant],
             flexShrink: 0,
           }}
           role="img"
           aria-label={item.detail.fullTitle}
         >
-          {item.imageSrc && (
+          {item.imageSrc ? (
             <Image
               src={item.imageSrc}
               alt={item.detail.fullTitle}
-              fill
-              sizes="1280px"
+              width={1280}
+              height={720}
+              sizes="100vw"
               priority
-              className="object-cover"
-              style={{ objectPosition: resolveImagePositionCss(item.imagePosition) }}
+              className="h-auto w-full"
               unoptimized={item.imageSrc.startsWith("http")}
+            />
+          ) : (
+            <div
+              className="aspect-[16/9] w-full"
+              style={{ background: HERO_GRADIENT[item.imageVariant] }}
+              aria-hidden
             />
           )}
         </div>
