@@ -16,7 +16,7 @@ export default async function Page({ params }: PageProps) {
   const item = await getResearchNewsById(id);
   if (!item) notFound();
 
-  await incrementResearchNewsViews(id);
+  const counted = await incrementResearchNewsViews(id);
 
-  return <ResearchNewsDetailPage item={{ ...item, views: item.views + 1 }} />;
+  return <ResearchNewsDetailPage item={{ ...item, views: item.views + (counted ? 1 : 0) }} />;
 }

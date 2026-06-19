@@ -153,7 +153,7 @@ export default async function AdminAnalyticsPage() {
             </div>
 
             <p className="text-sm text-brand-muted">
-              หมายเหตุ: นับทุกครั้งที่เปิดหน้า (page view) ไม่ใช่ unique visitor
+              หมายเหตุ: นับครั้งเดียวต่อ session ต่อหน้า/รายการ (ปิดเบราว์เซอร์แล้วเปิดใหม่จึงนับอีกครั้ง)
             </p>
           </>
         ) : null}
