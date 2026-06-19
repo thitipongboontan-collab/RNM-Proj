@@ -6,6 +6,7 @@ export function ResearcherCard({ item }: { item: ResearcherItem }) {
   return (
     <Link
       href={`/researchers/${item.id}`}
+      prefetch={false}
       className="flex min-h-0 w-full flex-col gap-5 rounded-[16px] bg-white px-5 py-6 shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)] sm:min-h-[296px] sm:gap-[27px] sm:px-[30px] sm:py-[35px]"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-5">

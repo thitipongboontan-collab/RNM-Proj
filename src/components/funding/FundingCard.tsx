@@ -24,6 +24,7 @@ export function FundingCard({ item, starred = false, onToggleStar }: FundingCard
       ) : null}
       <Link
         href={`/funding/${item.id}`}
+        prefetch={false}
         className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_0px_5px_0px_rgba(0,0,0,0.2)] transition hover:shadow-[0px_4px_16px_0px_rgba(0,0,0,0.15)]"
       >
         <div

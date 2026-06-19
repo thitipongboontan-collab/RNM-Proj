@@ -41,10 +41,10 @@ export async function countViewOnce(
     const viewed = await getViewedKeys();
     if (viewed.has(viewKey)) return false;
 
-    await increment();
-
     viewed.add(viewKey);
     await saveViewedKeys(viewed);
+
+    await increment();
     return true;
   } catch {
     await increment();

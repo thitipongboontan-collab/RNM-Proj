@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RecordContentView } from "@/components/analytics/RecordContentView";
 import {
   ContactRow,
   DetailSection,
@@ -20,6 +21,7 @@ export function ResearcherDetailPage({
 }) {
   return (
     <>
+      <RecordContentView type="researcher" id={item.id} />
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },

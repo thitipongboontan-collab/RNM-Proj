@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RecordContentView } from "@/components/analytics/RecordContentView";
 import { AttachmentCard, DownloadIcon } from "@/components/funding/FundingDetailParts";
 import { AdaptiveDetailLayout } from "@/components/detail/AdaptiveDetailLayout";
 import type { ResearchNewsDetail } from "@/data/research-news";
@@ -28,6 +29,7 @@ function getAttachmentType(fileName?: string): "doc" | "pdf" {
 export function ResearchNewsDetailPage({ item }: { item: ResearchNewsDetail }) {
   return (
     <>
+      <RecordContentView type="news" id={item.id} />
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },

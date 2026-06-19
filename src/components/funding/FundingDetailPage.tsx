@@ -1,4 +1,5 @@
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RecordContentView } from "@/components/analytics/RecordContentView";
 import { CopyLinkButton } from "@/components/funding/CopyLinkButton";
 import {
   AttachmentCard,
@@ -24,6 +25,7 @@ export function FundingDetailPage({
 }) {
   return (
     <>
+      <RecordContentView type="funding" id={item.id} />
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
