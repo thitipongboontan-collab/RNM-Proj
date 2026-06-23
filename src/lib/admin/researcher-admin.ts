@@ -5,6 +5,7 @@ import type {
   AdminResearcherRecord,
 } from "@/lib/admin/researcher-types";
 import { removeResearcherImage, uploadResearcherImage } from "@/lib/admin/researcher-upload";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 type ResearcherRow = {
   researcher_id: string;
@@ -307,11 +308,18 @@ export async function createAdminResearcher(
     imagePath = await uploadResearcherImage(researcherId, imageFile);
   }
 
-  const { error } = await supabase.from("researchers").insert({
+  const insertPayload = {
     researcher_id: researcherId,
     ...buildResearcherRowPayload(input),
     image_path: imagePath,
-  });
+  };
+
+  let { error } = await supabase.from("researchers").insert(insertPayload);
+
+  if (error && isMissingSchemaError(error.message)) {
+    const { updated_at: _updatedAt, ...withoutUpdatedAt } = insertPayload;
+    ({ error } = await supabase.from("researchers").insert(withoutUpdatedAt));
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -347,13 +355,23 @@ export async function updateAdminResearcher(
     imagePath = await uploadResearcherImage(researcherId, imageFile);
   }
 
-  const { error } = await supabase
+  const updatePayload = {
+    ...buildResearcherRowPayload(input),
+    image_path: imagePath,
+  };
+
+  let { error } = await supabase
     .from("researchers")
-    .update({
-      ...buildResearcherRowPayload(input),
-      image_path: imagePath,
-    })
+    .update(updatePayload)
     .eq("researcher_id", researcherId);
+
+  if (error && isMissingSchemaError(error.message)) {
+    const { updated_at: _updatedAt, ...withoutUpdatedAt } = updatePayload;
+    ({ error } = await supabase
+      .from("researchers")
+      .update(withoutUpdatedAt)
+      .eq("researcher_id", researcherId));
+  }
 
   if (error) {
     throw new Error(error.message);

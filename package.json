@@ -12,6 +12,7 @@
     "researchers:photos": "node scripts/researchers/sync-researcher-photos.mjs",
     "researchers:collaborations": "node scripts/researchers/prepare-collaboration-data.mjs",
     "researchers:scholarly": "node scripts/researchers/import-scholarly-metrics.mjs",
+    "researchers:projects": "node scripts/researchers/import-research-projects.mjs",
     "ai:index-embeddings": "node scripts/ai/index-embeddings.mjs"
   },
   "dependencies": {

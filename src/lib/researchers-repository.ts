@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import type { ResearcherItem, ResearcherPublication } from "@/data/researchers";
+import type { ResearcherItem, ResearcherProject, ResearcherPublication } from "@/data/researchers";
 import { resolveResearcherImageSrc } from "@/lib/researcher-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
 
@@ -49,6 +49,16 @@ type CollaborationRow = {
   researcher_id: string;
   organization_name: string;
   org_order: number | null;
+};
+
+type ProjectRow = {
+  id: number;
+  researcher_id: string;
+  project_name: string;
+  role_label: string;
+  project_order: number | null;
+  project_status: string | null;
+  fiscal_year_be: number | null;
 };
 
 const DEGREE_LEVEL_RANK: Record<string, number> = {
@@ -137,6 +147,18 @@ function sortCollaborations(rows: CollaborationRow[]): string[] {
     .map((row) => row.organization_name);
 }
 
+function mapProjects(rows: ProjectRow[]): ResearcherProject[] {
+  return [...rows]
+    .sort((a, b) => (a.project_order ?? 0) - (b.project_order ?? 0))
+    .map((row) => ({
+      id: String(row.id),
+      title: row.project_name,
+      roleLabel: row.role_label,
+      projectStatus: row.project_status ?? undefined,
+      fiscalYearBe: row.fiscal_year_be ?? undefined,
+    }));
+}
+
 export async function getResearchers(): Promise<ResearcherItem[]> {
   return getResearchersCached();
 }
@@ -200,7 +222,7 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     return null;
   }
 
-  const [degreesResult, expertiseResult, publicationsResult, keywordsResult, collaborationsResult] =
+  const [degreesResult, expertiseResult, publicationsResult, keywordsResult, collaborationsResult, projectsResult] =
     await Promise.all([
       supabase
         .from("researcher_degrees")
@@ -224,6 +246,11 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
         .select("researcher_id, organization_name, org_order")
         .eq("researcher_id", id)
         .order("org_order"),
+      supabase
+        .from("researcher_projects")
+        .select("id, researcher_id, project_name, role_label, project_order, project_status, fiscal_year_be")
+        .eq("researcher_id", id)
+        .order("project_order"),
     ]);
 
   const item = mapResearcherRow(researcher as ResearcherRow);
@@ -250,6 +277,12 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     console.error("Failed to fetch collaborations:", collaborationsResult.error.message);
   } else if (collaborationsResult.data?.length) {
     item.collaborations = sortCollaborations(collaborationsResult.data as CollaborationRow[]);
+  }
+
+  if (projectsResult.error) {
+    console.error("Failed to fetch research projects:", projectsResult.error.message);
+  } else if (projectsResult.data?.length) {
+    item.projects = mapProjects(projectsResult.data as ProjectRow[]);
   }
 
   return item;

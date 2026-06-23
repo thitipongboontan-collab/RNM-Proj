@@ -1,3 +1,3 @@
 export function isMissingSchemaError(message: string): boolean {
-  return /does not exist/i.test(message);
+  return /does not exist/i.test(message) || /could not find the .* column/i.test(message);
 }

@@ -88,6 +88,7 @@ export function ResearcherDetailPage({
               researcherId={item.id}
               initialTab={initialTab}
               expertise={item.expertise}
+              projects={item.projects}
               publications={item.publications}
               collaborations={item.collaborations}
             />

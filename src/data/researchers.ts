@@ -6,6 +6,14 @@ export type ResearcherPublication = {
   citations?: number;
 };
 
+export type ResearcherProject = {
+  id: string;
+  title: string;
+  roleLabel: string;
+  projectStatus?: string;
+  fiscalYearBe?: number;
+};
+
 export type ResearcherItem = {
   id: string;
   name: string;
@@ -21,5 +29,6 @@ export type ResearcherItem = {
   education?: string[];
   expertise?: string[];
   publications?: ResearcherPublication[];
+  projects?: ResearcherProject[];
   collaborations?: string[];
 };

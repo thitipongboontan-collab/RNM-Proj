@@ -4,7 +4,7 @@ import { getResearcherById } from "@/lib/researchers-repository";
 
 export const dynamic = "force-dynamic";
 
-const PROFILE_TABS = ["expertise", "publications", "collaborations"] as const;
+const PROFILE_TABS = ["expertise", "projects", "publications", "collaborations"] as const;
 
 type ProfileTabId = (typeof PROFILE_TABS)[number];
 
