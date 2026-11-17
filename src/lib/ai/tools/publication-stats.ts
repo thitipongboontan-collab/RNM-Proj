@@ -19,7 +19,8 @@ export function publicationCountTool(
   const ranked = filtered
     .map((record) => ({
       record,
-      publicationCount: record.publications.length,
+      publicationCount: Math.max(record.publications.length, record.row.scholarly_output ?? 0),
+      listedTitles: record.publications.length,
       scholarlyOutput: record.row.scholarly_output ?? 0,
     }))
     .sort((a, b) => {
@@ -29,7 +30,7 @@ export function publicationCountTool(
       return b.scholarlyOutput - a.scholarlyOutput;
     });
 
-  const totalPublications = ranked.reduce((sum, item) => sum + item.publicationCount, 0);
+  const totalPublications = ranked.reduce((sum, item) => sum + item.listedTitles, 0);
   const researchersWithPublications = ranked.filter((item) => item.publicationCount > 0).length;
   const filterDescription = [
     filters.researcherId ? `researcher_id=${filters.researcherId}` : null,
@@ -39,16 +40,27 @@ export function publicationCountTool(
     .filter(Boolean)
     .join(" | ");
 
+  const top = ranked[0];
+  const leaderboard = ranked.slice(0, 8).map(
+    (item, index) =>
+      `${index + 1}. [${item.record.row.researcher_id}] ${item.record.row.name_th}: ${item.publicationCount} รายการ`,
+  );
   const detailLines =
     ranked.length === 1
       ? [
-          `จำนวนผลงานตีพิมพ์ในฐานข้อมูล publications: ${ranked[0].publicationCount} รายการ`,
+          `จำนวนผลงานตีพิมพ์ในฐานข้อมูล publications: ${ranked[0].listedTitles} รายการ`,
           `Scholarly Output (metrics): ${ranked[0].scholarlyOutput}`,
         ]
       : [
+          top
+            ? `นักวิจัยที่มีผลงานตีพิมพ์มากที่สุด: [${top.record.row.researcher_id}] ${top.record.row.name_th} (${top.publicationCount} รายการ)`
+            : "",
           `จำนวนผลงานตีพิมพ์รวมทั้งหมด: ${totalPublications} รายการ`,
           `จำนวนนักวิจัยที่มีผลงานตีพิมพ์: ${researchersWithPublications} คน`,
           `จำนวนนักวิจัยในชุดข้อมูล: ${ranked.length} คน`,
+          "",
+          "=== อันดับผลงานตีพิมพ์สูงสุด ===",
+          ...leaderboard,
           "",
           "=== จำนวนผลงานตีพิมพ์ต่อนักวิจัย ===",
           ...ranked.map(
@@ -62,7 +74,9 @@ export function publicationCountTool(
     summary:
       ranked.length === 1
         ? `${ranked[0].record.row.name_th} มีผลงานตีพิมพ์ ${ranked[0].publicationCount} รายการ`
-        : `ผลงานตีพิมพ์รวม ${totalPublications} รายการ จากนักวิจัย ${ranked.length} คน`,
+        : top
+          ? `มากที่สุดคือ ${top.record.row.name_th} ${top.publicationCount} รายการ จากนักวิจัย ${ranked.length} คน`
+          : `ผลงานตีพิมพ์รวม ${totalPublications} รายการ จากนักวิจัย ${ranked.length} คน`,
     contextBlock: [
       "=== TOOL: publication_count (นับจากตาราง publications) ===",
       filterDescription ? `เงื่อนไข: ${filterDescription}` : "เงื่อนไข: นักวิจัยทั้งหมด",

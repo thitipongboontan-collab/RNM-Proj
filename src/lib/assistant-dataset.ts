@@ -1,7 +1,9 @@
 import { unstable_cache } from "next/cache";
 import { normalizeText } from "@/lib/ai/researcher-meta";
+import { formatExpertiseBrief, isExpertiseProfile } from "@/lib/expertise/present";
 import { getFundings } from "@/lib/funding-repository";import { getResearchers } from "@/lib/researchers-repository";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 type ResearcherRow = {
   researcher_id: string;
@@ -70,6 +72,7 @@ export type ResearcherRecord = {
   publications: PublicationRow[];
   collaborations: CollaborationRow[];
   searchText: string;
+  expertiseBrief?: string;
 };
 
 export type FundingRecord = {
@@ -186,6 +189,21 @@ async function loadDatasetFromSupabase(): Promise<AssistantDataset | null> {
     attachmentsByFunding.set(row.funding_id, list);
   }
 
+  const profileResult = await supabase
+    .from("researcher_expertise_profiles")
+    .select("researcher_id, analysis_status, display_profile");
+  const briefs = new Map<string, string>();
+  if (profileResult.error) {
+    if (!isMissingSchemaError(profileResult.error.message)) {
+      console.error("Failed to fetch expertise profiles:", profileResult.error.message);
+    }
+  } else {
+    for (const row of profileResult.data ?? []) {
+      if (row.analysis_status === "rejected" || !isExpertiseProfile(row.display_profile)) continue;
+      briefs.set(String(row.researcher_id), formatExpertiseBrief(row.display_profile));
+    }
+  }
+
   const researchers = (researchersResult.data as ResearcherRow[]).map((row) => {
     const keywords = keywordsByResearcher.get(row.researcher_id) ?? [];
     const expertise = expertiseByResearcher.get(row.researcher_id) ?? [];
@@ -208,6 +226,7 @@ async function loadDatasetFromSupabase(): Promise<AssistantDataset | null> {
         publications,
         collaborations,
       ),
+      expertiseBrief: briefs.get(row.researcher_id),
     };
   });
 
@@ -313,7 +332,7 @@ async function loadDatasetFallback(): Promise<AssistantDataset> {
 const getAssistantDatasetCached = unstable_cache(
   async () => (await loadDatasetFromSupabase()) ?? (await loadDatasetFallback()),
   ["assistant-dataset"],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ["assistant-dataset"] },
 );
 
 export async function getAssistantDataset(): Promise<AssistantDataset> {

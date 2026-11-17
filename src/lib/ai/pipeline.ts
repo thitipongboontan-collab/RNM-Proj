@@ -305,7 +305,7 @@ export async function runAssistantPipeline(
     routed.isCountQuestion && routed.intent === "count_researchers"
       ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนนักวิจัย — ใช้ผลลัพธ์จาก TOOL count_researchers เท่านั้น ห้ามนับจากตัวอย่าง"
       : routed.intent === "publication_count"
-        ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนผลงานตีพิมพ์ — ใช้ผลลัพธ์จาก TOOL publication_count เท่านั้น"
+        ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนผลงานตีพิมพ์หรือผู้ที่มีผลงานมากที่สุด — ใช้ผลลัพธ์จาก TOOL publication_count เท่านั้น ห้ามเดาจากตัวอย่างนักวิจัยชุดสั้น"
         : routed.intent === "collaboration_countries"
           ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนประเทศในเครือข่ายความร่วมมือ — ใช้ผลลัพธ์จาก TOOL collaboration_countries เท่านั้น"
           : routed.intent === "search_by_publication"

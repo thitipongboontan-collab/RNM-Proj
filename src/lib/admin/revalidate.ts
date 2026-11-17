@@ -16,6 +16,7 @@ export function revalidateNewsCaches() {
 
 export function revalidateResearcherCaches(researcherId?: string) {
   revalidateTag("researchers-list");
+  revalidateTag("assistant-dataset");
   revalidatePath("/researchers");
   revalidatePath("/admin/researchers");
   if (researcherId) {

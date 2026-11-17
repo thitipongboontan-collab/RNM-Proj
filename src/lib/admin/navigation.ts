@@ -4,4 +4,5 @@ export const ADMIN_NAV_ITEMS = [
   { label: "แหล่งทุน", href: "/admin/fundings" },
   { label: "ข่าวสาร", href: "/admin/news" },
   { label: "นักวิจัย", href: "/admin/researchers" },
+  { label: "ความเชี่ยวชาญ", href: "/admin/expertise" },
 ] as const;

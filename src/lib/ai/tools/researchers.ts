@@ -109,6 +109,10 @@ export function formatResearcherDetail(record: ResearcherRecord): string {
     for (const org of collaborationList) lines.push(`    - ${org}`);
   }
 
+  if (record.expertiseBrief) {
+    lines.push(record.expertiseBrief);
+  }
+
   lines.push(`  ลิงก์: /researchers/${row.researcher_id}`);
   return lines.join("\n");
 }

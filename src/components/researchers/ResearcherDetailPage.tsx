@@ -6,6 +6,7 @@ import {
   DetailSection,
   MetricsRow,
 } from "@/components/researchers/ResearcherDetailParts";
+import { ExpertiseIntelligencePanel } from "@/components/researchers/ExpertiseIntelligencePanel";
 import {
   ResearcherProfileTabs,
   type ProfileTabId,
@@ -83,6 +84,10 @@ export function ResearcherDetailPage({
                 variant="card"
               />
             )}
+
+            {item.expertiseProfile ? (
+              <ExpertiseIntelligencePanel profile={item.expertiseProfile} />
+            ) : null}
 
             <ResearcherProfileTabs
               researcherId={item.id}

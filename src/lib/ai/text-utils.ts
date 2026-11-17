@@ -165,8 +165,10 @@ export function isPublicationTopicQuestion(message: string): boolean {
 export function isPublicationCountQuestion(message: string): boolean {
   const normalized = normalizeText(message);
   return (
-    /(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย)/.test(normalized) &&
-    /(จำนวน|ทั้งหมด|กี่|เท่าไร|เท่าไหร่|how many|count|total)/.test(normalized)
+    /(ผลงาน|publication|ตีพิมพ์|paper|article|งานวิจัย|scholarly)/.test(normalized) &&
+    /(จำนวน|ทั้งหมด|กี่|เท่าไร|เท่าไหร่|how many|count|total|มากที่สุด|เยอะที่สุด|สูงสุด|most|highest|largest|อันดับ)/.test(
+      normalized,
+    )
   );
 }
 

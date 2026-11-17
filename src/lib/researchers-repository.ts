@@ -1,7 +1,9 @@
 import { unstable_cache } from "next/cache";
 import type { ResearcherItem, ResearcherProject, ResearcherPublication } from "@/data/researchers";
+import { isExpertiseProfile, presentExpertiseProfile } from "@/lib/expertise/present";
 import { resolveResearcherImageSrc } from "@/lib/researcher-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 type ResearcherRow = {
   researcher_id: string;
@@ -283,6 +285,24 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     console.error("Failed to fetch research projects:", projectsResult.error.message);
   } else if (projectsResult.data?.length) {
     item.projects = mapProjects(projectsResult.data as ProjectRow[]);
+  }
+
+  const profileResult = await supabase
+    .from("researcher_expertise_profiles")
+    .select("analysis_status, display_profile")
+    .eq("researcher_id", id)
+    .maybeSingle();
+
+  if (profileResult.error) {
+    if (!isMissingSchemaError(profileResult.error.message)) {
+      console.error("Failed to fetch expertise profile:", profileResult.error.message);
+    }
+  } else if (
+    profileResult.data &&
+    profileResult.data.analysis_status !== "rejected" &&
+    isExpertiseProfile(profileResult.data.display_profile)
+  ) {
+    item.expertiseProfile = presentExpertiseProfile(profileResult.data.display_profile);
   }
 
   return item;

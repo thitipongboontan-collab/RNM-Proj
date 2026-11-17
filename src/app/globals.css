@@ -271,13 +271,23 @@ header img[alt="Research Nexus Matching"] {
   font: 24px/1 var(--font-inter), sans-serif;
 }
 
-.spatial-basemap-control-host {
-  clear: both;
+.spatial-basemap-overlay-host {
+  position: absolute;
+  z-index: 1100;
+  left: 10px;
+  top: 74px;
+  pointer-events: auto;
+}
+
+.spatial-map-shell:has(.leaflet-touch) .spatial-basemap-overlay-host {
+  top: 86px;
 }
 
 .spatial-basemap-control {
   position: relative;
-  margin-top: 0 !important;
+  overflow: visible;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
 }
 
 .spatial-basemap-trigger {
@@ -287,6 +297,7 @@ header img[alt="Research Nexus Matching"] {
   align-items: center;
   justify-content: center;
   border: 0;
+  border-radius: 4px;
   background: #ffffff;
   color: #333333;
   cursor: pointer;

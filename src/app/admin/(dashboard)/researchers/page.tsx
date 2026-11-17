@@ -109,6 +109,12 @@ export default async function AdminResearchersPage({ searchParams }: PageProps) 
                             >
                               แก้ไข
                             </Link>
+                            <Link
+                              href={`/admin/expertise/${item.researcherId}`}
+                              className="rounded-lg border border-[#D9DEE8] px-3 py-1.5 text-xs font-medium text-brand-dark transition hover:bg-[#F3F5FA]"
+                            >
+                              ความเชี่ยวชาญ
+                            </Link>
                             <ResearcherDeleteButton
                               researcherId={item.researcherId}
                               name={item.nameTh}

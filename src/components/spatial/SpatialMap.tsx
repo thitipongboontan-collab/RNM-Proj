@@ -376,7 +376,7 @@ export function SpatialMap({
   );
 
   return (
-    <div className="relative h-full min-h-[620px] w-full">
+    <div className="spatial-map-shell relative h-full min-h-[620px] w-full">
       <MapContainer
         center={[16.8, 100.6]}
         zoom={6}
@@ -393,7 +393,6 @@ export function SpatialMap({
           {...(basemap.maxZoom ? { maxZoom: basemap.maxZoom } : {})}
         />
       <ZoomTracker onZoomChange={setZoom} />
-      <BasemapLayerControl basemapId={basemapId} onBasemapChange={setBasemapId} />
       <MapFocusController
         organizations={organizations}
         spreadPositions={spreadPositions}
@@ -443,6 +442,9 @@ export function SpatialMap({
         />
       )}
       </MapContainer>
+      <div className="spatial-basemap-overlay-host">
+        <BasemapLayerControl basemapId={basemapId} onBasemapChange={setBasemapId} />
+      </div>
     </div>
   );
 }

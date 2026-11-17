@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { useMap } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
 import {
   BASEMAP_OPTIONS,
   getBasemapOption,
@@ -108,101 +106,52 @@ function BasemapControlPanel({
   );
 }
 
-function stopLeafletPropagation(element: HTMLElement) {
-  const stop = (event: Event) => {
-    event.stopPropagation();
-  };
-
-  element.addEventListener("click", stop);
-  element.addEventListener("dblclick", stop);
-  element.addEventListener("mousedown", stop);
-  element.addEventListener("touchstart", stop);
-
-  return () => {
-    element.removeEventListener("click", stop);
-    element.removeEventListener("dblclick", stop);
-    element.removeEventListener("mousedown", stop);
-    element.removeEventListener("touchstart", stop);
-  };
-}
-
-function BasemapControlContent({
+export function BasemapLayerControl({
   basemapId,
   onBasemapChange,
 }: BasemapLayerControlProps) {
-  const map = useMap();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
 
-    function handleMapClick() {
-      setOpen(false);
+    function handlePointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
     }
 
-    map.on("click", handleMapClick);
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      map.off("click", handleMapClick);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [map, open]);
+  }, [open]);
 
   return (
-    <div className="leaflet-bar leaflet-control spatial-basemap-control">
+    <div ref={rootRef} className="spatial-basemap-control">
       <button
         type="button"
         className={`spatial-basemap-trigger${open ? " is-active" : ""}`}
         aria-label="เลือก Basemap"
         aria-expanded={open}
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen((value) => !value);
-        }}
+        onClick={() => setOpen((value) => !value)}
       >
         <LayersIcon />
       </button>
-      {open && (
-        <div onClick={(event) => event.stopPropagation()}>
-          <BasemapControlPanel
-            basemapId={basemapId}
-            onBasemapChange={onBasemapChange}
-            onClose={() => setOpen(false)}
-          />
-        </div>
-      )}
+      {open ? (
+        <BasemapControlPanel
+          basemapId={basemapId}
+          onBasemapChange={onBasemapChange}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </div>
-  );
-}
-
-export function BasemapLayerControl({
-  basemapId,
-  onBasemapChange,
-}: BasemapLayerControlProps) {
-  const map = useMap();
-  const [host, setHost] = useState<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const element = document.createElement("div");
-    element.className = "spatial-basemap-control-host";
-    const cleanupPropagation = stopLeafletPropagation(element);
-
-    const corner = map.getContainer().querySelector(".leaflet-top.leaflet-left");
-    if (corner) {
-      corner.appendChild(element);
-    }
-
-    setHost(element);
-
-    return () => {
-      cleanupPropagation();
-      element.remove();
-      setHost(null);
-    };
-  }, [map]);
-
-  if (!host) return null;
-
-  return createPortal(
-    <BasemapControlContent basemapId={basemapId} onBasemapChange={onBasemapChange} />,
-    host,
   );
 }
