@@ -40,6 +40,10 @@ function sortText<T extends { order: number | null; text: string }>(rows: T[]) {
   return [...rows].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((row) => row.text);
 }
 
+function asRows<T>(data: unknown): T[] {
+  return Array.isArray(data) ? (data as T[]) : [];
+}
+
 async function loadSource(
   supabase: ReturnType<typeof createClient>,
   researcherId: string,
@@ -61,31 +65,35 @@ async function loadSource(
     researcherId,
     department,
     degrees: sortText(
-      (degrees.data ?? []).map((row) => ({
-        order: (row.degree_order as number | null) ?? 0,
+      asRows<{ degree_text?: string | null; degree_order?: number | null }>(degrees.data).map((row) => ({
+        order: row.degree_order ?? 0,
         text: String(row.degree_text ?? ""),
       })),
     ),
     manualExpertise: sortText(
-      (expertise.data ?? []).map((row) => ({
-        order: (row.expertise_order as number | null) ?? 0,
+      asRows<{ expertise?: string | null; expertise_order?: number | null }>(expertise.data).map((row) => ({
+        order: row.expertise_order ?? 0,
         text: String(row.expertise ?? ""),
       })),
     ),
     keywords: sortText(
-      (keywords.data ?? []).map((row) => ({
-        order: (row.keyword_order as number | null) ?? 0,
+      asRows<{ keyword?: string | null; keyword_order?: number | null }>(keywords.data).map((row) => ({
+        order: row.keyword_order ?? 0,
         text: String(row.keyword ?? ""),
       })),
     ),
-    publications: (publications.data ?? []).map((row) => ({
+    publications: asRows<{ publication_id?: string | number | null; title?: string | null; year?: number | null }>(
+      publications.data,
+    ).map((row) => ({
       id: String(row.publication_id),
       title: String(row.title ?? ""),
       year: typeof row.year === "number" ? row.year : null,
     })),
     projects: projects.error
       ? []
-      : (projects.data ?? []).map((row) => ({
+      : asRows<{ id?: string | number | null; project_name?: string | null; role_label?: string | null }>(
+          projects.data,
+        ).map((row) => ({
           id: String(row.id),
           title: String(row.project_name ?? ""),
           role: String(row.role_label ?? ""),

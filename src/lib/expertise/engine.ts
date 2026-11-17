@@ -387,7 +387,7 @@ function classify(drafts: TopicDraft[]): {
       dropped.push(item.draft.topic);
       continue;
     }
-    const primaryEligible = isPrimary(item.evidence, item.support) && item.strength !== "insufficient";
+    const primaryEligible = isPrimary(item.evidence, item.support);
     const topic: ExpertiseTopic = {
       topic: item.draft.topic,
       confidence: confidenceFromSupport(item.support),
