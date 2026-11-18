@@ -3,6 +3,8 @@ export const SITE_PAGE_KEYS = {
   funding: "funding",
   researchers: "researchers",
   spatial: "spatial",
+  geographic: "geographic",
+  projectMap: "project-map",
   works: "works",
 } as const;
 
@@ -12,6 +14,8 @@ export const SITE_PAGE_LABELS: Record<SitePageKey, string> = {
   home: "หน้าแรก",
   funding: "แหล่งทุน",
   researchers: "นักวิจัย",
-  spatial: "แผนที่ความร่วมมือ",
+  spatial: "เครือข่าย",
+  geographic: "เชิงพื้นที่",
+  "project-map": "พื้นที่วิจัย",
   works: "ผลงาน",
 };

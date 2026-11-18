@@ -391,6 +391,7 @@ export function SpatialMap({
           url={basemap.url}
           {...(basemap.subdomains ? { subdomains: basemap.subdomains } : {})}
           {...(basemap.maxZoom ? { maxZoom: basemap.maxZoom } : {})}
+          {...(basemap.tileSize ? { tileSize: basemap.tileSize } : {})}
         />
       <ZoomTracker onZoomChange={setZoom} />
       <MapFocusController

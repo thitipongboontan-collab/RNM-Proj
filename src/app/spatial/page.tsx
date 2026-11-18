@@ -16,11 +16,11 @@ export default async function SpatialPage() {
       <Breadcrumb
         segments={[
           { label: "หน้าหลัก", href: "/" },
-          { label: "เชิงพื้นที่" },
+          { label: "เครือข่าย" },
         ]}
       />
       <main className="flex w-full flex-col items-center px-2 py-10 sm:px-4 lg:px-6 lg:py-14">
-        <PageTitle>เชิงพื้นที่</PageTitle>
+        <PageTitle>เครือข่ายความร่วมมือ</PageTitle>
         <p className="mt-4 max-w-4xl text-center text-base leading-relaxed text-brand-muted sm:text-lg">
           แผนที่ความร่วมมือทางวิชาการ (Academic Collaboration Map)
           แสดงเครือข่ายความร่วมมือทางวิชาการของนักวิจัยในรูปแบบเชิงพื้นที่
