@@ -123,7 +123,7 @@ export async function extractFundingAttachmentsForFunding(fundingId: string): Pr
 
 export async function extractPendingFundingAttachments(limit = 20): Promise<number> {
   const supabase = getAdminClient();
-  let query = supabase
+  const query = supabase
     .from("funding_attachments")
     .select("id")
     .in("extraction_status", ["pending"])
