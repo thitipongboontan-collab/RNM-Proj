@@ -161,18 +161,27 @@ export async function getAdminFundingById(id: string): Promise<AdminFundingRecor
     "id, funding_id, file_name, file_type, storage_path, file_order, extracted_text, extraction_status, text_origin, page_count, extraction_error";
   const attachmentSelectBase = "id, funding_id, file_name, file_type, storage_path, file_order";
 
-  let { data: attachments, error: attachmentError } = await supabase
-    .from("funding_attachments")
-    .select(attachmentSelectWithText)
-    .eq("funding_id", id)
-    .order("file_order");
+  let attachments: AttachmentRow[] | null = null;
+  let attachmentError: { message: string } | null = null;
+
+  {
+    const result = await supabase
+      .from("funding_attachments")
+      .select(attachmentSelectWithText)
+      .eq("funding_id", id)
+      .order("file_order");
+    attachments = (result.data as AttachmentRow[] | null) ?? null;
+    attachmentError = result.error;
+  }
 
   if (attachmentError && isMissingSchemaError(attachmentError.message)) {
-    ({ data: attachments, error: attachmentError } = await supabase
+    const result = await supabase
       .from("funding_attachments")
       .select(attachmentSelectBase)
       .eq("funding_id", id)
-      .order("file_order"));
+      .order("file_order");
+    attachments = (result.data as AttachmentRow[] | null) ?? null;
+    attachmentError = result.error;
   }
 
   if (attachmentError) {
