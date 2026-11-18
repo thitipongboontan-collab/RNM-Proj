@@ -14,8 +14,6 @@ export type ResearcherProject = {
   fiscalYearBe?: number;
 };
 
-import type { ExpertiseProfileView } from "@/lib/expertise/present";
-
 export type ResearcherItem = {
   id: string;
   name: string;
@@ -33,5 +31,4 @@ export type ResearcherItem = {
   publications?: ResearcherPublication[];
   projects?: ResearcherProject[];
   collaborations?: string[];
-  expertiseProfile?: ExpertiseProfileView | null;
 };

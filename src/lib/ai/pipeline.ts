@@ -25,8 +25,10 @@ import {
   searchResearchersTool,
 } from "@/lib/ai/tools/researchers";
 import type { AssistantPipelineResult, Citation, ConversationTurn, ToolExecutionResult } from "@/lib/ai/types";
-import { expandQueryTokens } from "@/lib/ai/text-utils";
+import { expandRelatedTermsWithModel } from "@/lib/ai/query-expand";
+import { expandQueryTokens, mergeSearchTerms } from "@/lib/ai/text-utils";
 import { getAssistantDataset } from "@/lib/assistant-dataset";
+import { loadMatchingProfiles } from "@/lib/matching";
 
 function dedupeCitations(citations: Citation[]): Citation[] {
   const seen = new Set<string>();
@@ -95,7 +97,9 @@ export async function runAssistantPipeline(
     contextResearcherId: conversation.primaryResearcherId,
     isFollowUp: conversation.isFollowUp,
   });
-  const queryTokens = expandQueryTokens(pipelineMessage);
+  const relatedTerms = await expandRelatedTermsWithModel(pipelineMessage, apiKey);
+  const queryTokens = mergeSearchTerms(expandQueryTokens(pipelineMessage), relatedTerms);
+  const embeddingQuery = [pipelineMessage, ...relatedTerms].join(" ");
   const resolvedResearcherIds = [
     ...new Set([
       ...conversation.contextResearcherIds,
@@ -112,7 +116,7 @@ export async function runAssistantPipeline(
   let vectorScores = new Map<string, number>();
   if (apiKey) {
     try {
-      const vectorResults = await searchWithEmbeddings(apiKey, dataset, pipelineMessage, 16);
+      const vectorResults = await searchWithEmbeddings(apiKey, dataset, embeddingQuery, 16);
       vectorScores = buildVectorScoreMap(vectorResults);
     } catch (error) {
       console.error("Vector search failed, falling back to keyword search:", error);
@@ -121,6 +125,15 @@ export async function runAssistantPipeline(
 
   const toolResults: ToolExecutionResult[] = [];
   const collaborationOrganizationLookup = collaborationOrganizationTool(dataset, pipelineMessage);
+  const matchingIntents = new Set([
+    "match_funding",
+    "match_researchers_for_funding",
+    "researcher_intelligence",
+    "researcher_profile",
+  ]);
+  const matchingProfiles = matchingIntents.has(routed.intent)
+    ? await loadMatchingProfiles()
+    : new Map();
 
   switch (routed.intent) {
     case "count_researchers":
@@ -136,6 +149,7 @@ export async function runAssistantPipeline(
         const intelligence = researcherIntelligenceTool(
           dataset,
           filters.researcherId,
+          matchingProfiles,
         );
         if (intelligence) toolResults.push(intelligence);
       }
@@ -175,6 +189,7 @@ export async function runAssistantPipeline(
           vectorScores,
           filters.researcherId,
           5,
+          matchingProfiles,
         ),
       );
       break;
@@ -186,6 +201,7 @@ export async function runAssistantPipeline(
         vectorScores,
         undefined,
         10,
+        matchingProfiles,
       );
       if (fundingMatch) {
         toolResults.push(fundingMatch);
@@ -231,22 +247,12 @@ export async function runAssistantPipeline(
     case "search_by_publication": {
       const publicationSearch = searchResearchersByPublicationTool(
         dataset.researchers,
-        pipelineMessage,
+        embeddingQuery,
         filters,
         8,
       );
       if (publicationSearch) {
         toolResults.push(publicationSearch);
-      } else {
-        toolResults.push(
-          searchResearchersTool(
-            dataset.researchers,
-            queryTokens,
-            vectorScores,
-            filters,
-            8,
-          ),
-        );
       }
       break;
     }
@@ -260,6 +266,7 @@ export async function runAssistantPipeline(
         const intelligence = researcherIntelligenceTool(
           dataset,
           filters.researcherId,
+          matchingProfiles,
         );
         if (intelligence) toolResults.push(intelligence);
       }
@@ -309,7 +316,7 @@ export async function runAssistantPipeline(
         : routed.intent === "collaboration_countries"
           ? "หมายเหตุ: คำถามนี้เกี่ยวกับจำนวนประเทศในเครือข่ายความร่วมมือ — ใช้ผลลัพธ์จาก TOOL collaboration_countries เท่านั้น"
           : routed.intent === "search_by_publication"
-            ? "หมายเหตุ: คำถามนี้เกี่ยวกับนักวิจัย/ผลงานตามหัวข้อ — ใช้ผลลัพธ์จาก TOOL search_by_publication เป็นหลัก หากพบรายชื่อและผลงานใน context ต้องตอบว่ามีนักวิจัยที่ทำวิจัยในหัวข้อนี้ ห้ามตอบว่าไม่พบข้อมูล"
+            ? "หมายเหตุ: คำถามนี้เกี่ยวกับนักวิจัยตามหัวข้อ — ใช้เฉพาะรายชื่อและชื่อเรื่องจาก TOOL search_by_publication ตอบโดยคัดลอกชื่อผลงานตีพิมพ์หรือโครงการวิจัยที่ตรงหัวข้อ ห้ามใส่หน่วยงาน ความเชี่ยวชาญ เครือข่าย หรือจำนวนผลงานทั้งหมด ห้ามยกนักวิจัยเพียงเพราะ scholarly output สูง"
             : conversation.isFollowUp
         ? "หมายเหตุ: คำถามนี้เป็นคำถามต่อเนื่อง — ให้ตอบใน context ของนักวิจัยที่อ้างถึงจากประวัติการสนทนา และใช้ข้อมูลจาก Tools ด้านล่าง"
         : "หมายเหตุ: อ้างอิงข้อมูลจาก Tools และภาพรวมระบบ ทุกคำตอบต้องมี citation [RSxxx] หรือ [FDxxx]",

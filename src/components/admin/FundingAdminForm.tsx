@@ -11,6 +11,7 @@ import {
   updateFundingAction,
 } from "@/app/admin/fundings/actions";
 import { CoverImageField } from "@/components/admin/CoverImageField";
+import { ExtractFundingAttachmentsButton } from "@/components/admin/ExtractFundingAttachmentsButton";
 import {
   MultiFileUploadSection,
   type MultiFileUploadHandle,
@@ -29,6 +30,25 @@ type FundingAdminFormProps = {
     displayOrder: number;
   };
 };
+
+function extractionStatusLabel(status?: string | null) {
+  switch (status) {
+    case "extracted":
+      return "ดึงข้อความแล้ว";
+    case "needs_ocr":
+      return "เป็นไฟล์สแกน ยังไม่มีข้อความให้จับคู่";
+    case "malformed":
+      return "อ่านไฟล์ไม่สำเร็จ";
+    case "too_large":
+      return "ไฟล์ใหญ่เกินกำหนด";
+    case "unsupported":
+      return "ชนิดไฟล์ไม่รองรับ";
+    case "pending":
+      return "ยังไม่ได้วิเคราะห์";
+    default:
+      return "ยังไม่ได้วิเคราะห์";
+  }
+}
 
 function Field({
   label,
@@ -239,7 +259,16 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
 
       {mode === "edit" && record?.attachments.length ? (
         <div className="rounded-2xl border border-[#E5E7EF] bg-white p-5">
-          <p className="text-sm font-medium text-brand-dark">ไฟล์แนบปัจจุบัน</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-brand-dark">ไฟล์แนบปัจจุบัน</p>
+              <p className="mt-1 text-xs text-brand-muted">
+                AI Assistant จะใช้ข้อความจากไฟล์เหล่านี้ร่วมกับรายละเอียดและเงื่อนไขการสมัคร
+                เพื่อแนะนำนักวิจัยที่เหมาะกับทุน
+              </p>
+            </div>
+            <ExtractFundingAttachmentsButton fundingId={record.fundingId} />
+          </div>
           <ul className="mt-3 space-y-2">
             {record.attachments.map((attachment) => (
               <li
@@ -248,6 +277,16 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
               >
                 <div>
                   <p className="text-sm font-medium text-brand-dark">{attachment.fileName}</p>
+                  <p className="text-xs text-brand-muted">
+                    {extractionStatusLabel(attachment.extractionStatus)}
+                    {attachment.extractedCharCount
+                      ? ` · ${attachment.extractedCharCount.toLocaleString()} ตัวอักษร`
+                      : ""}
+                    {attachment.pageCount ? ` · ${attachment.pageCount} หน้า` : ""}
+                  </p>
+                  {attachment.extractionError ? (
+                    <p className="text-xs text-[#B45309]">{attachment.extractionError}</p>
+                  ) : null}
                   <a
                     href={resolveFundingDocumentUrl(attachment.storagePath)}
                     target="_blank"
@@ -278,7 +317,7 @@ export function FundingAdminForm({ mode, record, defaults }: FundingAdminFormPro
         ref={attachmentsRef}
         label="เพิ่มไฟล์แนบ (PDF/DOC)"
         accept=".pdf,.doc,.docx,application/pdf,application/msword"
-        description="สามารถเลือกหลายไฟล์ในครั้งเดียว หรือกดเลือกไฟล์ซ้ำเพื่อเพิ่มอีก"
+        description="ระบบจะดึงข้อความจาก PDF/Word อัตโนมัติเพื่อใช้จับคู่นักวิจัย สามารถเลือกหลายไฟล์ได้"
       />
 
       {statusMessage?.type === "error" ? (

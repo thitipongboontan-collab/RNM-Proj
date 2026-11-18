@@ -25,7 +25,12 @@ let embeddingCache: {
 const EMBEDDING_CACHE_TTL_MS = 60 * 60 * 1000;
 
 function datasetFingerprint(dataset: AssistantDataset): string {
-  const researcherIds = dataset.researchers.map((item) => item.row.researcher_id).join(",");
+  const researcherIds = dataset.researchers
+    .map(
+      (item) =>
+        `${item.row.researcher_id}:${item.publications.length}:${item.projects?.length ?? 0}`,
+    )
+    .join(",");
   const fundingIds = dataset.fundings.map((item) => item.row.funding_id).join(",");
   return `${dataset.researchers.length}:${dataset.fundings.length}:${researcherIds}:${fundingIds}`;
 }
@@ -37,7 +42,7 @@ function sortKeywords(rows: { keyword: string; keyword_order: number | null }[])
 }
 
 function buildResearcherDocument(record: ResearcherRecord): string {
-  const { row, keywords, expertise, degrees, publications, collaborations } = record;
+  const { row, keywords, expertise, degrees, publications, collaborations, projects = [] } = record;
   const keywordEn = sortKeywords(
     keywords.filter((item) => item.keyword_type === "keyword_en"),
   );
@@ -53,6 +58,9 @@ function buildResearcherDocument(record: ResearcherRecord): string {
   const publicationTitles = [...publications]
     .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
     .map((item) => (item.year ? `${item.title} (${item.year})` : item.title));
+  const projectTitles = [...projects]
+    .sort((a, b) => (b.fiscal_year_be ?? 0) - (a.fiscal_year_be ?? 0))
+    .map((item) => item.project_name);
   const collaborationOrgs = [...collaborations]
     .sort((a, b) => (a.org_order ?? 0) - (b.org_order ?? 0))
     .map((item) => item.organization_name)
@@ -68,6 +76,7 @@ function buildResearcherDocument(record: ResearcherRecord): string {
       ? `คำสำคัญ ${[...keywordEn, ...keywordTh].join(", ")}`
       : "",
     publicationTitles.length ? `ผลงานวิจัย ${publicationTitles.join("; ")}` : "",
+    projectTitles.length ? `โครงการวิจัย ${projectTitles.join("; ")}` : "",
     collaborationOrgs.length ? `เครือข่ายความร่วมมือ ${collaborationOrgs.join(", ")}` : "",
     `scholarly output ${row.scholarly_output ?? 0}`,
     `citations ${row.citations ?? 0}`,
@@ -87,6 +96,11 @@ function buildFundingDocument(record: FundingRecord): string {
     `ปิดรับ ${row.close_date}`,
     `รายละเอียด ${row.details.slice(0, 800)}`,
     attachments.length ? `ไฟล์แนบ ${attachments.map((item) => item.file_name).join(", ")}` : "",
+    attachments
+      .map((item) => item.extracted_text?.slice(0, 1500))
+      .filter(Boolean)
+      .join(" ")
+      .slice(0, 2500),
   ]
     .filter(Boolean)
     .join(". ");

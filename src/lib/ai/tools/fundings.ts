@@ -1,6 +1,8 @@
 import { scoreText, truncate } from "@/lib/ai/text-utils";
 import type { Citation, ToolExecutionResult } from "@/lib/ai/types";
 import type { FundingRecord } from "@/lib/assistant-context";
+import { getFundingCallText } from "@/lib/matching/call-text";
+import { extractEligibilityRequirements } from "@/lib/matching/funding-text";
 
 function fundingCitation(record: FundingRecord): Citation {
   return {
@@ -13,16 +15,27 @@ function fundingCitation(record: FundingRecord): Citation {
 
 function formatFundingDetail(record: FundingRecord): string {
   const { row, attachments } = record;
+  const callText = getFundingCallText(record);
+  const eligibility = extractEligibilityRequirements(callText, row.title);
   const lines = [
     `[${row.funding_id}] ${row.title}`,
     `  หน่วยงาน: ${row.organization}`,
     `  สถานะ: ${row.status_label}`,
     `  เปิดรับ: ${row.open_date} | ปิดรับ: ${row.close_date}`,
-    `  สรุป: ${truncate(row.details, 400)}`,
+    `  สรุป: ${truncate(callText || row.details, 500)}`,
   ];
 
+  if (eligibility.length) {
+    lines.push(`  เงื่อนไขการสมัคร: ${eligibility.slice(0, 4).join(" | ")}`);
+  }
+
   if (attachments.length) {
-    lines.push(`  ไฟล์แนบ: ${attachments.map((item) => item.file_name).join(", ")}`);
+    const extractedCount = attachments.filter((item) => item.extracted_text?.trim()).length;
+    lines.push(
+      `  ไฟล์แนบ: ${attachments.map((item) => item.file_name).join(", ")}${
+        extractedCount ? ` (ใช้ข้อความจากไฟล์ ${extractedCount} ไฟล์ในการจับคู่)` : ""
+      }`,
+    );
   }
 
   lines.push(`  ลิงก์: /funding/${row.funding_id}`);

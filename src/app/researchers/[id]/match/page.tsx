@@ -24,6 +24,7 @@ export default async function Page({ params }: PageProps) {
       researcherName={researcher.name}
       intelligence={match.researcher}
       fundings={match.fundings}
+      phaseBFundings={match.phaseBFundings}
       publicationTrend={match.publicationTrend}
     />
   );

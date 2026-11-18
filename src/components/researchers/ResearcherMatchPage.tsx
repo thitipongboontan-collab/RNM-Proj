@@ -1,5 +1,11 @@
 import Link from "next/link";
 import type { FundingFitResult, ResearcherIntelligence } from "@/lib/ai/intelligence/types";
+import type { ExpertiseFundingMatch } from "@/lib/matching";
+import {
+  CONFIDENCE_SOURCE_LABEL,
+  ELIGIBILITY_STATUS_LABEL,
+  RELEVANCE_BASIS_LABEL,
+} from "@/lib/matching/present";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { PageTitle } from "@/components/ui/PageTitle";
 
@@ -63,7 +69,13 @@ function IntelligenceCard({ researcher }: { researcher: ResearcherIntelligence }
   );
 }
 
-function FundingMatchCard({ item }: { item: FundingFitResult }) {
+function FundingMatchCard({
+  item,
+  phaseB,
+}: {
+  item: FundingFitResult;
+  phaseB?: ExpertiseFundingMatch;
+}) {
   return (
     <article className="rounded-[16px] border border-[#E5E7EB] bg-white p-5 shadow-[0px_0px_5px_0px_rgba(0,0,0,0.06)]">
       <div className="flex items-start justify-between gap-4">
@@ -93,6 +105,38 @@ function FundingMatchCard({ item }: { item: FundingFitResult }) {
           <li key={reason}>{reason}</li>
         ))}
       </ul>
+      {phaseB ? (
+        <div className="mt-4 rounded-xl bg-[#F7F8FC] p-3 text-sm text-[#4A5568]">
+          <p className="font-semibold text-brand-dark">การประเมินเชิงหลักฐาน</p>
+          <p className="mt-1">ความสอดคล้องกับทุน {phaseB.relevance.score}/100</p>
+          <p className="text-xs text-[#778097]">{RELEVANCE_BASIS_LABEL[phaseB.relevance.basis]}</p>
+          <p>
+            ความหนาของหลักฐาน {phaseB.evidenceConfidence.score} (
+            {CONFIDENCE_SOURCE_LABEL[phaseB.evidenceConfidence.source]})
+          </p>
+          <p>
+            สิทธิ์ตามประกาศ {ELIGIBILITY_STATUS_LABEL[phaseB.eligibility.status]}
+          </p>
+          <p className="mt-1 text-xs text-[#778097]">{phaseB.eligibility.summary}</p>
+          {phaseB.eligibility.quotedRequirements[0] ? (
+            <p className="mt-1 text-xs text-[#778097]">
+              ข้อความประกาศ: {phaseB.eligibility.quotedRequirements[0]}
+            </p>
+          ) : null}
+          {phaseB.eligibility.researcherFactsUsed.length ? (
+            <p className="text-xs text-[#778097]">
+              ข้อเท็จจริงที่ใช้: {phaseB.eligibility.researcherFactsUsed.join(" · ")}
+            </p>
+          ) : null}
+          {phaseB.relevance.evidence.length ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {phaseB.relevance.evidence.slice(0, 4).map((evidence) => (
+                <li key={evidence.id}>{evidence.label}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -129,14 +173,17 @@ export function ResearcherMatchPage({
   researcherName,
   intelligence,
   fundings,
+  phaseBFundings = [],
   publicationTrend,
 }: {
   researcherId: string;
   researcherName: string;
   intelligence: ResearcherIntelligence;
   fundings: FundingFitResult[];
+  phaseBFundings?: ExpertiseFundingMatch[];
   publicationTrend: { year: number; count: number }[];
 }) {
+  const phaseBById = new Map(phaseBFundings.map((item) => [item.fundingId, item]));
   return (
     <>
       <Breadcrumb
@@ -153,6 +200,8 @@ export function ResearcherMatchPage({
           <PageTitle>Smart Match</PageTitle>
           <p className="text-lg text-[#778097]">
             จับคู่แหล่งทุนที่เหมาะกับ {researcherName} ด้วย Research Intelligence
+            คะแนน Fit Score ยังเป็นระบบเดิม ส่วนการประเมินเชิงหลักฐานแยกความสอดคล้อง
+            ความหนาของหลักฐาน และสิทธิ์ตามประกาศออกจากกัน
           </p>
         </div>
 
@@ -174,7 +223,13 @@ export function ResearcherMatchPage({
             {fundings.length === 0 ? (
               <p className="text-[#778097]">ยังไม่พบทุนที่จับคู่ได้</p>
             ) : (
-              fundings.map((item) => <FundingMatchCard key={item.fundingId} item={item} />)
+              fundings.map((item) => (
+                <FundingMatchCard
+                  key={item.fundingId}
+                  item={item}
+                  phaseB={phaseBById.get(item.fundingId)}
+                />
+              ))
             )}
           </section>
         </div>

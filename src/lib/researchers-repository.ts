@@ -1,9 +1,7 @@
 import { unstable_cache } from "next/cache";
 import type { ResearcherItem, ResearcherProject, ResearcherPublication } from "@/data/researchers";
-import { isExpertiseProfile, presentExpertiseProfile } from "@/lib/expertise/present";
 import { resolveResearcherImageSrc } from "@/lib/researcher-assets";
 import { createSupabaseClient } from "@/lib/supabase/client";
-import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
 type ResearcherRow = {
   researcher_id: string;
@@ -151,7 +149,12 @@ function sortCollaborations(rows: CollaborationRow[]): string[] {
 
 function mapProjects(rows: ProjectRow[]): ResearcherProject[] {
   return [...rows]
-    .sort((a, b) => (a.project_order ?? 0) - (b.project_order ?? 0))
+    .sort((a, b) => {
+      const yearA = a.fiscal_year_be ?? 0;
+      const yearB = b.fiscal_year_be ?? 0;
+      if (yearA !== yearB) return yearB - yearA;
+      return (a.project_order ?? 0) - (b.project_order ?? 0);
+    })
     .map((row) => ({
       id: String(row.id),
       title: row.project_name,
@@ -252,6 +255,7 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
         .from("researcher_projects")
         .select("id, researcher_id, project_name, role_label, project_order, project_status, fiscal_year_be")
         .eq("researcher_id", id)
+        .order("fiscal_year_be", { ascending: false, nullsFirst: false })
         .order("project_order"),
     ]);
 
@@ -285,24 +289,6 @@ export async function getResearcherById(id: string): Promise<ResearcherItem | nu
     console.error("Failed to fetch research projects:", projectsResult.error.message);
   } else if (projectsResult.data?.length) {
     item.projects = mapProjects(projectsResult.data as ProjectRow[]);
-  }
-
-  const profileResult = await supabase
-    .from("researcher_expertise_profiles")
-    .select("analysis_status, display_profile")
-    .eq("researcher_id", id)
-    .maybeSingle();
-
-  if (profileResult.error) {
-    if (!isMissingSchemaError(profileResult.error.message)) {
-      console.error("Failed to fetch expertise profile:", profileResult.error.message);
-    }
-  } else if (
-    profileResult.data &&
-    profileResult.data.analysis_status !== "rejected" &&
-    isExpertiseProfile(profileResult.data.display_profile)
-  ) {
-    item.expertiseProfile = presentExpertiseProfile(profileResult.data.display_profile);
   }
 
   return item;

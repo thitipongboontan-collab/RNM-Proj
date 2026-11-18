@@ -1,8 +1,6 @@
-import { extractAcademicTitle } from "@/lib/ai/researcher-meta";
-import { expandQueryTokens, normalizeTopicQueryText } from "@/lib/ai/text-utils";
+import { expandQueryTokens, expandSynonymTerms, normalizeTopicQueryText } from "@/lib/ai/text-utils";
 import type { Citation, ResearcherFilters, ToolExecutionResult } from "@/lib/ai/types";
 import type { ResearcherRecord } from "@/lib/assistant-context";
-import { formatResearcherDetail } from "@/lib/ai/tools/researchers";
 
 const STOP_WORDS = new Set([
   "มี",
@@ -86,7 +84,7 @@ export function extractPublicationTopicPhrases(message: string): string[] {
   const phrase = normalizeTopicQueryText(topicMatch[1].replace(/[''’]/g, " ")).replace(/\bwomen s\b/, "women");
   if (phrase.length < 3) return [];
 
-  const phrases = [phrase];
+  const phrases = [phrase, ...expandSynonymTerms(phrase)];
   if (phrase.includes("women s")) {
     phrases.push(phrase.replace("women s", "women"));
   }
@@ -94,7 +92,7 @@ export function extractPublicationTopicPhrases(message: string): string[] {
     phrases.push("hmong women");
   }
 
-  return [...new Set(phrases)];
+  return [...new Set(phrases.filter((item) => item.length >= 3))];
 }
 
 function normalizeTopicMatchText(text: string): string {
@@ -166,13 +164,29 @@ export function searchResearchersByPublicationTool(
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score || (b.publication.year ?? 0) - (a.publication.year ?? 0));
 
-      const publicationScore = matchedPublications.reduce((sum, item) => sum + item.score, 0);
-      const keywordScore = scoreKeywordMatch(record, tokens, phrases);
-      const totalScore = publicationScore + keywordScore;
+      const matchedProjects = (record.projects ?? [])
+        .map((project) => ({
+          project,
+          score: scorePublicationTitle(project.project_name, tokens, phrases),
+        }))
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score);
 
-      return { record, matchedPublications, totalScore, publicationScore };
+      const publicationScore = matchedPublications.reduce((sum, item) => sum + item.score, 0);
+      const projectScore = matchedProjects.reduce((sum, item) => sum + item.score, 0);
+      const keywordScore = scoreKeywordMatch(record, tokens, phrases);
+      const outputScore = publicationScore + projectScore;
+      const totalScore = outputScore + keywordScore;
+
+      return {
+        record,
+        matchedPublications: matchedPublications.slice(0, 5),
+        matchedProjects: matchedProjects.slice(0, 5),
+        totalScore,
+        publicationScore: outputScore,
+      };
     })
-    .filter((item) => item.totalScore > 0)
+    .filter((item) => item.publicationScore > 0)
     .sort((a, b) => {
       if (b.publicationScore !== a.publicationScore) {
         return b.publicationScore - a.publicationScore;
@@ -185,34 +199,38 @@ export function searchResearchersByPublicationTool(
 
   const contextLines = ranked.map((item) => {
     const { row } = item.record;
-    const title = extractAcademicTitle(row.name_th);
     const pubLines = item.matchedPublications.map(
       ({ publication }) =>
         `    - ${publication.title}${publication.year ? ` (${publication.year})` : ""}`,
     );
+    const projectLines = item.matchedProjects.map(
+      ({ project }) =>
+        `    - ${project.project_name}${project.fiscal_year_be ? ` (ปีงบประมาณ ${project.fiscal_year_be})` : ""}`,
+    );
 
     return [
       `[${row.researcher_id}] ${row.name_th}${row.name_en ? ` (${row.name_en})` : ""}`,
-      `  ตำแหน่ง: ${title ?? "ไม่ระบุ"}`,
-      `  หน่วยงาน: ${row.department}`,
-      `  ผลงานที่ตรงหัวข้อ (${item.matchedPublications.length} รายการ):`,
+      item.matchedPublications.length ? `  ผลงานตีพิมพ์ที่ตรงหัวข้อ:` : "",
       ...pubLines,
+      item.matchedProjects.length ? `  โครงการวิจัยที่ตรงหัวข้อ:` : "",
+      ...projectLines,
       `  ลิงก์: /researchers/${row.researcher_id}`,
-    ].join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
   });
 
   return {
     name: "search_by_publication",
-    summary: `พบ ${ranked.length} นักวิจัยจากผลงานตีพิมพ์ที่ตรงหัวข้อ`,
+    summary: `พบ ${ranked.length} นักวิจัยจากผลงานตีพิมพ์หรือโครงการวิจัยที่ตรงหัวข้อ`,
     contextBlock: [
-      "=== TOOL: search_by_publication (ค้นจาก publications.title + keywords/expertise) ===",
+      "=== TOOL: search_by_publication (ค้นจาก publications + projects + keywords ด้วยคำใกล้เคียงไทย/อังกฤษ) ===",
       `หัวข้อที่ค้น: ${phrases.join(" | ") || tokens.join(", ")}`,
       `จำนวนที่พบ: ${ranked.length} คน`,
       "",
-      contextLines.join("\n\n"),
+      "แสดงเฉพาะชื่อนักวิจัยกับชื่อผลงาน/โครงการที่ตรงหัวข้อ — ห้ามใช้จำนวนผลงานทั้งหมดมาทดแทน",
       "",
-      "=== โปรไฟล์เต็มของผู้ที่พบ ===",
-      ranked.map((item) => formatResearcherDetail(item.record)).join("\n\n"),
+      contextLines.join("\n\n"),
     ].join("\n"),
     citations: ranked.map((item) => researcherCitation(item.record)),
   };

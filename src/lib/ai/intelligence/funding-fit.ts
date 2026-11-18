@@ -14,6 +14,7 @@ function overlapTokens(a: string, b: string): string[] {
   return [...new Set(tokenize(a))].filter((token) => setB.has(token));
 }
 
+/** Production Fit Score. Phase B does not replace this ranker until the benchmark is reviewed. */
 export function computeFundingFit(
   researcher: ResearcherRecord,
   funding: FundingRecord,

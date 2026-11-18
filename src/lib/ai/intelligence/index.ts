@@ -49,17 +49,34 @@ function buildIntelligenceIndex(dataset: AssistantDataset): IntelligenceIndex {
   };
 }
 
+type CachedIntelligenceIndex = Omit<IntelligenceIndex, "researchers"> & {
+  researchers: Record<string, ResearcherIntelligence>;
+};
+
 const getIntelligenceIndexCached = unstable_cache(
-  async () => {
+  async (): Promise<CachedIntelligenceIndex> => {
     const dataset = await getAssistantDataset();
-    return buildIntelligenceIndex(dataset);
+    const index = buildIntelligenceIndex(dataset);
+    return {
+      ...index,
+      researchers: Object.fromEntries(index.researchers),
+    };
   },
-  ["research-intelligence-index"],
+  ["research-intelligence-index-v2"],
   { revalidate: 300 },
 );
 
 export async function getIntelligenceIndex(): Promise<IntelligenceIndex> {
-  return getIntelligenceIndexCached();
+  const index = await getIntelligenceIndexCached();
+  const researchers =
+    index.researchers instanceof Map
+      ? index.researchers
+      : new Map(Object.entries(index.researchers ?? {}));
+
+  return {
+    ...index,
+    researchers,
+  };
 }
 
 export { buildIntelligenceIndex };

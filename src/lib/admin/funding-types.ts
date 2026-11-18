@@ -4,6 +4,11 @@ export type AdminFundingAttachment = {
   fileType: "pdf" | "doc";
   storagePath: string;
   fileOrder: number;
+  extractionStatus?: string | null;
+  textOrigin?: string | null;
+  extractedCharCount?: number;
+  pageCount?: number | null;
+  extractionError?: string | null;
 };
 
 export type AdminFundingDetailImage = {

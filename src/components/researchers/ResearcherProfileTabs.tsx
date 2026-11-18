@@ -63,8 +63,19 @@ function TabPanel({
   );
 }
 
+function sortProjectsByLatestYear(projects: ResearcherProject[]) {
+  return [...projects].sort((a, b) => {
+    const yearA = a.fiscalYearBe ?? 0;
+    const yearB = b.fiscalYearBe ?? 0;
+    if (yearA !== yearB) return yearB - yearA;
+    return a.title.localeCompare(b.title, "th");
+  });
+}
+
 function ProjectsTabPanel({ projects }: { projects: ResearcherProject[] }) {
-  if (!projects.length) {
+  const orderedProjects = sortProjectsByLatestYear(projects);
+
+  if (!orderedProjects.length) {
     return (
       <div className="flex min-h-[100px] items-center justify-center rounded-b-[16px] bg-[#FAFBFD] px-4 py-6 text-center text-sm text-[#778097] sm:min-h-[120px]">
         ไม่มีข้อมูลในส่วนนี้
@@ -74,7 +85,7 @@ function ProjectsTabPanel({ projects }: { projects: ResearcherProject[] }) {
 
   return (
     <div className="max-h-[272px] overflow-y-auto rounded-b-[16px] bg-[#FAFBFD]">
-      {projects.map((project, index) => (
+      {orderedProjects.map((project, index) => (
         <div key={project.id}>
           <div className="flex flex-col gap-2 px-3 py-3 sm:px-4 sm:py-3.5">
             <p className="text-sm font-medium leading-snug text-brand-dark sm:text-base">
@@ -95,7 +106,7 @@ function ProjectsTabPanel({ projects }: { projects: ResearcherProject[] }) {
               ) : null}
             </div>
           </div>
-          {index < projects.length - 1 && <div className="mx-3 border-t border-[#E5E7EB] sm:mx-4" />}
+          {index < orderedProjects.length - 1 && <div className="mx-3 border-t border-[#E5E7EB] sm:mx-4" />}
         </div>
       ))}
     </div>

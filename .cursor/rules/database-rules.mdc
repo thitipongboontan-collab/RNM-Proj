@@ -1,0 +1,46 @@
+---
+description: Supabase and Postgres conventions for RNM — schemas, clients, RLS, profiles, and safe additive changes
+globs: supabase/**/*.{sql,ts},src/lib/supabase/**/*.{ts,tsx},src/lib/**/*repository*.ts,src/lib/admin/**/*.ts,src/app/admin/**/*.ts
+alwaysApply: false
+---
+
+# Database rules
+
+## Clients
+
+- Browser: `src/lib/supabase/browser.ts` (publishable key only)
+- Server (user session): `src/lib/supabase/server.ts`
+- Admin/service: `src/lib/supabase/server-admin.ts` (service role — never import in client components)
+
+## Schema workflow
+
+- SQL lives in `supabase/*.sql` as **additive** scripts for the Supabase SQL Editor
+- Do not run migrations from the agent unless the user explicitly requests it
+- Prefer `create table if not exists`, additive columns, and non-destructive updates
+- Document any new script the operator must run
+
+## Core domains (do not reinvent)
+
+- Researchers, publications, projects, collaborations, scholarly metrics
+- Fundings (+ detail images, attachment text, storage)
+- Research news, analytics views
+- `researcher_expertise_profiles` (`ai_profile`, `display_profile`, `display_origin`, `analysis_status`)
+- AI vector / embeddings schema
+
+## Profile contract
+
+- Writes go through `src/lib/expertise/repository.ts` patterns
+- Admin-locked / `display_origin = admin` must not be blindly overwritten by re-analysis
+- Public matching uses `display_profile` only (`selectProfileForMatching`)
+
+## Security
+
+- Preserve RLS policies already defined in SQL
+- Admin mutations require `requireAdminSession` / existing action guards
+- Never commit `.env.local` or put secrets in `NEXT_PUBLIC_*`
+- Avoid weakening public write policies
+
+## Repositories
+
+- Extend existing `*-repository.ts` helpers instead of parallel data layers
+- Handle schema-fallback patterns already used in the codebase when columns may be missing

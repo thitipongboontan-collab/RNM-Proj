@@ -16,6 +16,11 @@
     "ai:index-embeddings": "node scripts/ai/index-embeddings.mjs",
     "expertise:test": "npx tsx --tsconfig tsconfig.json src/lib/expertise/expertise-engine.test.ts",
     "expertise:analyze": "npx tsx --tsconfig tsconfig.json scripts/ai/analyze-expertise.ts",
+    "matching:test": "npx tsx --tsconfig tsconfig.json src/lib/matching/matching-engine.test.ts",
+    "matching:benchmark": "npx tsx --tsconfig tsconfig.json scripts/ai/benchmark-matching.ts",
+    "funding:extract-attachments": "npx tsx --tsconfig tsconfig.json scripts/ai/extract-funding-attachments.ts",
+    "funding:test-extraction": "npx tsx --tsconfig tsconfig.json src/lib/funding-intelligence/extract-attachment-text.test.ts",
+    "funding:test-match-route": "npx tsx --tsconfig tsconfig.json src/lib/ai/funding-match-route.test.ts",
     "supabase:backup": "node scripts/supabase/backup-database.mjs",
     "supabase:backup:schedule": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/supabase/schedule-backup.ps1 -Action install",
     "supabase:backup:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/supabase/run-backup.ps1"

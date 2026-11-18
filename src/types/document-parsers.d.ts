@@ -5,7 +5,20 @@ declare module "pdf-parse" {
     info: Record<string, unknown>;
   };
 
-  export default function pdfParse(data: Buffer): Promise<PdfParseResult>;
+  type PdfPageData = {
+    getTextContent: (options?: {
+      normalizeWhitespace?: boolean;
+      disableCombineTextItems?: boolean;
+    }) => Promise<{
+      items: Array<{ str?: string; transform?: number[] }>;
+    }>;
+  };
+
+  type PdfParseOptions = {
+    pagerender?: (pageData: PdfPageData) => Promise<string>;
+  };
+
+  export default function pdfParse(data: Buffer, options?: PdfParseOptions): Promise<PdfParseResult>;
 }
 
 declare module "word-extractor" {

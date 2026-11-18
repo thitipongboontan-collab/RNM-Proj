@@ -18,7 +18,7 @@ export default async function AdminFundingsPage({ searchParams }: PageProps) {
       <AdminHeader
         email={user?.email}
         title="จัดการแหล่งทุน"
-        description="เพิ่ม แก้ไข และลบข้อมูลแหล่งทุนวิจัย"
+        description="เพิ่มแหล่งทุนจากหลังบ้าน แล้วให้ AI ใช้รายละเอียด เงื่อนไข และไฟล์ประกาศจับคู่นักวิจัย"
       />
 
       <div className="flex flex-1 flex-col gap-6 px-5 py-6 sm:px-8">

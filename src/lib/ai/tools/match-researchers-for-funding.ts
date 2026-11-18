@@ -3,10 +3,15 @@ import {
   formatResearcherFitBlock,
   rankResearchersForFunding,
 } from "@/lib/ai/intelligence/funding-fit";
-import { expandQueryTokens } from "@/lib/ai/text-utils";
+import { rankResearchersForFundingPhaseB } from "@/lib/matching/engine";
+import { formatResearcherFundingMatchBlock } from "@/lib/matching/present";
+import type { MatchingProfileRecord } from "@/lib/matching/types";
+import { expandQueryTokens, truncate } from "@/lib/ai/text-utils";
 import type { Citation, ToolExecutionResult } from "@/lib/ai/types";
 import type { AssistantDataset } from "@/lib/assistant-context";
 import { formatResearcherDetail } from "@/lib/ai/tools/researchers";
+import { getFundingCallText } from "@/lib/matching/call-text";
+import { extractEligibilityRequirements } from "@/lib/matching/funding-text";
 
 function fundingCitation(id: string, title: string): Citation {
   return {
@@ -28,13 +33,19 @@ function researcherCitation(id: string, label: string): Citation {
 
 function formatFundingSummary(funding: AssistantDataset["fundings"][number]): string {
   const { row } = funding;
+  const callText = getFundingCallText(funding);
+  const eligibility = extractEligibilityRequirements(callText, row.title);
   return [
     `[${row.funding_id}] ${row.title}`,
     `  หน่วยงาน: ${row.organization}`,
     `  สถานะ: ${row.status_label}`,
     `  เปิดรับ: ${row.open_date} | ปิดรับ: ${row.close_date}`,
+    `  รายละเอียด/ไฟล์ประกาศ: ${truncate(callText || row.details || "-", 700)}`,
+    eligibility.length ? `  เงื่อนไขการสมัคร: ${eligibility.slice(0, 5).join(" | ")}` : "",
     `  ลิงก์: /funding/${row.funding_id}`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function extractFundingId(message: string): string | undefined {
@@ -49,6 +60,7 @@ export function matchResearchersForFundingTool(
   vectorScores: Map<string, number>,
   fundingId?: string,
   limit = 8,
+  profiles: Map<string, MatchingProfileRecord> = new Map(),
 ): ToolExecutionResult | null {
   const explicitFundingId = fundingId ?? extractFundingId(message);
   const funding =
@@ -98,7 +110,14 @@ export function matchResearchersForFundingTool(
       formatFundingSummary(funding),
       "",
       `=== นักวิจัยที่เหมาะสม (${rankedResearchers.length} คน, เรียง Fit Score) ===`,
+      "Use this Fit Score ranking for recommendations until Phase B is validated.",
       formatResearcherFitBlock(rankedResearchers),
+      "",
+      "=== การประเมินเชิงหลักฐาน Phase B (explanations only; do not replace Fit Score) ===",
+      "Funding Relevance, Evidence Confidence, and Eligibility are separate. Confidence is evidence strength, not award probability.",
+      formatResearcherFundingMatchBlock(
+        rankResearchersForFundingPhaseB(dataset, funding.row.funding_id, profiles, limit),
+      ),
       "",
       "=== โปรไฟล์ย่อของผู้ที่แนะนำ ===",
       topProfiles.join("\n\n"),

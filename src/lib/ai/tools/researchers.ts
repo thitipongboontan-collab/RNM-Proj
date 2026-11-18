@@ -65,7 +65,7 @@ function sortDegrees(rows: { degree_text: string; degree_order: number | null }[
 }
 
 export function formatResearcherDetail(record: ResearcherRecord): string {
-  const { row, expertise, degrees, publications, collaborations } = record;
+  const { row, expertise, degrees, publications, collaborations, projects = [] } = record;
   const lines = [
     `[${row.researcher_id}] ${row.name_th}${row.name_en ? ` (${row.name_en})` : ""}`,
     `  ตำแหน่ง: ${extractAcademicTitle(row.name_th) ?? "ไม่ระบุ"}`,
@@ -99,6 +99,17 @@ export function formatResearcherDetail(record: ResearcherRecord): string {
     for (const item of publicationList) lines.push(`    - ${item}`);
   }
 
+  const projectList = [...projects]
+    .sort((a, b) => (b.fiscal_year_be ?? 0) - (a.fiscal_year_be ?? 0))
+    .map((item) =>
+      item.fiscal_year_be ? `${item.project_name} (${item.fiscal_year_be})` : item.project_name,
+    );
+
+  if (projectList.length) {
+    lines.push(`  โครงการวิจัย (${projectList.length} รายการ):`);
+    for (const item of projectList) lines.push(`    - ${item}`);
+  }
+
   const collaborationList = [...collaborations]
     .sort((a, b) => (a.org_order ?? 0) - (b.org_order ?? 0))
     .map((item) => item.organization_name)
@@ -107,10 +118,6 @@ export function formatResearcherDetail(record: ResearcherRecord): string {
   if (collaborationList.length) {
     lines.push(`  เครือข่ายความร่วมมือ (${collaborationList.length} หน่วยงาน):`);
     for (const org of collaborationList) lines.push(`    - ${org}`);
-  }
-
-  if (record.expertiseBrief) {
-    lines.push(record.expertiseBrief);
   }
 
   lines.push(`  ลิงก์: /researchers/${row.researcher_id}`);

@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 export function revalidateFundingCaches() {
   revalidateTag("funding-summaries");
   revalidateTag("fundings-full");
+  revalidateTag("assistant-dataset");
   revalidatePath("/funding");
   revalidatePath("/admin/fundings");
 }

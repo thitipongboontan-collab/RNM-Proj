@@ -1,0 +1,49 @@
+---
+description: AI assistant, matching, expertise, and funding-intelligence rules — reuse computeFundingFit; protect profile boundaries
+globs: src/lib/ai/**/*.{ts,tsx},src/lib/matching/**/*.{ts,tsx},src/lib/expertise/**/*.{ts,tsx},src/lib/funding-intelligence/**/*.{ts,tsx},src/lib/assistant-*.ts,src/app/api/assistant/**/*.{ts,tsx},src/app/api/match/**/*.{ts,tsx},scripts/ai/**/*.{ts,mjs,js}
+alwaysApply: false
+---
+
+# AI development rules
+
+## Canonical ranking
+
+```ts
+import { computeFundingFit } from "@/lib/ai/intelligence/funding-fit";
+```
+
+- Production match ordering and Fit Score cards use `computeFundingFit` / `rankFundingsForResearcher`
+- **Never** copy Fit Score formula into tools, UI, or a second module
+- Phase B (`assessExpertiseFundingMatch`, etc.) = relevance / confidence / eligibility explanations
+
+## Assistant pipeline
+
+- Entry: `src/app/api/assistant` → `src/lib/ai/pipeline.ts` + `router.ts` + `src/lib/ai/tools/*`
+- Preserve citation and tool-result shapes in `src/lib/ai/types.ts`
+- Reuse `expandQueryTokens` / text utils; keep prompts and tool Thai explanations consistent
+
+## Expertise (Phase A)
+
+- Evidence-weighted profiles; invalid/missing model output still yields safe fallbacks where implemented
+- Do not show unverified `ai_profile` as approved expertise on public researcher pages
+- Admin review flow owns approve/reject/edit of `display_profile`
+
+## Matching (Phase B)
+
+- Profile input: `selectProfileForMatching` — ignore `ai_profile`
+- Ignore `insufficient_evidence` topics for relevance
+- Eligibility must quote call text; missing researcher facts → `unknown`, not ineligible
+- Sparse funding `details` capped per existing engine rules
+
+## Funding intelligence
+
+- Attachment text extraction feeds matching + assistant; no OCR for scanned PDFs unless explicitly scoped
+- Keep extraction store helpers in `src/lib/funding-intelligence/`
+
+## Tests to prefer
+
+- `npm run matching:test`
+- `npm run expertise:test`
+- `npm run funding:test-extraction`
+- `npm run funding:test-match-route`
+- `npm run matching:benchmark` when changing rank/explain behavior

@@ -1,0 +1,37 @@
+---
+description: Core Research Nexus Matching project context, stack, boundaries, and non-negotiables for all agents
+alwaysApply: true
+---
+
+# Research Nexus Matching — Project Context
+
+## What this is
+
+Thai/English research platform: researchers, funding calls, news, spatial collaboration map, admin CMS, and an AI research assistant with funding matching.
+
+## Stack
+
+- Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 3
+- Supabase (Auth, Postgres, Storage); OpenAI server-side for assistant/expertise/embeddings
+- Path alias `@/` → `src/`
+
+## Key directories
+
+- `src/app/` — public + `/admin` routes, `/api/assistant`, `/api/match`
+- `src/components/` — UI (home, funding, researchers, spatial, admin, layout)
+- `src/lib/` — repositories, matching, expertise, AI pipeline/tools, admin, supabase clients
+- `supabase/` — additive SQL schemas (run manually in SQL Editor)
+- `docs/` — phase A/B/C architecture and audit notes
+- `scripts/` — data prep, embeddings, benchmarks, backups
+
+## Non-negotiables
+
+1. **Canonical funding ranker:** `computeFundingFit` in `src/lib/ai/intelligence/funding-fit.ts`. Never create a duplicate Fit Score engine.
+2. **Profiles:** `ai_profile` = AI draft; `display_profile` = matching/display input via `selectProfileForMatching`. Matching never scores `ai_profile`.
+3. **Phase B** (`src/lib/matching/`) explains/enriches; it does not replace production Fit Score sort unless explicitly cut over after benchmark review.
+4. **Auth:** `/admin` gated by Supabase Auth + optional `ADMIN_EMAIL`. Keep service-role and OpenAI keys server-only.
+5. **Do not** change package dependencies, run DB migrations, or rewrite schemas unless the user explicitly asks.
+
+## When unsure
+
+Read neighboring modules and `docs/phase-*-*.md` before inventing new patterns. Prefer additive changes.

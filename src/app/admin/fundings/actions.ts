@@ -15,6 +15,7 @@ import {
 } from "@/lib/admin/funding-admin";
 import type { AdminFundingFormInput } from "@/lib/admin/funding-types";
 import { revalidateFundingCaches } from "@/lib/admin/revalidate";
+import { extractFundingAttachmentsForFunding } from "@/lib/funding-intelligence/store-attachment-text";
 import { normalizeImagePosition } from "@/lib/image-position";
 
 export type FundingActionState = {
@@ -175,6 +176,31 @@ export async function completeFundingAttachmentUploadAction(
 
   await registerFundingDocumentAttachment(fundingId, attachment);
   revalidateFundingCaches();
+}
+
+export async function extractFundingAttachmentsAction(
+  fundingId: string,
+): Promise<FundingActionState> {
+  try {
+    await requireAdminSession();
+  } catch {
+    redirect("/admin/login");
+  }
+
+  try {
+    const count = await extractFundingAttachmentsForFunding(fundingId);
+    revalidateFundingCaches();
+    return {
+      success:
+        count > 0
+          ? `วิเคราะห์ไฟล์แนบ ${count} ไฟล์แล้ว AI Assistant จะใช้ข้อความนี้จับคู่นักวิจัย`
+          : "ทุนนี้ยังไม่มีไฟล์แนบ",
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "วิเคราะห์ไฟล์แนบไม่สำเร็จ",
+    };
+  }
 }
 
 export async function deleteFundingAttachmentAction(

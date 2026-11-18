@@ -54,7 +54,7 @@ export const MultiFileUploadSection = forwardRef<MultiFileUploadHandle, MultiFil
         <p className="text-sm font-medium text-brand-dark">{label}</p>
         {description ? <p className="mt-1 text-xs text-brand-muted">{description}</p> : null}
         <p className="mt-1 text-xs text-brand-muted">
-          ไฟล์แนบจะอัปโหลดตรงไป Supabase Storage (รองรับไฟล์ขนาดใหญ่)
+          ไฟล์จะอัปโหลดตรงไป Supabase Storage (รองรับไฟล์ขนาดใหญ่)
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">

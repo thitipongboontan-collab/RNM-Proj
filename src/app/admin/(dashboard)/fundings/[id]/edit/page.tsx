@@ -26,7 +26,7 @@ export default async function AdminFundingEditPage({ params, searchParams }: Pag
       <AdminHeader
         email={user?.email}
         title={`แก้ไขแหล่งทุน ${record.fundingId}`}
-        description={record.title}
+        description={`${record.title} — ข้อความในรายละเอียดและไฟล์ PDF/Word จะถูกใช้จับคู่นักวิจัย`}
       />
 
       <div className="flex flex-1 flex-col gap-4 px-5 py-6 sm:px-8">

@@ -23,6 +23,22 @@ export const QUERY_SYNONYMS: Record<string, string[]> = {
   social: ["สังคม", "social", "ความมั่นคง", "security"],
   environment: ["สิ่งแวดล้อม", "environment", "environmental", "climate", "ภูมิอากาศ"],
   researcher: ["นักวิจัย", "researcher", "อาจารย์", "ผศ", "รศ", "ดร"],
+  thaomai: [
+    "เฒ่าใหม่",
+    "พื้นที่เฒ่าใหม่",
+    "บ้านเฒ่าใหม่",
+    "thao mai",
+    "mae mai",
+    "ban thao mai",
+    "ban mae mai",
+    "thaomai",
+    "maemai",
+  ],
+  chiangmai: ["เชียงใหม่", "chiang mai", "chiangmai"],
+  highland: ["พื้นที่สูง", "highland", "upland", "hill tribe", "บนดอย", "ดอย"],
+  ethnicity: ["ชาติพันธุ์", "ethnic", "ethnicity", "ชนเผ่า", "indigenous", "ethnic group"],
+  livelihood: ["livelihood", "วิถีชีวิต", "การดำรงชีพ", "อาชีพ"],
+  disaster: ["ภัยพิบัติ", "disaster", "flood", "น้ำท่วม", "drought", "ภัยแล้ง"],
 };
 
 export function expandQueryTokens(message: string): string[] {
@@ -33,15 +49,39 @@ export function expandQueryTokens(message: string): string[] {
     if (part.length >= 2) tokens.add(part);
   }
 
-  for (const [key, synonyms] of Object.entries(QUERY_SYNONYMS)) {
-    const synonymNorms = synonyms.map((term) => normalizeTopicQueryText(term));
-    if (synonymNorms.some((term) => normalized.includes(term))) {
-      tokens.add(key);
-      for (const synonym of synonymNorms) tokens.add(synonym);
-    }
+  for (const synonym of expandSynonymTerms(normalized)) {
+    tokens.add(synonym);
   }
 
   return [...tokens];
+}
+
+export function expandSynonymTerms(text: string): string[] {
+  const normalized = normalizeTopicQueryText(text);
+  const terms = new Set<string>();
+
+  for (const [key, synonyms] of Object.entries(QUERY_SYNONYMS)) {
+    const synonymNorms = synonyms.map((term) => normalizeTopicQueryText(term));
+    if (synonymNorms.some((term) => term.length >= 2 && normalized.includes(term))) {
+      terms.add(key);
+      for (const synonym of synonymNorms) {
+        if (synonym.length >= 2) terms.add(synonym);
+      }
+    }
+  }
+
+  return [...terms];
+}
+
+export function mergeSearchTerms(...groups: Array<string[] | undefined>): string[] {
+  const terms = new Set<string>();
+  for (const group of groups) {
+    for (const term of group ?? []) {
+      const normalized = normalizeTopicQueryText(term);
+      if (normalized.length >= 2) terms.add(normalized);
+    }
+  }
+  return [...terms];
 }
 
 export function scoreText(searchText: string, queryTokens: string[]): number {
@@ -90,11 +130,9 @@ export function isFundingToResearchersQuestion(message: string): boolean {
   const hasFunding =
     /(ทุน|funding|grant|วช\.|nrct|nriis|ประกาศรับ|2570|งบประมาณ)/.test(normalized) ||
     /\bFD\d{3}\b/i.test(message);
-  const asksResearchers =
-    /(นักวิจัย|researcher|อาจารย์)/.test(normalized) &&
-    /(คนไหน|ใคร|who|which|ใดบ้าง|บ้าง)/.test(normalized);
+  const asksWho = /(คนไหน|ใคร|who|which|ใดบ้าง)/.test(normalized);
   const fitIntent = /(เหมาะ|เหมาะสม|ควรสมัคร|match|จับคู่|แนะนำ)/.test(normalized);
-  return hasFunding && asksResearchers && fitIntent;
+  return hasFunding && asksWho && fitIntent;
 }
 
 export function isMatchFundingQuestion(message: string): boolean {

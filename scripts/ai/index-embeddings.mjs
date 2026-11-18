@@ -32,7 +32,7 @@ function sortByOrder(rows, orderKey) {
   return [...rows].sort((a, b) => (a[orderKey] ?? 0) - (b[orderKey] ?? 0));
 }
 
-function buildResearcherContent(row, expertise, keywords, degrees, publications, collaborations) {
+function buildResearcherContent(row, expertise, keywords, degrees, publications, collaborations, projects = []) {
   const keywordEn = sortByOrder(
     keywords.filter((item) => item.keyword_type === "keyword_en"),
     "keyword_order",
@@ -46,6 +46,9 @@ function buildResearcherContent(row, expertise, keywords, degrees, publications,
   const publicationTitles = sortByOrder(publications, "year")
     .reverse()
     .map((item) => (item.year ? `${item.title} (${item.year})` : item.title));
+  const projectTitles = [...projects]
+    .sort((a, b) => (b.fiscal_year_be ?? 0) - (a.fiscal_year_be ?? 0))
+    .map((item) => item.project_name);
   const collaborationOrgs = sortByOrder(collaborations, "org_order")
     .map((item) => item.organization_name)
     .filter((org) => org && org !== "-");
@@ -60,6 +63,7 @@ function buildResearcherContent(row, expertise, keywords, degrees, publications,
       ? `คำสำคัญ ${[...keywordEn, ...keywordTh].join(", ")}`
       : "",
     publicationTitles.length ? `ผลงานวิจัย ${publicationTitles.join("; ")}` : "",
+    projectTitles.length ? `โครงการวิจัย ${projectTitles.join("; ")}` : "",
     collaborationOrgs.length ? `เครือข่ายความร่วมมือ ${collaborationOrgs.join(", ")}` : "",
     `scholarly output ${row.scholarly_output ?? 0}`,
     `citations ${row.citations ?? 0}`,
@@ -131,6 +135,7 @@ async function main() {
     { data: degrees, error: degreeError },
     { data: publications, error: publicationError },
     { data: collaborations, error: collaborationError },
+    { data: projects, error: projectError },
     { data: fundings, error: fundingError },
     { data: attachments, error: attachmentError },
   ] = await Promise.all([
@@ -144,6 +149,7 @@ async function main() {
     supabase
       .from("researcher_collaborations")
       .select("researcher_id, org_order, organization_name"),
+    supabase.from("researcher_projects").select("researcher_id, project_name, fiscal_year_be"),
     supabase
       .from("fundings")
       .select("funding_id, title, organization, status_label, open_date, close_date, details"),
@@ -161,6 +167,10 @@ async function main() {
     attachmentError,
   ]) {
     if (error) throw error;
+  }
+
+  if (projectError && !/does not exist|could not find/i.test(projectError.message)) {
+    throw projectError;
   }
 
   const expertiseByResearcher = new Map();
@@ -198,6 +208,13 @@ async function main() {
     collaborationsByResearcher.set(row.researcher_id, list);
   }
 
+  const projectsByResearcher = new Map();
+  for (const row of projects ?? []) {
+    const list = projectsByResearcher.get(row.researcher_id) ?? [];
+    list.push(row);
+    projectsByResearcher.set(row.researcher_id, list);
+  }
+
   const attachmentsByFunding = new Map();
   for (const row of attachments ?? []) {
     const list = attachmentsByFunding.get(row.funding_id) ?? [];
@@ -220,6 +237,7 @@ async function main() {
         degreesByResearcher.get(row.researcher_id) ?? [],
         publicationsByResearcher.get(row.researcher_id) ?? [],
         collaborationsByResearcher.get(row.researcher_id) ?? [],
+        projectsByResearcher.get(row.researcher_id) ?? [],
       ),
       metadata: { department: row.department, name_th: row.name_th },
     });

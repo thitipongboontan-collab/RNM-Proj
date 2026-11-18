@@ -14,6 +14,10 @@ import {
   uploadFundingDocument,
   uploadFundingImage,
 } from "@/lib/admin/funding-upload";
+import {
+  extractAndStoreFundingAttachment,
+  extractTextFromUploadFile,
+} from "@/lib/funding-intelligence/store-attachment-text";
 import { normalizeImagePosition } from "@/lib/image-position";
 import { isMissingSchemaError } from "@/lib/supabase/schema-fallback";
 
@@ -42,6 +46,11 @@ type AttachmentRow = {
   file_type: "pdf" | "doc";
   storage_path: string;
   file_order: number | null;
+  extracted_text?: string | null;
+  extraction_status?: string | null;
+  text_origin?: string | null;
+  page_count?: number | null;
+  extraction_error?: string | null;
 };
 
 function getAdminClient() {
@@ -85,6 +94,11 @@ function mapFundingRecord(
       fileType: item.file_type,
       storagePath: item.storage_path,
       fileOrder: item.file_order ?? 0,
+      extractionStatus: item.extraction_status ?? null,
+      textOrigin: item.text_origin ?? null,
+      extractedCharCount: item.extracted_text?.length ?? 0,
+      pageCount: item.page_count ?? null,
+      extractionError: item.extraction_error ?? null,
     })),
     detailImages: detailImages.map((item) => ({
       id: item.id,
@@ -143,11 +157,23 @@ export async function getAdminFundingById(id: string): Promise<AdminFundingRecor
   }
   if (!data) return null;
 
-  const { data: attachments, error: attachmentError } = await supabase
+  const attachmentSelectWithText =
+    "id, funding_id, file_name, file_type, storage_path, file_order, extracted_text, extraction_status, text_origin, page_count, extraction_error";
+  const attachmentSelectBase = "id, funding_id, file_name, file_type, storage_path, file_order";
+
+  let { data: attachments, error: attachmentError } = await supabase
     .from("funding_attachments")
-    .select("id, funding_id, file_name, file_type, storage_path, file_order")
+    .select(attachmentSelectWithText)
     .eq("funding_id", id)
     .order("file_order");
+
+  if (attachmentError && isMissingSchemaError(attachmentError.message)) {
+    ({ data: attachments, error: attachmentError } = await supabase
+      .from("funding_attachments")
+      .select(attachmentSelectBase)
+      .eq("funding_id", id)
+      .order("file_order"));
+  }
 
   if (attachmentError) {
     throw new Error(attachmentError.message);
@@ -276,16 +302,24 @@ export async function registerFundingDocumentAttachment(
   attachment: Pick<PreparedFundingDocumentUpload, "storagePath" | "fileName" | "fileType" | "fileOrder">,
 ): Promise<void> {
   const supabase = getAdminClient();
-  const { error } = await supabase.from("funding_attachments").insert({
-    funding_id: fundingId,
-    file_name: attachment.fileName,
-    file_type: attachment.fileType,
-    storage_path: attachment.storagePath,
-    file_order: attachment.fileOrder,
-  });
+  const { data, error } = await supabase
+    .from("funding_attachments")
+    .insert({
+      funding_id: fundingId,
+      file_name: attachment.fileName,
+      file_type: attachment.fileType,
+      storage_path: attachment.storagePath,
+      file_order: attachment.fileOrder,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (data?.id) {
+    await extractAndStoreFundingAttachment(data.id);
   }
 }
 
@@ -381,16 +415,37 @@ async function insertAttachments(
 
   for (const [index, file] of files.entries()) {
     const uploaded = await uploadFundingDocument(fundingId, file, startOrder + index + 1);
+    const extraction = await extractTextFromUploadFile(file);
     rows.push({
       funding_id: fundingId,
       file_name: uploaded.fileName,
       file_type: uploaded.fileType,
       storage_path: uploaded.storagePath,
       file_order: startOrder + index + 1,
+      extracted_text: extraction.text || null,
+      extraction_status: extraction.status,
+      text_origin: extraction.textOrigin,
+      page_count: extraction.pageCount,
+      extracted_at: new Date().toISOString(),
+      extraction_error: extraction.errorMessage,
     });
   }
 
-  const { error } = await supabase.from("funding_attachments").insert(rows);
+  let { error } = await supabase.from("funding_attachments").insert(rows);
+  if (error && isMissingSchemaError(error.message)) {
+    const withoutText = rows.map(
+      ({
+        extracted_text: _extractedText,
+        extraction_status: _status,
+        text_origin: _origin,
+        page_count: _pages,
+        extracted_at: _extractedAt,
+        extraction_error: _extractionError,
+        ...row
+      }) => row,
+    );
+    ({ error } = await supabase.from("funding_attachments").insert(withoutText));
+  }
   if (error) {
     throw new Error(error.message);
   }
