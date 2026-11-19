@@ -64,6 +64,8 @@ export type ProjectMapListItem = {
   titleTh: string;
   titleEn: string;
   fiscalYearBe: number | null;
+  startYearBe: number | null;
+  endYearBe: number | null;
   sdg: string;
   strategy: string;
   researchGroup: string;

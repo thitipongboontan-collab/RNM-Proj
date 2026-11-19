@@ -199,7 +199,7 @@ export function SpatialDashboard({ data }: SpatialDashboardProps) {
     .length;
 
   return (
-    <div className="mx-auto w-full max-w-none">
+    <div className="mx-auto w-full max-w-[1320px]">
       <div className="overflow-hidden rounded-[18px] border border-[#DDE7EC] bg-white shadow-[0px_14px_45px_rgba(37,50,75,0.08)]">
         <div className="grid gap-2 border-b border-[#DDE7EC] bg-white/95 p-2.5 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
           <select

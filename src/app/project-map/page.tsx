@@ -19,7 +19,7 @@ export default async function ProjectMapPage() {
           { label: "พื้นที่วิจัย" },
         ]}
       />
-      <main className="flex w-full flex-col items-center px-2 py-10 sm:px-4 lg:px-6 lg:py-14">
+      <main className="flex w-full flex-col items-center px-4 py-10 sm:px-6 md:px-10 lg:px-[60px] lg:py-14">
         <PageTitle>พื้นที่วิจัย</PageTitle>
         <p className="mt-4 max-w-4xl text-center text-base leading-relaxed text-brand-muted sm:text-lg">
           แผนที่แสดงพื้นที่ดำเนินโครงการวิจัย

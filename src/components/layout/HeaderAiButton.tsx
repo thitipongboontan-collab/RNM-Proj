@@ -1,6 +1,5 @@
 "use client";
 
-import { AiAssistantIcon } from "@/components/home/AiAssistantIcon";
 import { useAiAssistant } from "@/components/layout/AiAssistantProvider";
 
 export function HeaderAiButton() {
@@ -11,14 +10,12 @@ export function HeaderAiButton() {
       type="button"
       onClick={openAssistant}
       aria-label="Ask AI Research Assistant"
-      className="flex h-[43px] w-[52px] shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-r from-[#4D5CAD] to-[#00CACC] shadow-[0px_2px_8px_rgba(77,92,173,0.28)] transition hover:opacity-90"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(90deg,#7A45E8_0%,#4D5CAD_48%,#1C2454_100%)] text-white shadow-[0_6px_16px_rgba(74,63,158,0.28)] transition hover:brightness-[1.05]"
     >
-      <AiAssistantIcon
-        white
-        className="relative h-[24px] w-[28px] shrink-0"
-        iconClassName="absolute left-0 top-[4px] h-[20px] w-[28px] object-contain"
-        sparkleClassName="absolute left-[14px] top-0 h-[10px] w-[10px] object-cover"
-      />
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <circle cx="11" cy="11" r="6.25" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M16 16.5L20 20.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
     </button>
   );
 }

@@ -29,6 +29,7 @@
     "supabase:backup:run": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/supabase/run-backup.ps1"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.8.2",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.106.2",
     "@tsparticles/react": "^4.0.5",
@@ -41,6 +42,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
+    "three": "^0.187.0",
     "word-extractor": "^1.0.4"
   },
   "devDependencies": {
@@ -48,6 +50,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.187.0",
     "autoprefixer": "^10.5.0",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",

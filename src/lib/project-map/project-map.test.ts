@@ -22,6 +22,8 @@ function sampleProject(overrides: Partial<ProjectMapListItem> = {}): ProjectMapL
     titleTh: "โครงการตัวอย่างเชียงใหม่",
     titleEn: "Sample Chiang Mai Project",
     fiscalYearBe: 2567,
+    startYearBe: 2567,
+    endYearBe: 2568,
     sdg: "เป้าหมายที่ 13",
     strategy: "อื่นๆ",
     researchGroup: "กลุ่ม A",

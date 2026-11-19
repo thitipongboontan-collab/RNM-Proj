@@ -2,25 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-  box-sizing: border-box;
+:root {
+  --font-site: var(--font-inter), var(--font-noto-sans-thai-ui), Inter, "Noto Sans Thai UI", sans-serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
+html,
+body,
+.font-sans,
+.font-jakarta,
+.font-inter,
+.font-thai-ui {
+  font-family: var(--font-site);
 }
 
-body {
-  margin: 0;
-  background-color: #ffffff;
-  color: #25324b;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;
-  font-style: normal;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    box-sizing: border-box;
+    font-family: var(--font-site);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
+  body {
+    margin: 0;
+    background-color: #ffffff;
+    color: #25324b;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-site);
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+  }
+
+  button,
+  [type="button"],
+  [type="submit"] {
+    font-weight: 600;
+  }
 }
 
 a {
@@ -204,7 +241,7 @@ header img[alt="Research Nexus Matching"] {
   border-radius: 9999px;
   background: linear-gradient(135deg, #4d5cad 0%, #00cacc 100%);
   color: #ffffff;
-  font-family: var(--font-inter), var(--font-noto-sans-thai-ui), sans-serif;
+  font-family: var(--font-site);
   font-weight: 800;
   line-height: 1;
   box-shadow:
@@ -237,7 +274,7 @@ header img[alt="Research Nexus Matching"] {
   background: #ffffff;
   box-shadow: 0 16px 38px rgba(37, 50, 75, 0.18);
   color: #24324b;
-  font-family: var(--font-noto-sans-thai-ui), var(--font-inter), sans-serif;
+  font-family: var(--font-site);
   pointer-events: auto;
 }
 
@@ -268,7 +305,7 @@ header img[alt="Research Nexus Matching"] {
   background: transparent;
   color: #8a94a8;
   cursor: pointer;
-  font: 24px/1 var(--font-inter), sans-serif;
+  font: 24px/1 var(--font-site);
 }
 
 .spatial-basemap-overlay-host {
@@ -326,7 +363,7 @@ header img[alt="Research Nexus Matching"] {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 32px rgba(37, 50, 75, 0.08);
-  font-family: var(--font-inter), var(--font-noto-sans-thai-ui), sans-serif;
+  font-family: var(--font-site);
 }
 
 .spatial-basemap-popup-header {
@@ -357,7 +394,7 @@ header img[alt="Research Nexus Matching"] {
   background: transparent;
   color: #8a94a8;
   cursor: pointer;
-  font: 18px/1 var(--font-inter), sans-serif;
+  font: 18px/1 var(--font-site);
 }
 
 .spatial-basemap-popup-options {
@@ -417,7 +454,7 @@ header img[alt="Research Nexus Matching"] {
 
 @layer utilities {
   .font-thai-ui {
-    font-family: var(--font-noto-sans-thai-ui), "Noto Sans Thai UI", sans-serif;
+    font-family: var(--font-site);
     font-style: normal;
   }
 

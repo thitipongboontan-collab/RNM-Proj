@@ -22,8 +22,10 @@ import type { ProjectMapFeature } from "@/lib/project-map/types";
 type ProjectMapProps = {
   features: ProjectMapFeature[];
   selectedProjectId?: string;
+  focusedProjectIds?: string[];
   focusNonce?: number;
   onSelectProject: (projectId?: string) => void;
+  onSelectProjects: (projectIds: string[]) => void;
 };
 
 type AggregatePoint = {
@@ -86,12 +88,10 @@ function FitFeatures({
 function FocusSelectedProject({
   features,
   selectedProjectId,
-  spreadPositions,
   focusNonce = 0,
 }: {
   features: ProjectMapFeature[];
   selectedProjectId?: string;
-  spreadPositions: Map<string, { latitude: number; longitude: number }>;
   focusNonce?: number;
 }) {
   const map = useMap();
@@ -102,10 +102,6 @@ function FocusSelectedProject({
     const points = features
       .filter((feature) => feature.projectId === selectedProjectId)
       .map((feature) => {
-        const spread = spreadPositions.get(feature.featureId);
-        if (spread) {
-          return [spread.latitude, spread.longitude] as [number, number];
-        }
         if (feature.latitude != null && feature.longitude != null) {
           return [feature.latitude, feature.longitude] as [number, number];
         }
@@ -120,7 +116,7 @@ function FocusSelectedProject({
     if (points.length > 1) {
       map.flyToBounds(points, { padding: [72, 72], maxZoom: 10, duration: 0.8 });
     }
-  }, [features, focusNonce, map, selectedProjectId, spreadPositions]);
+  }, [features, focusNonce, map, selectedProjectId]);
 
   return null;
 }
@@ -142,9 +138,17 @@ function markerIcon(count: number, selected: boolean) {
   });
 }
 
-function spreadOverlappingPoints(
-  features: ProjectMapFeature[],
-): Map<string, { latitude: number; longitude: number }> {
+function uniqueProjectIds(items: ProjectMapFeature[]) {
+  return [...new Set(items.map((item) => item.projectId))];
+}
+
+function sameProjectSet(left: string[] | undefined, right: string[]) {
+  if (!left?.length || left.length !== right.length) return false;
+  const lookup = new Set(left);
+  return right.every((id) => lookup.has(id));
+}
+
+function buildCoordinateAggregates(features: ProjectMapFeature[]): AggregatePoint[] {
   const grouped = new Map<string, ProjectMapFeature[]>();
   for (const feature of features) {
     if (feature.latitude == null || feature.longitude == null) continue;
@@ -152,25 +156,19 @@ function spreadOverlappingPoints(
     grouped.set(key, [...(grouped.get(key) ?? []), feature]);
   }
 
-  const positions = new Map<string, { latitude: number; longitude: number }>();
-  for (const group of grouped.values()) {
-    if (group.length === 1) {
-      positions.set(group[0].featureId, {
-        latitude: group[0].latitude!,
-        longitude: group[0].longitude!,
-      });
-      continue;
-    }
-    const radius = Math.min(0.16, 0.03 + group.length * 0.004);
-    group.forEach((feature, index) => {
-      const angle = (Math.PI * 2 * index) / group.length;
-      positions.set(feature.featureId, {
-        latitude: feature.latitude! + Math.sin(angle) * radius,
-        longitude: feature.longitude! + Math.cos(angle) * radius,
-      });
-    });
-  }
-  return positions;
+  return [...grouped.entries()].map(([key, items]) => {
+    const projectIds = uniqueProjectIds(items);
+    const sample = items[0];
+    const label = [sample.amphoe, sample.province].filter(Boolean).join(", ") || "พื้นที่วิจัย";
+    return {
+      key: `coord:${key}`,
+      label,
+      count: projectIds.length,
+      latitude: sample.latitude!,
+      longitude: sample.longitude!,
+      projectIds,
+    };
+  });
 }
 
 function buildProvinceAggregates(features: ProjectMapFeature[]): AggregatePoint[] {
@@ -186,79 +184,66 @@ function buildProvinceAggregates(features: ProjectMapFeature[]): AggregatePoint[
       items.reduce((sum, item) => sum + (item.latitude ?? 0), 0) / items.length;
     const longitude =
       items.reduce((sum, item) => sum + (item.longitude ?? 0), 0) / items.length;
+    const projectIds = uniqueProjectIds(items);
     return {
       key: `province:${label}`,
       label,
-      count: items.length,
+      count: projectIds.length,
       latitude,
       longitude,
-      projectIds: [...new Set(items.map((item) => item.projectId))],
+      projectIds,
     };
   });
 }
 
 function MapLayers({
-  pointFeatures,
   polygonFeatures,
-  aggregates,
-  spreadPositions,
-  showPoints,
+  visibleAggregates,
   selectedProjectId,
+  focusedProjectIds,
+  zoomToOnMultiProvince,
   onSelectProject,
+  onSelectProjects,
 }: {
-  pointFeatures: ProjectMapFeature[];
   polygonFeatures: ProjectMapFeature[];
-  aggregates: AggregatePoint[];
-  spreadPositions: Map<string, { latitude: number; longitude: number }>;
-  showPoints: boolean;
+  visibleAggregates: AggregatePoint[];
   selectedProjectId?: string;
+  focusedProjectIds?: string[];
+  zoomToOnMultiProvince: boolean;
   onSelectProject: (projectId?: string) => void;
+  onSelectProjects: (projectIds: string[]) => void;
 }) {
   const map = useMap();
 
   return (
     <>
-      {showPoints
-        ? pointFeatures.map((feature) => {
-            const position = spreadPositions.get(feature.featureId) ?? {
-              latitude: feature.latitude!,
-              longitude: feature.longitude!,
-            };
-            return (
-              <Marker
-                key={feature.featureId}
-                position={[position.latitude, position.longitude]}
-                icon={markerIcon(1, feature.projectId === selectedProjectId)}
-                eventHandlers={{
-                  click: () => onSelectProject(feature.projectId),
-                }}
-              />
-            );
-          })
-        : aggregates.map((aggregate) => {
-            const uniqueIds = [...new Set(aggregate.projectIds)];
-            return (
-              <Marker
-                key={aggregate.key}
-                position={[aggregate.latitude, aggregate.longitude]}
-                icon={markerIcon(
-                  aggregate.count,
-                  uniqueIds.includes(selectedProjectId ?? ""),
-                )}
-                eventHandlers={{
-                  click: () => {
-                    if (uniqueIds.length === 1) {
-                      onSelectProject(uniqueIds[0]);
-                      return;
-                    }
-                    map.flyTo([aggregate.latitude, aggregate.longitude], 8, {
-                      duration: 0.8,
-                    });
-                  },
-                }}
-              />
-            );
-          })}
+      {visibleAggregates.map((aggregate) => {
+        const selected =
+          sameProjectSet(focusedProjectIds, aggregate.projectIds) ||
+          aggregate.projectIds.includes(selectedProjectId ?? "");
+        return (
+          <Marker
+            key={aggregate.key}
+            position={[aggregate.latitude, aggregate.longitude]}
+            icon={markerIcon(aggregate.count, selected)}
+            eventHandlers={{
+              click: () => {
+                if (zoomToOnMultiProvince && aggregate.projectIds.length > 1) {
+                  map.flyTo([aggregate.latitude, aggregate.longitude], 8, {
+                    duration: 0.8,
+                  });
+                  return;
+                }
+                if (aggregate.projectIds.length === 1) {
+                  onSelectProject(aggregate.projectIds[0]);
+                  return;
+                }
+                onSelectProjects(aggregate.projectIds);
+              },
+            }}
+          />
+        );
+      })}
 
       {polygonFeatures.map((feature) => (
         <GeoJSON
@@ -281,8 +266,10 @@ function MapLayers({
 export function ProjectMap({
   features,
   selectedProjectId,
+  focusedProjectIds,
   focusNonce = 0,
   onSelectProject,
+  onSelectProjects,
 }: ProjectMapProps) {
   const [zoom, setZoom] = useState(6);
   const [basemapId, setBasemapId] = useState<BasemapId>(DEFAULT_BASEMAP_ID);
@@ -308,15 +295,16 @@ export function ProjectMap({
       ),
     [features],
   );
-  const aggregates = useMemo(
+  const provinceAggregates = useMemo(
     () => buildProvinceAggregates(pointFeatures),
     [pointFeatures],
   );
-  const spreadPositions = useMemo(
-    () => spreadOverlappingPoints(pointFeatures),
+  const coordinateAggregates = useMemo(
+    () => buildCoordinateAggregates(pointFeatures),
     [pointFeatures],
   );
-  const showPoints = zoom >= 7;
+  const showCoordinates = zoom >= 7;
+  const visibleAggregates = showCoordinates ? coordinateAggregates : provinceAggregates;
 
   return (
     <div className="spatial-map-shell relative h-full min-h-[620px] w-full">
@@ -341,17 +329,16 @@ export function ProjectMap({
         <FocusSelectedProject
           features={features}
           selectedProjectId={selectedProjectId}
-          spreadPositions={spreadPositions}
           focusNonce={focusNonce}
         />
         <MapLayers
-          pointFeatures={pointFeatures}
           polygonFeatures={polygonFeatures}
-          aggregates={aggregates}
-          spreadPositions={spreadPositions}
-          showPoints={showPoints}
+          visibleAggregates={visibleAggregates}
           selectedProjectId={selectedProjectId}
+          focusedProjectIds={focusedProjectIds}
+          zoomToOnMultiProvince={!showCoordinates}
           onSelectProject={onSelectProject}
+          onSelectProjects={onSelectProjects}
         />
       </MapContainer>
 

@@ -13,9 +13,28 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-noto-sans-thai-ui)", "Noto Sans Thai UI", "sans-serif"],
-        jakarta: ["var(--font-plus-jakarta)", "Plus Jakarta Sans", "sans-serif"],
-        inter: ["var(--font-inter)", "Inter", "sans-serif"],
+        // Site stack: Inter (English/numbers/UI) then Noto Sans Thai UI (Thai glyphs).
+        sans: [
+          "var(--font-inter)",
+          "var(--font-noto-sans-thai-ui)",
+          "Inter",
+          "Noto Sans Thai UI",
+          "sans-serif",
+        ],
+        jakarta: [
+          "var(--font-inter)",
+          "var(--font-noto-sans-thai-ui)",
+          "Inter",
+          "Noto Sans Thai UI",
+          "sans-serif",
+        ],
+        inter: [
+          "var(--font-inter)",
+          "var(--font-noto-sans-thai-ui)",
+          "Inter",
+          "Noto Sans Thai UI",
+          "sans-serif",
+        ],
       },
       boxShadow: {
         "ai-bar": "0px 4px 20px 0px rgba(171, 205, 255, 1)",

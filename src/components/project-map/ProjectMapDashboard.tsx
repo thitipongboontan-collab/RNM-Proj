@@ -10,6 +10,10 @@ import type {
   ProjectMapFilters,
 } from "@/lib/project-map/types";
 
+function formatProjectYears(startYearBe: number | null | undefined, endYearBe: number | null | undefined) {
+  return `${startYearBe ?? "—"} / ${endYearBe ?? "—"}`;
+}
+
 const ProjectMap = dynamic(
   () =>
     import("@/components/project-map/ProjectMap").then((mod) => ({
@@ -37,10 +41,10 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-3xl border border-white/45 bg-white/70 p-5 text-center shadow-[0px_10px_32px_rgba(37,50,75,0.08)] backdrop-blur-md">
+    <div className="rounded-3xl border border-white/45 bg-white/70 p-3 text-center shadow-[0px_10px_32px_rgba(37,50,75,0.08)] backdrop-blur-md">
       <p className="text-sm font-semibold leading-snug text-[#8A94A8]">{label}</p>
-      <p className="mt-2 text-5xl font-black leading-none text-black">{value}</p>
-      <p className="mt-1 text-base font-medium text-[#8A94A8]">โครงการ</p>
+      <p className="mt-1 text-4xl font-black leading-none text-black">{value}</p>
+      <p className="mt-1 text-sm font-medium text-[#8A94A8]">โครงการ</p>
     </div>
   );
 }
@@ -92,6 +96,7 @@ const EMPTY_FILTERS: Required<
 export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
+  const [focusedProjectIds, setFocusedProjectIds] = useState<string[] | undefined>();
   const [focusNonce, setFocusNonce] = useState(0);
   const [detail, setDetail] = useState<ProjectMapDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -101,9 +106,27 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
   function selectProject(projectId: string) {
     setSelectedProjectId(projectId);
     setFocusNonce((value) => value + 1);
+    if (focusedProjectIds && !focusedProjectIds.includes(projectId)) {
+      setFocusedProjectIds(undefined);
+    }
     if (detail?.projectId !== projectId) {
       setDetailLoading(true);
     }
+  }
+
+  function selectProjectsFromMap(projectIds: string[]) {
+    const uniqueIds = [...new Set(projectIds)];
+    setFocusedProjectIds(uniqueIds);
+    if (uniqueIds.length === 1) {
+      setSelectedProjectId(uniqueIds[0]);
+      setFocusNonce((value) => value + 1);
+      if (detail?.projectId !== uniqueIds[0]) {
+        setDetailLoading(true);
+      }
+      return;
+    }
+    setSelectedProjectId(undefined);
+    setDetail(null);
   }
 
   const filtered = useMemo(
@@ -115,7 +138,8 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
     filters.tambon !== "all" ||
     filters.amphoe !== "all" ||
     filters.province !== "all" ||
-    filters.principalInvestigator !== "all";
+    filters.principalInvestigator !== "all" ||
+    Boolean(focusedProjectIds?.length);
 
   function updateFilter<K extends keyof ProjectMapFilters>(key: K, value: string) {
     setFilters((current) => {
@@ -134,6 +158,7 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
   function resetFilters() {
     setFilters(EMPTY_FILTERS);
     setSelectedProjectId(undefined);
+    setFocusedProjectIds(undefined);
     setDetail(null);
   }
 
@@ -147,15 +172,30 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
     }
   }, [filtered.projects, selectedProjectId]);
 
+  useEffect(() => {
+    if (!focusedProjectIds?.length) return;
+    const remaining = focusedProjectIds.filter((projectId) =>
+      filtered.projects.some((project) => project.projectId === projectId),
+    );
+    if (remaining.length === focusedProjectIds.length) return;
+    setFocusedProjectIds(remaining.length ? remaining : undefined);
+  }, [filtered.projects, focusedProjectIds]);
+
+  const listedProjects = useMemo(() => {
+    if (!focusedProjectIds?.length) return filtered.projects;
+    const focused = new Set(focusedProjectIds);
+    return filtered.projects.filter((project) => focused.has(project.projectId));
+  }, [filtered.projects, focusedProjectIds]);
+
   const visibleProjects = useMemo(() => {
-    const list = filtered.projects.slice(0, 100);
+    const list = listedProjects.slice(0, 100);
     if (!selectedProjectId) return list;
     if (list.some((project) => project.projectId === selectedProjectId)) return list;
-    const selected = filtered.projects.find(
+    const selected = listedProjects.find(
       (project) => project.projectId === selectedProjectId,
     );
     return selected ? [selected, ...list.slice(0, 99)] : list;
-  }, [filtered.projects, selectedProjectId]);
+  }, [listedProjects, selectedProjectId]);
 
   useEffect(() => {
     const item = selectedItemRef.current;
@@ -201,7 +241,7 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
   }, [selectedProjectId]);
 
   return (
-    <div className="mx-auto w-full max-w-none">
+    <div className="mx-auto w-full max-w-[1320px]">
       <div className="overflow-hidden rounded-[18px] border border-[#DDE7EC] bg-white shadow-[0px_14px_45px_rgba(37,50,75,0.08)]">
         <div className="grid gap-2 border-b border-[#DDE7EC] bg-white/95 p-2.5 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
           <FilterSelect
@@ -243,15 +283,17 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
             <ProjectMap
               features={filtered.features}
               selectedProjectId={selectedProjectId}
+              focusedProjectIds={focusedProjectIds}
               focusNonce={focusNonce}
               onSelectProject={(projectId) => {
                 if (projectId) selectProject(projectId);
               }}
+              onSelectProjects={selectProjectsFromMap}
             />
           </div>
 
-          <div className="pointer-events-none absolute right-4 top-6 z-[500] flex w-[min(380px,calc(100%-2rem))] flex-col gap-5 sm:right-6">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="pointer-events-none absolute inset-y-4 right-4 z-[500] flex w-[min(380px,calc(100%-2rem))] flex-col gap-3 sm:right-6">
+            <div className="grid shrink-0 grid-cols-2 gap-4">
               <StatCard
                 label="จำนวนพื้นที่วิจัยในประเทศ"
                 value={filtered.stats.domesticProjectCount}
@@ -262,7 +304,7 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
               />
             </div>
 
-            <aside className="pointer-events-auto flex max-h-[420px] flex-col rounded-[18px] border border-white/70 bg-white/85 p-5 text-brand-dark shadow-[0px_16px_42px_rgba(37,50,75,0.14)] backdrop-blur-md sm:max-h-[520px]">
+            <aside className="pointer-events-auto flex min-h-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-white/70 bg-white/85 p-5 text-brand-dark shadow-[0px_16px_42px_rgba(37,50,75,0.14)] backdrop-blur-md">
               <div className="grid grid-cols-[1fr_auto] gap-4">
                 <div>
                   <h2 className="text-xl font-bold">รายการโครงการ</h2>
@@ -273,9 +315,22 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                   </p>
                 </div>
                 <p className="text-sm text-[#778097]">
-                  {filtered.stats.projectCount} โครงการ
+                  {listedProjects.length} โครงการ
                 </p>
               </div>
+
+              {focusedProjectIds && focusedProjectIds.length > 1 ? (
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#EEF7F8] px-3 py-2 text-xs text-[#00838A]">
+                  <span>แสดงเฉพาะโครงการในจุดที่เลือก</span>
+                  <button
+                    type="button"
+                    onClick={() => setFocusedProjectIds(undefined)}
+                    className="shrink-0 font-semibold underline-offset-2 hover:underline"
+                  >
+                    แสดงทั้งหมด
+                  </button>
+                </div>
+              ) : null}
 
               {selectedProjectId ? (
                 <div className="mt-4 max-h-[180px] overflow-y-auto rounded-2xl border border-[#DDE7EC] bg-white/90 p-4">
@@ -289,6 +344,10 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                           {detail.titleEn}
                         </p>
                       ) : null}
+                      <p className="text-xs">
+                        <span className="font-semibold">ปีเริ่มโครงการ/สิ้นสุด:</span>{" "}
+                        {formatProjectYears(detail.startYearBe, detail.endYearBe)}
+                      </p>
                       <p className="text-xs">
                         <span className="font-semibold">ปีงบประมาณ:</span>{" "}
                         {detail.fiscalYearBe ?? "—"}
@@ -336,9 +395,11 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                 ref={listContainerRef}
                 className="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1"
               >
-                {filtered.projects.length === 0 ? (
+                {listedProjects.length === 0 ? (
                   <p className="px-2 py-6 text-center text-sm text-[#778097]">
-                    ไม่พบโครงการตามเงื่อนไข
+                    {filtered.projects.length === 0
+                      ? "ไม่พบโครงการตามเงื่อนไข"
+                      : "ไม่พบโครงการในจุดที่เลือก"}
                   </p>
                 ) : (
                   <ol className="flex flex-col gap-2">
@@ -422,6 +483,14 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                                     </span>
                                   );
                                 })}
+                                <span
+                                  className={`block text-[11px] leading-snug ${
+                                    selected ? "text-white/75" : "text-[#6B7287]"
+                                  }`}
+                                >
+                                  ปีเริ่มโครงการ/สิ้นสุด:{" "}
+                                  {formatProjectYears(project.startYearBe, project.endYearBe)}
+                                </span>
                               </span>
                               <span
                                 className={`mt-1 block text-[11px] ${
@@ -445,7 +514,8 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
         </div>
       </div>
       <p className="mt-3 text-center text-xs text-[#778097]">
-        แสดงเฉพาะพิกัด/ขอบเขตที่ตรวจสอบแล้วเท่านั้น ไม่มีการสร้างพิกัดโดยประมาณ
+        จุดที่มีตัวเลขมากกว่า 1 คือโครงการที่ใช้พิกัดอำเภอหรือจังหวัดเดียวกัน
+        แสดงเฉพาะพิกัดที่ตรวจสอบแล้ว ไม่มีการสร้างพิกัดโดยประมาณ
       </p>
     </div>
   );

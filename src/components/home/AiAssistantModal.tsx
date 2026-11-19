@@ -307,7 +307,7 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
             <div>
               <h2
                 id="ai-assistant-title"
-                className="font-jakarta text-2xl font-bold leading-tight text-white"
+                className="font-sans text-2xl font-bold leading-tight text-white"
               >
                 Research Nexus AI
               </h2>

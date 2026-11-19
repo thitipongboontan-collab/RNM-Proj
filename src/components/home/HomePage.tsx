@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
-import { HeroParticleBackgroundClient } from "@/components/home/HeroParticleBackgroundClient";
+import { HeroVortex } from "@/components/home/HeroVortex";
 import { ResearchNewsSection } from "@/components/home/ResearchNewsSection";
 import type { ResearchNewsItem } from "@/data/research-news";
 
@@ -42,6 +42,77 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
+const HERO_SHORTCUTS = [
+  {
+    title: "ค้นหาแหล่งทุน",
+    subtitle: "Funding Opportunities",
+    icon: "funding" as const,
+  },
+  {
+    title: "จับคู่ความร่วมมือ",
+    subtitle: "Research Matching",
+    icon: "matching" as const,
+  },
+  {
+    title: "เครือข่ายนักวิจัย",
+    subtitle: "Research Network",
+    icon: "network" as const,
+  },
+  {
+    title: "ผลงานวิจัย",
+    subtitle: "Research Outputs",
+    icon: "outputs" as const,
+  },
+] as const;
+
+function HeroShortcutIcon({ type }: { type: (typeof HERO_SHORTCUTS)[number]["icon"] }) {
+  const common = {
+    width: 28,
+    height: 28,
+    viewBox: "0 0 28 28",
+    fill: "none",
+    "aria-hidden": true as const,
+  };
+
+  if (type === "funding") {
+    return (
+      <svg {...common}>
+        <ellipse cx="14" cy="8" rx="7" ry="3" stroke="#4D5CAD" strokeWidth="1.6" />
+        <path d="M7 8v6c0 1.7 3.1 3 7 3s7-1.3 7-3V8" stroke="#4D5CAD" strokeWidth="1.6" />
+        <path d="M7 14v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" stroke="#4D5CAD" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  if (type === "matching") {
+    return (
+      <svg {...common}>
+        <circle cx="10" cy="11" r="3" stroke="#4D5CAD" strokeWidth="1.6" />
+        <circle cx="18.5" cy="11" r="3" stroke="#4D5CAD" strokeWidth="1.6" />
+        <path d="M5.5 20c.6-2.4 2.4-3.6 4.5-3.6s3.9 1.2 4.5 3.6" stroke="#4D5CAD" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M15 16.6c1.3-.5 2.5-.6 3.6-.2 1.8.6 2.9 2 3.4 3.6" stroke="#4D5CAD" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (type === "network") {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="15" r="2.2" stroke="#4D5CAD" strokeWidth="1.6" />
+        <circle cx="14" cy="8" r="2.2" stroke="#4D5CAD" strokeWidth="1.6" />
+        <circle cx="20" cy="16" r="2.2" stroke="#4D5CAD" strokeWidth="1.6" />
+        <path d="M10 14.2L12.4 9.6M15.6 9.4L18.2 14.4M10.1 16.2H17.8" stroke="#4D5CAD" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M6 20V16M12 20V10M18 20V13M22 20H5" stroke="#4D5CAD" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function FeatureIcon({
   type,
 }: {
@@ -79,44 +150,57 @@ function FeatureIcon({
 export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
   return (
     <>
-      <div className="relative w-full">
-        <div className="absolute inset-x-0 top-0 z-0 h-[640px] overflow-hidden sm:h-[628px]" aria-hidden>
-          <div className="pointer-events-none absolute inset-0 bg-hero-page" />
-          <HeroParticleBackgroundClient className="relative z-[1] h-full w-full" />
-        </div>
-
-        <section className="relative z-10 mx-auto flex w-full max-w-[1061px] flex-col items-center gap-10 px-4 pt-16 sm:gap-[68px] sm:px-6 sm:pt-[58px] lg:px-0">
-          <div className="flex w-full flex-col items-center gap-6 sm:gap-[30px]">
-            <div className="flex w-full flex-col items-center gap-10 sm:gap-[63px]">
-              <div className="flex min-h-[51px] w-full max-w-[365px] shrink-0 items-center justify-center rounded-[50px] bg-hero-pill px-5 py-3">
-                <p className="font-sans text-center text-sm font-medium tracking-[0.0313em] text-brand-primary sm:whitespace-nowrap sm:text-base">
-                  Intelligent for Research Colaboration
+      <section className="relative isolate overflow-hidden bg-white">
+        <div className="relative mx-auto flex min-h-svh w-full max-w-[1316px] flex-col px-4 pb-8 pt-[92px] sm:px-6 sm:pt-[108px] lg:px-8 lg:pt-[120px]">
+          <div className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,520px)] lg:gap-6">
+            <div className="flex flex-col items-start">
+              <h1 className="font-sans text-[clamp(2.15rem,3.1vw,3.45rem)] font-bold leading-[1.08] tracking-[-0.02em] text-[#1C2454] lg:whitespace-nowrap">
+                Research Nexus Matching
+              </h1>
+              <p className="mt-3 bg-[linear-gradient(90deg,#2F6BFF_0%,#5B5CFF_42%,#7A45E8_100%)] bg-clip-text font-sans text-[clamp(1.45rem,2.35vw,2.45rem)] font-bold leading-tight text-transparent lg:whitespace-nowrap">
+                Funding • Matching • Networking
+              </p>
+              <div className="mt-6 flex gap-4">
+                <span className="mt-1 w-[3px] shrink-0 self-stretch rounded-full bg-[#5B67C7]" />
+                <p className="m-0 max-w-[520px] font-sans text-sm font-medium leading-relaxed text-[#5C6780] sm:text-base">
+                  แพลตฟอร์มที่เชื่อมโยงแหล่งทุน นักวิจัย และเครือข่ายความร่วมมือทางวิชาการ
+                  เพื่อร่วมพัฒนาข้อเสนอโครงการ แลกเปลี่ยนความเชี่ยวชาญ
+                  และขับเคลื่อนงานวิจัยเพื่อสังคมอย่างยั่งยืน
                 </p>
               </div>
-
-              <h1 className="font-sans flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 pb-1 text-center text-[clamp(2.35rem,12vw,4rem)] font-bold leading-[1.08] tracking-[0.0078em] sm:gap-[10px] sm:whitespace-nowrap sm:leading-[1.15]">
-                <span className="text-gradient-funding">Funding</span>
-                <span className="text-brand-dark">•</span>
-                <span className="inline-block pb-0.5 text-gradient-matching">Matching</span>
-                <span className="text-brand-dark">•</span>
-                <span className="text-brand-dark">Networking</span>
-              </h1>
+              <div className="mt-7">
+                <AiResearchAssistant />
+              </div>
+              <ul className="mt-10 grid w-full grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+                {HERO_SHORTCUTS.map((item) => (
+                  <li key={item.title} className="flex flex-col items-center text-center">
+                    <HeroShortcutIcon type={item.icon} />
+                    <p className="mt-2 font-sans text-sm font-semibold text-[#31405C]">{item.title}</p>
+                    <p className="font-sans text-[11px] text-[#8A94A8]">{item.subtitle}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            <p className="font-sans m-0 w-full max-w-[792px] text-center text-lg font-medium leading-relaxed tracking-[0.0208em] text-brand-muted sm:text-2xl sm:leading-[1.35]">
-              แพลตฟอร์มที่เชื่อมโยงแหล่งทุน นักวิจัย และเครือข่ายความร่วมมือทางวิชาการ
-              <br className="hidden sm:block" />
-              เพื่อร่วมพัฒนาข้อเสนอโครงการ แลกเปลี่ยนความเชี่ยวชาญ
-              <br className="hidden sm:block" />
-              และขับเคลื่อนงานวิจัยเพื่อสังคมอย่างยั่งยืน
-            </p>
+            <div aria-hidden className="relative h-[320px] lg:h-auto lg:min-h-[520px]">
+              <div className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 lg:inset-y-[-3rem] lg:left-0 lg:right-[-1.5rem]">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(22,18,72,0.96)_0%,rgba(28,36,84,0.78)_40%,rgba(255,255,255,0)_72%)]" />
+                <HeroVortex className="absolute inset-0 h-full w-full" />
+              </div>
+            </div>
           </div>
+          <a
+            href="#about-platform"
+            className="mt-8 flex flex-col items-center gap-1 font-sans text-sm text-[#8A94A8] transition hover:text-brand-primary"
+          >
+            Scroll down
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M3 6L8 11L13 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        </div>
+      </section>
 
-          <AiResearchAssistant />
-        </section>
-      </div>
-
-      <main className="mx-auto flex w-full max-w-[1316px] flex-col items-start justify-center gap-12 px-4 pb-[72px] pt-16 sm:px-6 sm:pt-[140px] lg:flex-row lg:gap-[114px] lg:px-8">
+      <main id="about-platform" className="mx-auto flex w-full max-w-[1316px] flex-col items-start justify-center gap-12 px-4 pb-[72px] pt-16 sm:px-6 sm:pt-20 lg:flex-row lg:gap-[114px] lg:px-8">
         <section className="w-full shrink-0 lg:w-[509px]">
           <SectionLabel>เกี่ยวกับแพลตฟอร์ม</SectionLabel>
           <div className="mt-8 flex flex-col gap-5 sm:mt-10">

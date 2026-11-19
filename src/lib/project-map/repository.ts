@@ -293,6 +293,8 @@ async function loadProjectMapDashboardUncached(): Promise<ProjectMapDashboardDat
       titleTh: project.title_th,
       titleEn: project.title_en ?? "",
       fiscalYearBe: project.fiscal_year_be,
+      startYearBe: project.start_year_be,
+      endYearBe: project.end_year_be,
       sdg: project.sdg ?? "",
       strategy: project.strategy ?? "",
       researchGroup: project.research_group ?? "",
@@ -372,7 +374,7 @@ async function loadProjectMapDashboardUncached(): Promise<ProjectMapDashboardDat
 
 export const getProjectMapDashboardData = unstable_cache(
   loadProjectMapDashboardUncached,
-  ["project-map-dashboard-v3"],
+  ["project-map-dashboard-v4"],
   { revalidate: 300 },
 );
 

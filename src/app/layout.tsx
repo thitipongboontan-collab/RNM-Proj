@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { ConditionalPageShell } from "@/components/layout/ConditionalPageShell";
 import "./globals.css";
@@ -9,18 +9,21 @@ const notoSansThaiUi = localFont({
   weight: "400 700",
   variable: "--font-noto-sans-thai-ui",
   display: "swap",
-});
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["500", "600", "700"],
+  adjustFontFallback: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value: "U+0E00-0E7F, U+200C-200D, U+25CC",
+    },
+  ],
 });
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
-  weight: ["400", "500", "600"],
+  display: "swap",
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -35,11 +38,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" suppressHydrationWarning>
-      <body
-        className={`${notoSansThaiUi.variable} ${plusJakarta.variable} ${inter.variable} font-sans`}
-        suppressHydrationWarning
-      >
+    <html
+      lang="th"
+      className={`${notoSansThaiUi.variable} ${inter.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans" suppressHydrationWarning>
         <ConditionalPageShell>{children}</ConditionalPageShell>
       </body>
     </html>
