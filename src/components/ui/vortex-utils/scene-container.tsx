@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 
 import {
   useShadcnTheme,
@@ -50,6 +51,94 @@ const RIGS: Record<EnvironmentPreset, LightRig> = {
 
 function joinClasses(...parts: Array<string | undefined>) {
   return parts.filter(Boolean).join(" ");
+}
+
+/**
+ * Drag-to-orbit without @react-three/drei, matching the 21st.dev Vortex demo:
+ * rotate only, no pan or zoom, with damping.
+ */
+function sphericalFrom(position: [number, number, number]) {
+  return new THREE.Spherical().setFromVector3(
+    new THREE.Vector3(position[0], position[1], position[2]),
+  );
+}
+
+function DragOrbit({
+  enabled,
+  cameraPosition,
+}: {
+  enabled: boolean;
+  cameraPosition: [number, number, number];
+}) {
+  const { camera, gl } = useThree();
+  const start = React.useMemo(
+    () => sphericalFrom(cameraPosition),
+    [cameraPosition[0], cameraPosition[1], cameraPosition[2]],
+  );
+  const spherical = React.useRef(start.clone());
+  const target = React.useRef(start.clone());
+  const dragging = React.useRef(false);
+  const last = React.useRef({ x: 0, y: 0 });
+
+  React.useLayoutEffect(() => {
+    spherical.current.copy(start);
+    target.current.copy(start);
+    camera.position.setFromSpherical(start);
+    camera.lookAt(0, 0, 0);
+  }, [camera, start]);
+
+  React.useEffect(() => {
+    if (!enabled) return;
+    const el = gl.domElement;
+    el.style.touchAction = "none";
+    el.style.cursor = "grab";
+
+    const onDown = (event: PointerEvent) => {
+      dragging.current = true;
+      last.current = { x: event.clientX, y: event.clientY };
+      el.style.cursor = "grabbing";
+      el.setPointerCapture(event.pointerId);
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!dragging.current) return;
+      const dx = event.clientX - last.current.x;
+      const dy = event.clientY - last.current.y;
+      last.current = { x: event.clientX, y: event.clientY };
+      target.current.theta -= dx * 0.005;
+      target.current.phi = THREE.MathUtils.clamp(
+        target.current.phi + dy * 0.005,
+        0.35,
+        Math.PI - 0.35,
+      );
+    };
+    const onUp = (event: PointerEvent) => {
+      dragging.current = false;
+      el.style.cursor = "grab";
+      if (el.hasPointerCapture(event.pointerId)) {
+        el.releasePointerCapture(event.pointerId);
+      }
+    };
+
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [enabled, gl]);
+
+  useFrame((_, delta) => {
+    if (!enabled) return;
+    const damp = 1 - Math.exp(-12 * Math.min(delta, 0.05));
+    spherical.current.theta += (target.current.theta - spherical.current.theta) * damp;
+    spherical.current.phi += (target.current.phi - spherical.current.phi) * damp;
+    camera.position.setFromSpherical(spherical.current);
+    camera.lookAt(0, 0, 0);
+  });
+
+  return null;
 }
 
 function Rig({
@@ -150,6 +239,7 @@ export function SceneContainer({
   fov = 45,
   children,
   overlay,
+  orbit = true,
   lazy = true,
 }: SceneContainerProps) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -160,10 +250,18 @@ export function SceneContainer({
     <div ref={wrapRef} className={joinClasses("relative h-full w-full", className)}>
       {active ? (
         <Canvas
+          className="h-full w-full cursor-grab touch-none active:cursor-grabbing"
           dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          frameloop="always"
+          gl={{
+            antialias: true,
+            alpha: true,
+            premultipliedAlpha: false,
+            powerPreference: "high-performance",
+          }}
           camera={{ position: camera, fov, near: 0.1, far: 100 }}
         >
+          <DragOrbit enabled={orbit} cameraPosition={camera} />
           <Rig preset={environment} fog={fog} theme={theme} />
           <React.Suspense fallback={null}>{children}</React.Suspense>
         </Canvas>

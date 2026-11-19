@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { AiResearchAssistant } from "@/components/home/AiResearchAssistant";
-import { HeroVortex } from "@/components/home/HeroVortex";
+import { HeroInteractiveGlobe } from "@/components/home/HeroInteractiveGlobe";
+import { HeroVantaBirds } from "@/components/home/HeroVantaBirds";
 import { ResearchNewsSection } from "@/components/home/ResearchNewsSection";
 import type { ResearchNewsItem } from "@/data/research-news";
 
@@ -151,7 +152,10 @@ export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
   return (
     <>
       <section className="relative isolate overflow-hidden bg-white">
-        <div className="relative mx-auto flex min-h-svh w-full max-w-[1316px] flex-col px-4 pb-8 pt-[92px] sm:px-6 sm:pt-[108px] lg:px-8 lg:pt-[120px]">
+        <div aria-hidden className="absolute inset-0 z-0">
+          <HeroVantaBirds className="h-full w-full" />
+        </div>
+        <div className="pointer-events-none relative z-10 mx-auto flex min-h-svh w-full max-w-[1316px] flex-col px-4 pb-8 pt-[92px] sm:px-6 sm:pt-[108px] lg:px-8 lg:pt-[120px]">
           <div className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,520px)] lg:gap-6">
             <div className="flex flex-col items-start">
               <h1 className="font-sans text-[clamp(2.15rem,3.1vw,3.45rem)] font-bold leading-[1.08] tracking-[-0.02em] text-[#1C2454] lg:whitespace-nowrap">
@@ -168,7 +172,7 @@ export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
                   และขับเคลื่อนงานวิจัยเพื่อสังคมอย่างยั่งยืน
                 </p>
               </div>
-              <div className="mt-7">
+              <div className="pointer-events-auto mt-7">
                 <AiResearchAssistant />
               </div>
               <ul className="mt-10 grid w-full grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
@@ -181,16 +185,13 @@ export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
                 ))}
               </ul>
             </div>
-            <div aria-hidden className="relative h-[320px] lg:h-auto lg:min-h-[520px]">
-              <div className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 lg:inset-y-[-3rem] lg:left-0 lg:right-[-1.5rem]">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(22,18,72,0.96)_0%,rgba(28,36,84,0.78)_40%,rgba(255,255,255,0)_72%)]" />
-                <HeroVortex className="absolute inset-0 h-full w-full" />
-              </div>
+            <div className="pointer-events-auto relative hidden min-h-[420px] w-full lg:block lg:min-h-[520px]">
+              <HeroInteractiveGlobe className="absolute inset-0 h-full w-full" />
             </div>
           </div>
           <a
             href="#about-platform"
-            className="mt-8 flex flex-col items-center gap-1 font-sans text-sm text-[#8A94A8] transition hover:text-brand-primary"
+            className="pointer-events-auto mt-8 flex flex-col items-center gap-1 font-sans text-sm text-[#8A94A8] transition hover:text-brand-primary"
           >
             Scroll down
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>

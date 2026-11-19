@@ -11,11 +11,11 @@ export function HeroVortex({ className }: { className?: string }) {
   return (
     <Vortex
       className={className}
-      count={2200}
-      speed={1}
+      count={2800}
+      speed={1.15}
       arms={3}
-      theme="dark"
-      environment="night"
+      theme="light"
+      orbit
       lazy={false}
     />
   );

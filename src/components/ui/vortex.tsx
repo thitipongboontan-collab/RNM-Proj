@@ -44,7 +44,6 @@ function Spiral({
   theme: ThemeMode;
 }) {
   const pointsRef = React.useRef<THREE.Points>(null);
-  const reduceMotion = React.useRef(false);
   const { primaryColor, mutedColor } = useShadcnTheme(theme);
 
   const { positions, radii } = React.useMemo(
@@ -55,8 +54,10 @@ function Spiral({
   const colors = React.useMemo(() => {
     const arr = new Float32Array(count * 3);
     const c = new THREE.Color();
+    const core = new THREE.Color("#7B61C9").lerp(primaryColor, 0.35);
+    const rim = new THREE.Color("#C8B8F0").lerp(mutedColor, 0.2);
     for (let i = 0; i < count; i++) {
-      c.copy(primaryColor).lerp(mutedColor, radii[i]);
+      c.copy(core).lerp(rim, radii[i]);
       arr[i * 3] = c.r;
       arr[i * 3 + 1] = c.g;
       arr[i * 3 + 2] = c.b;
@@ -64,23 +65,13 @@ function Spiral({
     return arr;
   }, [count, radii, primaryColor, mutedColor]);
 
-  React.useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => {
-      reduceMotion.current = media.matches;
-    };
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-
   useFrame((_, delta) => {
-    if (reduceMotion.current || !pointsRef.current) return;
-    pointsRef.current.rotation.y += delta * 0.12 * speed;
+    if (!pointsRef.current) return;
+    pointsRef.current.rotation.y += Math.min(delta, 0.05) * 0.12 * speed;
   });
 
   return (
-    <points ref={pointsRef} rotation={[0.5, 0, 0]}>
+    <points ref={pointsRef} position={[1.15, 0.05, 0]} rotation={[0.5, 0, 0]}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
@@ -108,7 +99,7 @@ export type VortexProps = {
   className?: string;
   theme?: ThemeMode;
   environment?: SceneContainerProps["environment"];
-  /** Keep the camera fixed. Drag orbit is not used for a page background. */
+  /** Drag to orbit the camera, matching the 21st.dev Vortex preview. */
   orbit?: boolean;
   /** Render only while near the viewport. */
   lazy?: boolean;
@@ -124,7 +115,8 @@ export function Vortex({
   arms = 3,
   className,
   theme = "auto",
-  environment = "night",
+  environment = "studio",
+  orbit = true,
   lazy = true,
 }: VortexProps) {
   return (
@@ -134,6 +126,7 @@ export function Vortex({
       environment={environment}
       camera={[0, 3, 8]}
       fov={45}
+      orbit={orbit}
       lazy={lazy}
     >
       <Spiral count={count} speed={speed} arms={arms} theme={theme} />
