@@ -74,7 +74,7 @@ export function HeroVantaBirds({ className }: { className?: string }) {
         speedLimit: 3.0,
         separation: 61.0,
         cohesion: 67.0,
-        quantity: 3.0,
+        quantity: 2,
       });
 
       if (cancelled) {

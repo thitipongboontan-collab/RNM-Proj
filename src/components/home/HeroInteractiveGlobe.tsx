@@ -109,11 +109,16 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
       start: performance.now(),
     };
 
+    const host = canvas.parentElement ?? canvas;
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = host.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.max(1, Math.round(rect.width * dpr));
-      canvas.height = Math.max(1, Math.round(rect.height * dpr));
+      const cssW = Math.max(rect.width, 1);
+      const cssH = Math.max(rect.height, 1);
+      canvas.width = Math.max(1, Math.round(cssW * dpr));
+      canvas.height = Math.max(1, Math.round(cssH * dpr));
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
@@ -132,33 +137,47 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
       const width = rect.width;
       const height = rect.height;
       ctx.clearRect(0, 0, width, height);
+      if (width < 8 || height < 8) return;
 
       const idle = !state.dragging && now - state.lastDragAt > 1200;
       if (idle) state.yaw += 0.004;
 
-      const cx = width * 0.52;
+      const cx = width * 0.5;
       const cy = height * 0.5;
-      const radius = Math.min(width, height) * 0.42;
+      const radius = Math.min(width, height) * 0.38;
+
+      const body = ctx.createRadialGradient(
+        cx - radius * 0.28,
+        cy - radius * 0.32,
+        radius * 0.08,
+        cx,
+        cy,
+        radius,
+      );
+      body.addColorStop(0, "rgba(255, 255, 255, 0.98)");
+      body.addColorStop(0.42, "rgba(232, 236, 255, 0.96)");
+      body.addColorStop(1, "rgba(167, 180, 230, 0.82)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = body;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(77, 92, 173, 0.35)";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
 
       const rotatedDots = DOTS.map((p) => rotate(p, state.yaw, state.pitch));
       const rotatedMarkers = MARKER_VECS.map((p) => rotate(p, state.yaw, state.pitch));
 
       for (const p of rotatedDots) {
-        if (p.z < -0.15) continue;
+        if (p.z < -0.12) continue;
         const q = project(p, radius, cx, cy);
-        const alpha = 0.12 + q.depth * 0.55;
-        const size = 0.7 + q.depth * 1.35;
-        ctx.fillStyle = `rgba(77, 92, 173, ${alpha})`;
+        const alpha = 0.4 + q.depth * 0.55;
+        const size = 1.6 + q.depth * 2.1;
+        ctx.fillStyle = `rgba(49, 64, 140, ${alpha})`;
         ctx.beginPath();
         ctx.arc(q.x, q.y, size, 0, Math.PI * 2);
         ctx.fill();
       }
-
-      ctx.strokeStyle = "rgba(22, 93, 160, 0.08)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.02, 0, Math.PI * 2);
-      ctx.stroke();
 
       const t = (now - state.start) / 1000;
       ARC_PATHS.forEach((path, arcIndex) => {
@@ -178,8 +197,8 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
             ctx.lineTo(q.x, q.y);
           }
         });
-        ctx.strokeStyle = "rgba(103, 0, 255, 0.28)";
-        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = "rgba(103, 0, 255, 0.55)";
+        ctx.lineWidth = 1.8;
         ctx.stroke();
 
         const head = (t * 0.22 + arcIndex * 0.17) % 1;
@@ -246,7 +265,7 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
 
     resize();
     const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
+    observer.observe(host);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);

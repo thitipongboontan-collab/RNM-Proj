@@ -185,7 +185,7 @@ export function HomePage({ newsItems }: { newsItems: ResearchNewsItem[] }) {
                 ))}
               </ul>
             </div>
-            <div className="pointer-events-auto relative hidden min-h-[420px] w-full lg:block lg:min-h-[520px]">
+            <div className="pointer-events-auto relative z-20 mx-auto mt-4 h-[320px] w-full max-w-[420px] sm:h-[380px] lg:mx-0 lg:mt-0 lg:h-auto lg:min-h-[520px] lg:max-w-none">
               <HeroInteractiveGlobe className="absolute inset-0 h-full w-full" />
             </div>
           </div>
