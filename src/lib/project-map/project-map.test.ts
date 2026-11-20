@@ -339,7 +339,7 @@ assert.equal(
     region: "ภาคเหนือ",
     country: "ไทย",
   }),
-  "(พื้นที่ดำเนินโครงการ: ศรีภูมิ, เมืองเชียงใหม่, เชียงใหม่)",
+  "พื้นที่ดำเนินโครงการ: ศรีภูมิ, เมืองเชียงใหม่, เชียงใหม่",
 );
 assert.equal(
   formatOperatingAreaLabel({
@@ -350,7 +350,7 @@ assert.equal(
     region: "ภาคเหนือ",
     country: "ไทย",
   }),
-  "(พื้นที่ดำเนินโครงการ: ภาคเหนือ)",
+  "พื้นที่ดำเนินโครงการ: ภาคเหนือ",
 );
 assert.equal(
   formatOperatingAreaLabel({
@@ -361,7 +361,7 @@ assert.equal(
     region: "",
     country: "ไทย",
   }),
-  "(พื้นที่ดำเนินโครงการ: ประเทศไทย)",
+  "พื้นที่ดำเนินโครงการ: ประเทศไทย",
 );
 
 console.log("project-map tests passed");

@@ -85,6 +85,9 @@ header img[alt="Research Nexus Matching"] {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  overflow: visible;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .text-gradient-matching {

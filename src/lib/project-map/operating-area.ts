@@ -20,10 +20,10 @@ export function formatOperatingAreaLabel(area: ProjectMapOperatingArea) {
     .map((value) => value.trim())
     .filter(Boolean);
   if (placeParts.length) {
-    return `(พื้นที่ดำเนินโครงการ: ${placeParts.join(", ")})`;
+    return `พื้นที่ดำเนินโครงการ: ${placeParts.join(", ")}`;
   }
 
   const fallback = area.region.trim() || displayCountry(area.country);
   if (!fallback) return "";
-  return `(พื้นที่ดำเนินโครงการ: ${fallback})`;
+  return `พื้นที่ดำเนินโครงการ: ${fallback}`;
 }

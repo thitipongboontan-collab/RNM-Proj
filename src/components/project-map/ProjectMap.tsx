@@ -1,7 +1,8 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { divIcon } from "leaflet";
 import {
   GeoJSON,
@@ -24,8 +25,10 @@ type ProjectMapProps = {
   selectedProjectId?: string;
   focusedProjectIds?: string[];
   focusNonce?: number;
+  detailPanel?: ReactNode;
   onSelectProject: (projectId?: string) => void;
   onSelectProjects: (projectIds: string[]) => void;
+  onClearSelection?: () => void;
 };
 
 type AggregatePoint = {
@@ -46,6 +49,13 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
   return null;
 }
 
+function overviewFitPoints(features: ProjectMapFeature[]): [number, number][] {
+  return buildProvinceAggregates(features).map((aggregate) => [
+    aggregate.latitude,
+    aggregate.longitude,
+  ]);
+}
+
 function FitFeatures({
   features,
   selectedProjectId,
@@ -58,28 +68,27 @@ function FitFeatures({
   useEffect(() => {
     if (selectedProjectId) return;
 
-    const points = features
-      .map((feature) => {
-        if (
-          feature.geometryType === "Point" &&
-          feature.latitude != null &&
-          feature.longitude != null
-        ) {
-          return [feature.latitude, feature.longitude] as [number, number];
-        }
-        return null;
-      })
-      .filter(Boolean) as [number, number][];
+    const applyFit = () => {
+      const points = overviewFitPoints(features);
+      map.invalidateSize();
 
-    if (!points.length) {
-      map.setView([16.8, 100.6], 6);
-      return;
-    }
-    if (points.length === 1) {
-      map.setView(points[0], 9);
-      return;
-    }
-    map.fitBounds(points, { padding: [40, 40], maxZoom: 10 });
+      if (!points.length) {
+        map.setView([16.8, 100.6], 7);
+        return;
+      }
+      if (points.length === 1) {
+        map.setView(points[0], 9);
+        return;
+      }
+      map.fitBounds(points, {
+        padding: [28, 28],
+        maxZoom: 9,
+      });
+    };
+
+    applyFit();
+    const frame = window.requestAnimationFrame(applyFit);
+    return () => window.cancelAnimationFrame(frame);
   }, [features, map, selectedProjectId]);
 
   return null;
@@ -114,11 +123,84 @@ function FocusSelectedProject({
       return;
     }
     if (points.length > 1) {
-      map.flyToBounds(points, { padding: [72, 72], maxZoom: 10, duration: 0.8 });
+      map.flyToBounds(points, {
+        paddingTopLeft: [340, 72],
+        paddingBottomRight: [72, 72],
+        maxZoom: 10,
+        duration: 0.8,
+      });
     }
   }, [features, focusNonce, map, selectedProjectId]);
 
   return null;
+}
+
+function selectedFeaturePoint(
+  features: ProjectMapFeature[],
+  selectedProjectId?: string,
+): { latitude: number; longitude: number } | null {
+  if (!selectedProjectId) return null;
+  const match = features.find(
+    (feature) =>
+      feature.projectId === selectedProjectId &&
+      feature.latitude != null &&
+      feature.longitude != null,
+  );
+  if (!match || match.latitude == null || match.longitude == null) return null;
+  return { latitude: match.latitude, longitude: match.longitude };
+}
+
+function SideProjectDetailPopup({
+  latitude,
+  longitude,
+  onClose,
+  children,
+}: {
+  latitude: number;
+  longitude: number;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const map = useMap();
+  const [position, setPosition] = useState(() =>
+    map.latLngToContainerPoint([latitude, longitude]),
+  );
+
+  const updatePosition = useCallback(() => {
+    setPosition(map.latLngToContainerPoint([latitude, longitude]));
+  }, [latitude, longitude, map]);
+
+  useEffect(() => {
+    updatePosition();
+  }, [updatePosition]);
+
+  useMapEvents({
+    move: updatePosition,
+    zoom: updatePosition,
+    moveend: updatePosition,
+    zoomend: updatePosition,
+    viewreset: updatePosition,
+  });
+
+  return createPortal(
+    <div
+      className="spatial-side-popup max-w-[320px]"
+      style={{ left: position.x, top: position.y }}
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="spatial-side-popup-close"
+        aria-label="ปิดรายละเอียด"
+        onClick={onClose}
+      >
+        ×
+      </button>
+      <div className="max-h-[240px] min-w-[240px] overflow-y-auto pr-1">{children}</div>
+    </div>,
+    map.getContainer(),
+  );
 }
 
 function markerSize(count: number, selected: boolean) {
@@ -268,10 +350,12 @@ export function ProjectMap({
   selectedProjectId,
   focusedProjectIds,
   focusNonce = 0,
+  detailPanel,
   onSelectProject,
   onSelectProjects,
+  onClearSelection,
 }: ProjectMapProps) {
-  const [zoom, setZoom] = useState(6);
+  const [zoom, setZoom] = useState(7);
   const [basemapId, setBasemapId] = useState<BasemapId>(DEFAULT_BASEMAP_ID);
   const basemap = getBasemapOption(basemapId);
 
@@ -305,12 +389,13 @@ export function ProjectMap({
   );
   const showCoordinates = zoom >= 7;
   const visibleAggregates = showCoordinates ? coordinateAggregates : provinceAggregates;
+  const popupPoint = selectedFeaturePoint(features, selectedProjectId);
 
   return (
     <div className="spatial-map-shell relative h-full min-h-[620px] w-full">
       <MapContainer
         center={[16.8, 100.6]}
-        zoom={6}
+        zoom={7}
         minZoom={2}
         maxZoom={12}
         scrollWheelZoom
@@ -340,6 +425,15 @@ export function ProjectMap({
           onSelectProject={onSelectProject}
           onSelectProjects={onSelectProjects}
         />
+        {popupPoint && detailPanel ? (
+          <SideProjectDetailPopup
+            latitude={popupPoint.latitude}
+            longitude={popupPoint.longitude}
+            onClose={() => onClearSelection?.()}
+          >
+            {detailPanel}
+          </SideProjectDetailPopup>
+        ) : null}
       </MapContainer>
 
       <div className="spatial-basemap-overlay-host">

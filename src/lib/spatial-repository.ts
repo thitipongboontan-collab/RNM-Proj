@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { COLLABORATION_LOCATION_SEED } from "@/data/collaboration-locations";
+import { resolveClusterPosition } from "@/lib/spatial/country-centroids";
 import { createSupabaseClient } from "@/lib/supabase/client";
 
 type ResearcherRow = {
@@ -97,18 +98,7 @@ function buildAggregate(
     (sum, item) => sum + item.collaborationCount,
     0,
   );
-  const totalWeight = Math.max(totalCollaborations, organizations.length, 1);
-
-  const weightedLatitude =
-    organizations.reduce(
-      (sum, item) => sum + item.latitude * Math.max(item.collaborationCount, 1),
-      0,
-    ) / totalWeight;
-  const weightedLongitude =
-    organizations.reduce(
-      (sum, item) => sum + item.longitude * Math.max(item.collaborationCount, 1),
-      0,
-    ) / totalWeight;
+  const position = resolveClusterPosition(keyPrefix, label, organizations);
 
   const researcherNames = new Set<string>();
   for (const organization of organizations) {
@@ -121,8 +111,8 @@ function buildAggregate(
     key: `${keyPrefix}:${label}`,
     label,
     count: totalCollaborations,
-    latitude: weightedLatitude,
-    longitude: weightedLongitude,
+    latitude: position.latitude,
+    longitude: position.longitude,
     organizations: organizations.map((item) => item.name).sort((a, b) => a.localeCompare(b)),
     researchers: [...researcherNames].sort((a, b) => a.localeCompare(b, "th")),
   };

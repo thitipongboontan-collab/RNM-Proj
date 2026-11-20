@@ -142,42 +142,29 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
       const idle = !state.dragging && now - state.lastDragAt > 1200;
       if (idle) state.yaw += 0.004;
 
-      const cx = width * 0.5;
+      const cx = width * 0.52;
       const cy = height * 0.5;
-      const radius = Math.min(width, height) * 0.38;
-
-      const body = ctx.createRadialGradient(
-        cx - radius * 0.28,
-        cy - radius * 0.32,
-        radius * 0.08,
-        cx,
-        cy,
-        radius,
-      );
-      body.addColorStop(0, "rgba(255, 255, 255, 0.98)");
-      body.addColorStop(0.42, "rgba(232, 236, 255, 0.96)");
-      body.addColorStop(1, "rgba(167, 180, 230, 0.82)");
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fillStyle = body;
-      ctx.fill();
-      ctx.strokeStyle = "rgba(77, 92, 173, 0.35)";
-      ctx.lineWidth = 1.4;
-      ctx.stroke();
+      const radius = Math.min(width, height) * 0.42;
 
       const rotatedDots = DOTS.map((p) => rotate(p, state.yaw, state.pitch));
       const rotatedMarkers = MARKER_VECS.map((p) => rotate(p, state.yaw, state.pitch));
 
       for (const p of rotatedDots) {
-        if (p.z < -0.12) continue;
+        if (p.z < -0.15) continue;
         const q = project(p, radius, cx, cy);
-        const alpha = 0.4 + q.depth * 0.55;
-        const size = 1.6 + q.depth * 2.1;
-        ctx.fillStyle = `rgba(49, 64, 140, ${alpha})`;
+        const alpha = 0.12 + q.depth * 0.55;
+        const size = 0.7 + q.depth * 1.35;
+        ctx.fillStyle = `rgba(77, 92, 173, ${alpha})`;
         ctx.beginPath();
         ctx.arc(q.x, q.y, size, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      ctx.strokeStyle = "rgba(22, 93, 160, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius * 1.02, 0, Math.PI * 2);
+      ctx.stroke();
 
       const t = (now - state.start) / 1000;
       ARC_PATHS.forEach((path, arcIndex) => {
@@ -197,8 +184,8 @@ export function HeroInteractiveGlobe({ className }: { className?: string }) {
             ctx.lineTo(q.x, q.y);
           }
         });
-        ctx.strokeStyle = "rgba(103, 0, 255, 0.55)";
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "rgba(103, 0, 255, 0.28)";
+        ctx.lineWidth = 1.4;
         ctx.stroke();
 
         const head = (t * 0.22 + arcIndex * 0.17) % 1;

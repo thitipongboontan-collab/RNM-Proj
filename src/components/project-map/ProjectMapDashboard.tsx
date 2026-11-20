@@ -11,7 +11,65 @@ import type {
 } from "@/lib/project-map/types";
 
 function formatProjectYears(startYearBe: number | null | undefined, endYearBe: number | null | undefined) {
-  return `${startYearBe ?? "—"} / ${endYearBe ?? "—"}`;
+  const start = startYearBe ?? null;
+  const end = endYearBe ?? null;
+  if (start == null && end == null) return "—";
+  if (start != null && (end == null || end === start)) return String(start);
+  if (end != null && start == null) return String(end);
+  return `${start}-${end}`;
+}
+
+function ProjectDetailBody({
+  loading,
+  detail,
+}: {
+  loading: boolean;
+  detail: ProjectMapDetail | null;
+}) {
+  if (loading) {
+    return <p className="text-sm text-[#778097]">กำลังโหลดรายละเอียด...</p>;
+  }
+  if (!detail) {
+    return <p className="text-sm text-[#778097]">ไม่พบรายละเอียด</p>;
+  }
+
+  const operatingAreas = [
+    ...new Set(
+      detail.locations.map((location) =>
+        [location.areaName, location.tambon, location.amphoe, location.province]
+          .map((value) => value?.trim())
+          .filter(Boolean)
+          .join(", "),
+      ),
+    ),
+  ].filter(Boolean);
+
+  return (
+    <div className="space-y-3 pr-5 text-brand-dark">
+      <div>
+        <p className="text-[11px] font-medium leading-none text-[#8A94A8]">ชื่อโครงการ</p>
+        <p className="mt-1 text-sm font-bold leading-snug">{detail.titleTh || "—"}</p>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium leading-none text-[#8A94A8]">ปีที่เริ่มดำเนินโครงการ</p>
+        <p className="mt-1 text-xs font-normal leading-snug">{detail.startYearBe ?? "—"}</p>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium leading-none text-[#8A94A8]">แหล่งทุน</p>
+        <p className="mt-1 text-xs font-normal leading-snug">{detail.fundingSource || "—"}</p>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium leading-none text-[#8A94A8]">กลุ่มการวิจัย</p>
+        <p className="mt-1 text-xs font-normal leading-snug">{detail.researchGroup || "—"}</p>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium leading-none text-[#8A94A8]">พื้นที่ดำเนินงาน</p>
+        <p className="mt-1 text-xs font-normal leading-snug">
+          {operatingAreas.length ? operatingAreas.join("; ") : "—"}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 const ProjectMap = dynamic(
@@ -44,7 +102,7 @@ function StatCard({
     <div className="rounded-3xl border border-white/45 bg-white/70 p-3 text-center shadow-[0px_10px_32px_rgba(37,50,75,0.08)] backdrop-blur-md">
       <p className="text-sm font-semibold leading-snug text-[#8A94A8]">{label}</p>
       <p className="mt-1 text-4xl font-black leading-none text-black">{value}</p>
-      <p className="mt-1 text-sm font-medium text-[#8A94A8]">โครงการ</p>
+      <p className="mt-1 text-sm font-medium text-[#8A94A8]">พื้นที่</p>
     </div>
   );
 }
@@ -103,7 +161,13 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
   const selectedItemRef = useRef<HTMLLIElement | null>(null);
   const listContainerRef = useRef<HTMLDivElement | null>(null);
 
-  function selectProject(projectId: string) {
+  function selectProject(projectId?: string) {
+    if (!projectId) {
+      setSelectedProjectId(undefined);
+      setDetail(null);
+      setDetailLoading(false);
+      return;
+    }
     setSelectedProjectId(projectId);
     setFocusNonce((value) => value + 1);
     if (focusedProjectIds && !focusedProjectIds.includes(projectId)) {
@@ -285,10 +349,17 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
               selectedProjectId={selectedProjectId}
               focusedProjectIds={focusedProjectIds}
               focusNonce={focusNonce}
-              onSelectProject={(projectId) => {
-                if (projectId) selectProject(projectId);
-              }}
+              detailPanel={
+                selectedProjectId ? (
+                  <ProjectDetailBody
+                    loading={detailLoading || detail?.projectId !== selectedProjectId}
+                    detail={detail?.projectId === selectedProjectId ? detail : null}
+                  />
+                ) : null
+              }
+              onSelectProject={(projectId) => selectProject(projectId)}
               onSelectProjects={selectProjectsFromMap}
+              onClearSelection={() => selectProject(undefined)}
             />
           </div>
 
@@ -329,65 +400,6 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                   >
                     แสดงทั้งหมด
                   </button>
-                </div>
-              ) : null}
-
-              {selectedProjectId ? (
-                <div className="mt-4 max-h-[180px] overflow-y-auto rounded-2xl border border-[#DDE7EC] bg-white/90 p-4">
-                  {detailLoading || detail?.projectId !== selectedProjectId ? (
-                    <p className="text-sm text-[#778097]">กำลังโหลดรายละเอียด...</p>
-                  ) : detail ? (
-                    <div className="space-y-1.5 text-sm">
-                      <p className="font-semibold leading-snug">{detail.titleTh}</p>
-                      {detail.titleEn ? (
-                        <p className="line-clamp-2 text-xs leading-snug text-[#778097]">
-                          {detail.titleEn}
-                        </p>
-                      ) : null}
-                      <p className="text-xs">
-                        <span className="font-semibold">ปีเริ่มโครงการ/สิ้นสุด:</span>{" "}
-                        {formatProjectYears(detail.startYearBe, detail.endYearBe)}
-                      </p>
-                      <p className="text-xs">
-                        <span className="font-semibold">ปีงบประมาณ:</span>{" "}
-                        {detail.fiscalYearBe ?? "—"}
-                        <span className="mx-2 text-[#C5CDD8]">·</span>
-                        <span className="font-semibold">แหล่งทุน:</span>{" "}
-                        {detail.fundingSource || "—"}
-                      </p>
-                      {detail.researchGroup ? (
-                        <p className="line-clamp-2 text-xs">
-                          <span className="font-semibold">กลุ่มการวิจัย:</span>{" "}
-                          {detail.researchGroup}
-                        </p>
-                      ) : null}
-                      <div className="pt-1">
-                        <p className="mb-1 text-xs font-semibold">พื้นที่ดำเนินงาน</p>
-                        <ul className="space-y-1">
-                          {detail.locations.map((location) => (
-                            <li
-                              key={location.projectLocationId}
-                              className="rounded-lg border border-[#E3EAF2] bg-white px-2 py-1.5 text-xs"
-                            >
-                              <p className="font-semibold text-brand-dark">
-                                {[
-                                  location.areaName,
-                                  location.tambon,
-                                  location.amphoe,
-                                  location.province,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" · ") || location.locationId}
-                              </p>
-                              <p className="text-[#778097]">{location.positionLabel}</p>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#778097]">ไม่พบรายละเอียด</p>
-                  )}
                 </div>
               ) : null}
 
@@ -488,18 +500,9 @@ export function ProjectMapDashboard({ data }: ProjectMapDashboardProps) {
                                     selected ? "text-white/75" : "text-[#6B7287]"
                                   }`}
                                 >
-                                  ปีเริ่มโครงการ/สิ้นสุด:{" "}
+                                  ปีที่เริ่มดำเนินโครงการ-สิ้นสุด:{" "}
                                   {formatProjectYears(project.startYearBe, project.endYearBe)}
                                 </span>
-                              </span>
-                              <span
-                                className={`mt-1 block text-[11px] ${
-                                  selected ? "text-white/70" : "text-[#8A94A8]"
-                                }`}
-                              >
-                                {project.mappableLocationCount > 0
-                                  ? `บนแผนที่ ${project.mappableLocationCount} จุด`
-                                  : "รอตรวจสอบตำแหน่ง"}
                               </span>
                             </span>
                           </button>

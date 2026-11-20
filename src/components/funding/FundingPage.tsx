@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ResearchersPagination } from "@/components/ui/CircularPageNav";
-import { PageTitle } from "@/components/ui/PageTitle";
+import { PageLead, PageTitle } from "@/components/ui/PageTitle";
 import type { FundingListItem } from "@/data/funding";
 import { useFundingFavorites } from "@/lib/funding-favorites";
 import { FundingCard } from "./FundingCard";
@@ -76,10 +76,10 @@ export function FundingPage({ items }: { items: FundingListItem[] }) {
       />
       <main className="flex flex-col items-center gap-8 px-4 pb-12 pt-6 sm:gap-10 sm:px-6 sm:pb-16 sm:pt-8 md:px-10 lg:gap-[50px] lg:px-[60px] lg:pb-20 lg:pt-10">
         <div className="flex flex-col items-center gap-3 text-center">
-          <PageTitle>แหล่งทุน</PageTitle>
-          <p className="max-w-[760px] text-sm leading-relaxed text-brand-muted sm:text-base">
-            รวมประกาศทุนวิจัยจากทุกแหล่งทุน ทั้งในประเทศและต่างประเทศ
-          </p>
+          <PageTitle>แหล่งทุน (Funding)</PageTitle>
+          <PageLead>
+            รวบรวมประกาศและข่าวสารการเปิดรับข้อเสนอทุนสนับสนุนการวิจัยจากหน่วยงานต่าง ๆ ทั้งในประเทศและต่างประเทศ พร้อมข้อมูลรายละเอียด เงื่อนไข และกำหนดการสมัคร เพื่อให้นักวิจัยเข้าถึงแหล่งทุนได้อย่างสะดวกและทันเวลา
+          </PageLead>
         </div>
 
         <div className="flex w-full max-w-[1320px] flex-col gap-8 sm:gap-10">

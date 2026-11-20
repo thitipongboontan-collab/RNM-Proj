@@ -287,7 +287,7 @@ export function AiAssistantModal({ open, onClose }: AiAssistantModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ai-assistant-title"
-        className="relative z-[10000] flex h-[min(560px,88vh)] w-full max-w-[860px] flex-col overflow-hidden rounded-[24px] bg-white shadow-[0px_24px_64px_rgba(37,50,75,0.22)]"
+        className="relative z-[10000] flex h-[min(720px,88vh)] w-full max-w-[860px] flex-col overflow-hidden rounded-[24px] bg-white shadow-[0px_24px_64px_rgba(37,50,75,0.22)]"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between bg-gradient-to-r from-[#4D5CAD] to-[#00CACC] px-6 py-5">

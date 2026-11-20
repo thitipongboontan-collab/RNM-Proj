@@ -7,6 +7,7 @@ import type {
   SpatialDashboardData,
   SpatialOrganization,
 } from "@/lib/spatial-repository";
+import { resolveClusterPosition } from "@/lib/spatial/country-centroids";
 
 const SpatialMap = dynamic(
   () =>
@@ -49,17 +50,7 @@ function buildAggregate(
   organizations: SpatialOrganization[],
 ): SpatialAggregate {
   const count = organizations.reduce((sum, item) => sum + item.collaborationCount, 0);
-  const totalWeight = Math.max(count, organizations.length, 1);
-  const latitude =
-    organizations.reduce(
-      (sum, item) => sum + item.latitude * Math.max(item.collaborationCount, 1),
-      0,
-    ) / totalWeight;
-  const longitude =
-    organizations.reduce(
-      (sum, item) => sum + item.longitude * Math.max(item.collaborationCount, 1),
-      0,
-    ) / totalWeight;
+  const position = resolveClusterPosition(keyPrefix, label, organizations);
   const researchers = new Set<string>();
   for (const organization of organizations) {
     for (const researcher of organization.researchers) researchers.add(researcher.name);
@@ -69,8 +60,8 @@ function buildAggregate(
     key: `${keyPrefix}:${label}`,
     label,
     count,
-    latitude,
-    longitude,
+    latitude: position.latitude,
+    longitude: position.longitude,
     organizations: organizations.map((item) => item.name),
     researchers: [...researchers],
   };

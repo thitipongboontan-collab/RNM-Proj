@@ -1,6 +1,6 @@
 import { SpatialDashboard } from "@/components/spatial/SpatialDashboard";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { PageTitle } from "@/components/ui/PageTitle";
+import { PageLead, PageTitle } from "@/components/ui/PageTitle";
 import { SITE_PAGE_KEYS } from "@/lib/analytics/site-pages";
 import { incrementSitePageView } from "@/lib/analytics/views";
 import { getSpatialDashboardData } from "@/lib/spatial-repository";
@@ -20,14 +20,16 @@ export default async function SpatialPage() {
         ]}
       />
       <main className="flex w-full flex-col items-center px-4 py-10 sm:px-6 md:px-10 lg:px-[60px] lg:py-14">
-        <PageTitle>เครือข่ายความร่วมมือ</PageTitle>
-        <p className="mt-4 max-w-4xl text-center text-base leading-relaxed text-brand-muted sm:text-lg">
-          แผนที่ความร่วมมือทางวิชาการ (Academic Collaboration Map)
-          แสดงเครือข่ายความร่วมมือทางวิชาการของนักวิจัยในรูปแบบเชิงพื้นที่
-          เพื่อให้เห็นการกระจายตัวและจำนวนความร่วมมือทางวิชาการของนักวิจัยในแต่ละพื้นที่
-          และสามารถวิเคราะห์แนวโน้มการเชื่อมโยงทางวิชาการ
-          และค้นหาโอกาสในการสร้างความร่วมมือใหม่ในอนาคต
-        </p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <PageTitle>เครือข่ายทางวิชาการ (Academic Network)</PageTitle>
+          <PageLead>
+            แผนที่ความร่วมมือทางวิชาการ (Academic Collaboration Map)
+            แสดงเครือข่ายความร่วมมือทางวิชาการของนักวิจัยในรูปแบบเชิงพื้นที่
+            เพื่อให้เห็นการกระจายตัวและจำนวนความร่วมมือทางวิชาการของนักวิจัยในแต่ละพื้นที่
+            และสามารถวิเคราะห์แนวโน้มการเชื่อมโยงทางวิชาการ
+            และค้นหาโอกาสในการสร้างความร่วมมือใหม่ในอนาคต
+          </PageLead>
+        </div>
         <div className="mt-8 w-full">
           <SpatialDashboard data={data} />
         </div>
